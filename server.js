@@ -3,7 +3,7 @@ require('dotenv').config();
 const { generateIdentity } = require("./src/core/identity");
 const { PeerManager } = require("./src/state/peers");
 const { DiagnosticsManager } = require("./src/state/diagnostics");
-const { TweetStore } = require("./src/state/tweets");
+const { PingStore } = require("./src/state/pings");
 const { MessageHandler } = require("./src/p2p/messaging");
 const { relayMessage } = require("./src/p2p/relay");
 const { SwarmManager } = require("./src/p2p/swarm");
@@ -15,7 +15,7 @@ const main = async () => {
   const identity = generateIdentity();
   const peerManager = new PeerManager();
   const diagnostics = new DiagnosticsManager();
-  const tweetStore = new TweetStore();
+  const pingStore = new PingStore();
   const sseManager = new SSEManager();
 
   peerManager.addOrUpdatePeer(identity.id, peerManager.getSeq());
@@ -31,7 +31,7 @@ const main = async () => {
     });
   };
 
-  const tweetCallback = (msg) => {
+  const pingCallback = (msg) => {
     sseManager.broadcast(msg);
   };
 
@@ -42,10 +42,10 @@ const main = async () => {
   const messageHandler = new MessageHandler(
     peerManager,
     diagnostics,
-    tweetStore,
+    pingStore,
     (msg, sourceSocket) => relayMessage(msg, sourceSocket, swarmManager.getSwarm(), diagnostics),
     broadcastUpdate,
-    tweetCallback,
+    pingCallback,
     systemMessageFn
   );
 
@@ -70,7 +70,7 @@ const main = async () => {
     broadcastUpdate();
   }, DIAGNOSTICS_INTERVAL);
 
-  const app = createServer(identity, peerManager, swarmManager, sseManager, diagnostics, tweetStore);
+  const app = createServer(identity, peerManager, swarmManager, sseManager, diagnostics, pingStore);
   startServer(app, identity);
 
   const handleShutdown = () => {

@@ -2,10 +2,10 @@ const express = require("express");
 const { PORT } = require("../config/constants");
 const { setupRoutes } = require("./routes");
 
-const createServer = (identity, peerManager, swarm, sseManager, diagnostics, tweetStore) => {
+const createServer = (identity, peerManager, swarm, sseManager, diagnostics, pingStore) => {
     const app = express();
 
-    setupRoutes(app, identity, peerManager, swarm, sseManager, diagnostics, tweetStore);
+    setupRoutes(app, identity, peerManager, swarm, sseManager, diagnostics, pingStore);
 
     return app;
 }

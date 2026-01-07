@@ -18,7 +18,7 @@ const setupRoutes = (
   swarm,
   sseManager,
   diagnostics,
-  tweetStore
+  pingStore
 ) => {
   app.use(express.json());
   app.use(express.static(path.join(__dirname, "../../public")));
@@ -63,8 +63,12 @@ const setupRoutes = (
     });
   });
 
-  app.get("/api/tweets", (req, res) => {
-    res.json(tweetStore.getAll());
+  app.get("/api/whoami", (req, res) => {
+    res.json({ id: identity.id });
+  });
+
+  app.get("/api/pings", (req, res) => {
+    res.json(pingStore.getAll());
   });
 
   app.get("/api/avatar/:id", (req, res) => {
@@ -80,17 +84,17 @@ const setupRoutes = (
     }
   });
 
-  let tweetHistory = [];
+  let pingHistory = [];
 
-  app.post("/api/tweet", (req, res) => {
+  app.post("/api/ping", (req, res) => {
     const now = Date.now();
-    tweetHistory = tweetHistory.filter((time) => now - time < CHAT_RATE_LIMIT);
+    pingHistory = pingHistory.filter((time) => now - time < CHAT_RATE_LIMIT);
 
-    if (tweetHistory.length >= 5) {
+    if (pingHistory.length >= 5) {
       return res.status(429).json({ error: "Rate limit exceeded" });
     }
 
-    tweetHistory.push(now);
+    pingHistory.push(now);
 
     const { content } = req.body;
     if (!content || typeof content !== "string" || content.length > 280) {
@@ -101,10 +105,10 @@ const setupRoutes = (
     const idBase = identity.id + content + timestamp;
     const msgId = crypto.createHash("sha256").update(idBase).digest("hex");
 
-    const sig = signMessage(`tweet:${msgId}`, identity.privateKey);
+    const sig = signMessage(`ping:${msgId}`, identity.privateKey);
 
     const msg = {
-      type: "TWEET",
+      type: "PING",
       id: msgId,
       author: identity.id,
       username: identity.username,
@@ -116,71 +120,84 @@ const setupRoutes = (
     };
 
     // Store locally
-    if (tweetStore.add(msg)) {
+    if (pingStore.add(msg)) {
+      // Auto-amplify (Pre-amplify)
+      pingStore.like(msg.id, identity.id);
+
       // Broadcast to direct peers
       swarm.broadcast(msg);
 
-      // Notify local SSE clients (so the user sees their own tweet)
-      sseManager.broadcast(msg);
+      // Notify local SSE clients with updated state (likes: 1)
+      const pingWithState = {
+        ...msg,
+        likes: 1,
+        amplifiedBy: [identity.id]
+      };
+      sseManager.broadcast(pingWithState);
 
       res.json(msg);
     } else {
-      res.status(400).json({ error: "Duplicate tweet" });
+      res.status(400).json({ error: "Duplicate ping" });
     }
   });
 
   app.post("/api/amplify", (req, res) => {
     const { id } = req.body;
-    if (!id) return res.status(400).json({ error: "Missing tweet ID" });
+    if (!id) return res.status(400).json({ error: "Missing ping ID" });
 
-    const tweet = tweetStore.get(id);
-    if (!tweet) {
-      return res.status(404).json({ error: "Tweet not found" });
+    const ping = pingStore.get(id);
+    if (!ping) {
+      return res.status(404).json({ error: "Ping not found" });
     }
 
     // Prevent double amplify (local check)
-    if (tweet.amplifiedBy && tweet.amplifiedBy.has(identity.id)) {
+    if (ping.amplifiedBy && ping.amplifiedBy.has(identity.id)) {
         return res.status(400).json({ error: "Already amplified" });
     }
 
+    // Prevent self-amplification
+    if (ping.author === identity.id) {
+        return res.status(400).json({ error: "Cannot amplify your own ping" });
+    }
+
     // Create AMPLIFY message
-    const amplifyIdBase = identity.id + tweet.id + Date.now();
+    const amplifyIdBase = identity.id + ping.id + Date.now();
     const amplifyId = crypto.createHash("sha256").update(amplifyIdBase).digest("hex");
     const sig = signMessage(`amplify:${amplifyId}`, identity.privateKey);
 
     // Strip local fields for the network message
-    // We need to send a valid TWEET object as 'originalTweet'
-    // 'tweet' from store has 'likes', 'amplifiedBy', 'receivedAt' which are not allowed in TWEET validation
-    const { likes, amplifiedBy, receivedAt, ...originalTweetData } = tweet;
+    // We need to send a valid PING object as 'originalPing'
+    // 'ping' from store has 'likes', 'amplifiedBy', 'receivedAt' which are not allowed in PING validation
+    const { likes, amplifiedBy, receivedAt, ...originalPingData } = ping;
 
     const amplifyMsg = {
         type: "AMPLIFY",
         id: amplifyId,
-        originalTweet: originalTweetData,
+        originalPing: originalPingData,
         amplifier: identity.id,
         sig,
         ttl: 10 // Boosted TTL!
     };
 
     // Update local state
-    tweetStore.like(id, identity.id);
+    pingStore.like(id, identity.id);
 
     // Broadcast to network
     swarm.broadcast(amplifyMsg);
 
-    // Notify local SSE clients with the updated tweet object
+    // Notify local SSE clients with the updated ping object
     // Frontend needs to handle updates (or we rely on reload, but better to push)
-    const updatedTweet = tweetStore.get(id);
+    const updatedPing = pingStore.get(id);
     
     // We convert Set to Array for JSON serialization (like in getAll)
-    const serializableTweet = {
-        ...updatedTweet,
-        amplifiedBy: Array.from(updatedTweet.amplifiedBy || [])
+    const serializablePing = {
+        ...updatedPing,
+        amplifiedBy: Array.from(updatedPing.amplifiedBy || [])
     };
     
-    sseManager.broadcast(serializableTweet);
+    sseManager.broadcast(serializablePing);
 
-    res.json({ success: true, likes: updatedTweet.likes });
+    res.json({ success: true, likes: updatedPing.likes });
   });
 };
 

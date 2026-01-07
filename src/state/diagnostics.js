@@ -12,6 +12,8 @@ class DiagnosticsManager {
             bytesReceived: 0,
             bytesRelayed: 0,
             leaveMessages: 0,
+            pingsRelayed: 0,
+            amplifyRelayed: 0,
         };
 
         this.interval = null;

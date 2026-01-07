@@ -1,6 +1,6 @@
 const feed = document.getElementById("feed");
-const tweetInput = document.getElementById("tweet-input");
-const tweetBtn = document.getElementById("tweet-btn");
+const pingInput = document.getElementById("ping-input");
+const pingBtn = document.getElementById("ping-btn");
 const statusDot = document.getElementById("status-dot");
 const statusText = document.getElementById("status-text");
 const myIdEl = document.getElementById("my-id");
@@ -8,13 +8,24 @@ const myIdEl = document.getElementById("my-id");
 let myId = "";
 
 async function init() {
-  // Load initial tweets
+  // 1. Get identity first
   try {
-    const res = await fetch("/api/tweets");
-    const tweets = await res.json();
-    tweets.forEach((tweet) => addTweetToFeed(tweet, false));
+    const res = await fetch("/api/whoami");
+    if (res.ok) {
+      const data = await res.json();
+      myId = data.id;
+    }
   } catch (e) {
-    console.error("Failed to fetch tweets", e);
+    console.error("Failed to fetch identity", e);
+  }
+
+  // 2. Load initial pings
+  try {
+    const res = await fetch("/api/pings");
+    const pings = await res.json();
+    pings.forEach((ping) => addPingToFeed(ping, false));
+  } catch (e) {
+    console.error("Failed to fetch pings", e);
   }
 
   // Setup SSE
@@ -27,8 +38,8 @@ async function init() {
       updateStats(data);
       myId = data.id;
       myIdEl.textContent = data.username || "..." + myId.slice(-8);
-    } else if (data.type === "TWEET") {
-      addTweetToFeed(data, true); // true = prepend
+    } else if (data.type === "PING") {
+      addPingToFeed(data, true); // true = prepend
     } else if (data.count !== undefined) {
       // Stat update
       updateStats(data);
@@ -47,14 +58,14 @@ function updateStats(data) {
   }
 }
 
-function addTweetToFeed(tweet, prepend = false) {
-  const existingEl = document.getElementById(`tweet-${tweet.id}`);
+function addPingToFeed(ping, prepend = false) {
+  const existingEl = document.getElementById(`ping-${ping.id}`);
 
-  const likes = tweet.likes || 0;
-  const amplifiedBy = tweet.amplifiedBy || [];
+  const likes = ping.likes || 0;
+  const amplifiedBy = ping.amplifiedBy || [];
   const isAmplifiedByMe =
     Array.isArray(amplifiedBy) && amplifiedBy.includes(myId);
-  const isMe = tweet.author === myId;
+  const isMe = ping.author === myId;
 
   // Icon: Font Awesome Bullhorn
   const icon = `<i class="fa-solid fa-bullhorn"></i>`;
@@ -65,7 +76,7 @@ function addTweetToFeed(tweet, prepend = false) {
   `;
 
   if (existingEl) {
-    const btn = existingEl.querySelector(".tweet-actions button");
+    const btn = existingEl.querySelector(".ping-actions button");
     if (btn) {
       btn.innerHTML = buttonContent;
       if (isAmplifiedByMe) {
@@ -79,30 +90,30 @@ function addTweetToFeed(tweet, prepend = false) {
   }
 
   const el = document.createElement("div");
-  el.className = "tweet";
-  el.id = `tweet-${tweet.id}`;
+  el.className = "ping";
+  el.id = `ping-${ping.id}`;
 
-  const date = new Date(tweet.timestamp).toLocaleString();
-  const authorName = tweet.username || "..." + tweet.author.slice(-8);
-  const avatarUrl = `/api/avatar/${tweet.author}`;
+  const date = new Date(ping.timestamp).toLocaleString();
+  const authorName = ping.username || "..." + ping.author.slice(-8);
+  const avatarUrl = `/api/avatar/${ping.author}`;
 
   el.innerHTML = `
         <div class="avatar">
             <img src="${avatarUrl}" alt="${authorName}" loading="lazy">
         </div>
-        <div class="tweet-body">
-            <div class="tweet-header">
-                <span class="author" title="${tweet.author}">${escapeHtml(
+        <div class="ping-body">
+            <div class="ping-header">
+                <span class="author" title="${ping.author}">${escapeHtml(
     authorName
   )}</span>
                 <span class="date">${date}</span>
             </div>
-            <div class="tweet-content">${escapeHtml(tweet.content)}</div>
-            <div class="tweet-actions">
+            <div class="ping-content">${escapeHtml(ping.content)}</div>
+            <div class="ping-actions">
                 <button class="action-btn ${
                   isAmplifiedByMe ? "amplified" : ""
                 }" 
-                        onclick="amplify('${tweet.id}')" 
+                        onclick="amplify('${ping.id}')" 
                         ${isMe || isAmplifiedByMe ? "disabled" : ""}>
                     ${buttonContent}
                 </button>
@@ -133,7 +144,7 @@ window.amplify = async (id) => {
     });
     if (res.ok) {
       const data = await res.json();
-      const btn = document.querySelector(`#tweet-${id} .tweet-actions button`);
+      const btn = document.querySelector(`#ping-${id} .ping-actions button`);
       if (btn) {
         // Icon: Font Awesome Bullhorn (reused)
         const icon = `<i class="fa-solid fa-bullhorn"></i>`;
@@ -154,21 +165,21 @@ window.amplify = async (id) => {
   }
 };
 
-tweetBtn.onclick = async () => {
-  const content = tweetInput.value.trim();
+pingBtn.onclick = async () => {
+  const content = pingInput.value.trim();
   if (!content) return;
 
   try {
-    const res = await fetch("/api/tweet", {
+    const res = await fetch("/api/ping", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content }),
     });
 
     if (res.ok) {
-      tweetInput.value = "";
+      pingInput.value = "";
     } else {
-      alert("Failed to post tweet");
+      alert("Failed to post ping");
     }
   } catch (e) {
     console.error(e);

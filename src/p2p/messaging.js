@@ -11,18 +11,18 @@ class MessageHandler {
   constructor(
     peerManager,
     diagnostics,
-    tweetStore,
+    pingStore,
     relayCallback,
     broadcastCallback,
-    tweetCallback,
+    pingCallback,
     systemMessageFn
   ) {
     this.peerManager = peerManager;
     this.diagnostics = diagnostics;
-    this.tweetStore = tweetStore;
+    this.pingStore = pingStore;
     this.relayCallback = relayCallback;
     this.broadcastCallback = broadcastCallback;
-    this.tweetCallback = tweetCallback;
+    this.pingCallback = pingCallback;
     this.systemMessageFn = systemMessageFn;
     this.bloomFilter = new BloomFilterManager();
     this.bloomFilter.start();
@@ -38,8 +38,8 @@ class MessageHandler {
       this.handleHeartbeat(msg, sourceSocket);
     } else if (msg.type === "LEAVE") {
       this.handleLeave(msg, sourceSocket);
-    } else if (msg.type === "TWEET") {
-      this.handleTweet(msg, sourceSocket);
+    } else if (msg.type === "PING") {
+      this.handlePing(msg, sourceSocket);
     } else if (msg.type === "AMPLIFY") {
       this.handleAmplify(msg, sourceSocket);
     }
@@ -151,7 +151,7 @@ class MessageHandler {
     }
   }
 
-  handleTweet(msg, sourceSocket) {
+  handlePing(msg, sourceSocket) {
     const { author, id, sig, timestamp } = msg;
     const ttl = typeof msg.ttl === "number" ? msg.ttl : 6; // Default TTL
 
@@ -180,19 +180,19 @@ class MessageHandler {
     // Verify signature (moved before store check to ensure validity even if we have it,
     // though for perf we might want to check store first. But strictness is good.)
     const key = createPublicKey(author);
-    if (!verifySignature(`tweet:${id}`, sig, key)) {
+    if (!verifySignature(`ping:${id}`, sig, key)) {
       this.diagnostics.increment("invalidSig");
       return;
     }
 
     // Store and Notify
-    const isNew = this.tweetStore.add(msg);
+    const isNew = this.pingStore.add(msg);
     if (isNew) {
       rateData.count++;
       this.rateLimits.set(author, rateData);
 
-      if (this.tweetCallback) {
-        this.tweetCallback(msg);
+      if (this.pingCallback) {
+        this.pingCallback(msg);
       }
     }
 
@@ -200,18 +200,18 @@ class MessageHandler {
     // If it's new OR it has high TTL (meaning it's a fresh wave), we might relay.
     // For now, simple gossip: if TTL > 0, relay.
     // To prevent loops, we can rely on bloom filter?
-    // TweetStore prevents re-processing, but doesn't track if we relayed THIS instance.
-    // We should use BloomFilter for tweets too if we want to support re-gossip.
-    // But currently tweetStore.add returns false if exists.
+    // PingStore prevents re-processing, but doesn't track if we relayed THIS instance.
+    // We should use BloomFilter for pings too if we want to support re-gossip.
+    // But currently pingStore.add returns false if exists.
 
     if (isNew && ttl > 0) {
-      this.diagnostics.increment("tweetsRelayed");
+      this.diagnostics.increment("pingsRelayed");
       this.relayCallback({ ...msg, ttl: ttl - 1 }, sourceSocket);
     }
   }
 
   handleAmplify(msg, sourceSocket) {
-    const { id, originalTweet, amplifier, sig, ttl } = msg;
+    const { id, originalPing, amplifier, sig, ttl } = msg;
 
     // check bloom filter for this amplify message
     if (this.bloomFilter.hasRelayed(id, "amplify")) {
@@ -220,47 +220,45 @@ class MessageHandler {
 
     // Verify Amplify Signature
     const key = createPublicKey(amplifier);
-    // We assume the ID was generated as hash(amplifier + originalTweet.id + timestamp)
+    // We assume the ID was generated as hash(amplifier + originalPing.id + timestamp)
     // and signed as `amplify:${id}`
     if (!verifySignature(`amplify:${id}`, sig, key)) {
       this.diagnostics.increment("invalidSig");
       return;
     }
 
-    // Verify Original Tweet Integrity & Signature
-    // We do this to prevent spamming fake tweets via amplify
-    const tweetIdBase =
-      originalTweet.author + originalTweet.content + originalTweet.timestamp;
-    const computedTweetId = crypto
+    // Verify Original Ping Integrity & Signature
+    // We do this to prevent spamming fake pings via amplify
+    const pingIdBase =
+      originalPing.author + originalPing.content + originalPing.timestamp;
+    const computedPingId = crypto
       .createHash("sha256")
-      .update(tweetIdBase)
+      .update(pingIdBase)
       .digest("hex");
-    if (computedTweetId !== originalTweet.id) return;
+    if (computedPingId !== originalPing.id) return;
 
-    const tweetKey = createPublicKey(originalTweet.author);
-    if (
-      !verifySignature(`tweet:${originalTweet.id}`, originalTweet.sig, tweetKey)
-    )
+    const pingKey = createPublicKey(originalPing.author);
+    if (!verifySignature(`ping:${originalPing.id}`, originalPing.sig, pingKey))
       return;
 
-    // Process Tweet (Add if missing)
-    const isNewTweet = this.tweetStore.add(originalTweet);
-    if (isNewTweet && this.tweetCallback) {
-      this.tweetCallback(originalTweet);
+    // Process Ping (Add if missing)
+    const isNewPing = this.pingStore.add(originalPing);
+    if (isNewPing && this.pingCallback) {
+      this.pingCallback(originalPing);
     }
 
     // Apply Like
-    if (this.tweetStore.like(originalTweet.id, amplifier)) {
+    if (this.pingStore.like(originalPing.id, amplifier)) {
       // If like was successful (first time this user liked it locally), notify UI?
-      // We can reuse tweetCallback to push update?
-      // Or we need a specific event. For now, pushing the tweet again updates the UI state
-      // because the UI receives the tweet object.
-      // But tweetStore.add returns false if exists.
+      // We can reuse pingCallback to push update?
+      // Or we need a specific event. For now, pushing the ping again updates the UI state
+      // because the UI receives the ping object.
+      // But pingStore.add returns false if exists.
       // We might want to force an update.
-      if (this.tweetCallback) {
-        // Fetch the updated tweet object
-        const updatedTweet = this.tweetStore.get(originalTweet.id);
-        this.tweetCallback(updatedTweet);
+      if (this.pingCallback) {
+        // Fetch the updated ping object
+        const updatedPing = this.pingStore.get(originalPing.id);
+        this.pingCallback(updatedPing);
       }
     }
 
@@ -304,14 +302,14 @@ const validateMessage = (msg) => {
     );
   }
 
-  if (msg.type === "TWEET") {
+  if (msg.type === "PING") {
     const allowedFields = [
       "type",
+      "id",
       "author",
       "username",
       "content",
       "timestamp",
-      "id",
       "sig",
       "hops",
       "ttl",
@@ -319,19 +317,20 @@ const validateMessage = (msg) => {
     const fields = Object.keys(msg);
     return (
       fields.every((f) => allowedFields.includes(f)) &&
+      msg.id &&
       msg.author &&
       msg.content &&
-      typeof msg.content === "string" &&
-      msg.content.length <= 280 &&
-      typeof msg.timestamp === "number"
+      msg.timestamp &&
+      msg.sig &&
+      typeof msg.ttl === "number"
     );
   }
 
   if (msg.type === "AMPLIFY") {
     const allowedFields = [
       "type",
-      "id", // ID of the AMPLIFY message itself
-      "originalTweet",
+      "id",
+      "originalPing", // Renamed from originalTweet
       "amplifier", // User ID of amplifier
       "sig",
       "ttl",
@@ -340,8 +339,8 @@ const validateMessage = (msg) => {
     return (
       fields.every((f) => allowedFields.includes(f)) &&
       msg.id &&
-      msg.originalTweet &&
-      validateMessage(msg.originalTweet) &&
+      msg.originalPing &&
+      validateMessage(msg.originalPing) &&
       msg.amplifier &&
       msg.sig &&
       typeof msg.ttl === "number"

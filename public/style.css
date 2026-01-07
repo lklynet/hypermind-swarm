@@ -5,8 +5,8 @@
     --primary-color: #00ba7c; /* Hypermind Green */
     --primary-hover: #00a36d;
     --secondary-text: #71767b;
-    --tweet-bg: #000000;
-    --tweet-hover: #080808; /* Subtle hover */
+    --ping-bg: #000000;
+    --ping-hover: #080808; /* Subtle hover */
     --status-connecting: #ffad1f;
     --status-connected: #00ba7c;
     --card-border: 1px solid var(--border-color);
@@ -130,7 +130,7 @@ textarea::placeholder {
     color: var(--secondary-text);
 }
 
-#tweet-btn {
+#ping-btn {
     align-self: flex-end;
     background: var(--primary-color);
     color: white;
@@ -143,11 +143,11 @@ textarea::placeholder {
     transition: background-color 0.2s;
 }
 
-#tweet-btn:hover {
+#ping-btn:hover {
     background: var(--primary-hover);
 }
 
-#tweet-btn:disabled {
+#ping-btn:disabled {
     opacity: 0.5;
     cursor: default;
 }
@@ -158,18 +158,18 @@ textarea::placeholder {
     flex-direction: column;
 }
 
-.tweet {
+.ping {
     padding: 1rem;
     border-bottom: 1px solid var(--border-color);
-    background: var(--tweet-bg);
+    background: var(--ping-bg);
     transition: background-color 0.2s;
     display: flex;
     gap: 0.8rem;
     cursor: pointer; /* Suggest interaction */
 }
 
-.tweet:hover { 
-    background: var(--tweet-hover); 
+.ping:hover { 
+    background: var(--ping-hover); 
 }
 
 .avatar {
@@ -187,14 +187,14 @@ textarea::placeholder {
     object-fit: cover;
 }
 
-.tweet-body {
+.ping-body {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
 }
 
-.tweet-header {
+.ping-header {
     margin-bottom: 0.2rem;
     font-size: 0.95rem;
     display: flex;
@@ -222,7 +222,7 @@ textarea::placeholder {
     margin-right: 0.3rem;
 }
 
-.tweet-content { 
+.ping-content { 
     white-space: pre-wrap; 
     margin-bottom: 0.8rem; 
     line-height: 1.4; 
@@ -232,7 +232,7 @@ textarea::placeholder {
 }
 
 /* Actions */
-.tweet-actions {
+.ping-actions {
     display: flex;
     gap: 2rem; /* Spacing between potential future actions */
     margin-top: 0.2rem;
@@ -275,6 +275,6 @@ textarea::placeholder {
     to { opacity: 1; transform: translateY(0); }
 }
 
-.tweet {
+.ping {
     animation: fadeIn 0.3s ease-out;
 }

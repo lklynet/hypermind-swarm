@@ -112,6 +112,7 @@ const setupRoutes = (
       timestamp,
       sig,
       hops: 0,
+      ttl: 6, // Default TTL
     };
 
     // Store locally
@@ -137,10 +138,49 @@ const setupRoutes = (
       return res.status(404).json({ error: "Tweet not found" });
     }
 
-    // Just rebroadcast the original tweet
-    swarm.broadcast(tweet);
+    // Prevent double amplify (local check)
+    if (tweet.amplifiedBy && tweet.amplifiedBy.has(identity.id)) {
+        return res.status(400).json({ error: "Already amplified" });
+    }
 
-    res.json({ success: true });
+    // Create AMPLIFY message
+    const amplifyIdBase = identity.id + tweet.id + Date.now();
+    const amplifyId = crypto.createHash("sha256").update(amplifyIdBase).digest("hex");
+    const sig = signMessage(`amplify:${amplifyId}`, identity.privateKey);
+
+    // Strip local fields for the network message
+    // We need to send a valid TWEET object as 'originalTweet'
+    // 'tweet' from store has 'likes', 'amplifiedBy', 'receivedAt' which are not allowed in TWEET validation
+    const { likes, amplifiedBy, receivedAt, ...originalTweetData } = tweet;
+
+    const amplifyMsg = {
+        type: "AMPLIFY",
+        id: amplifyId,
+        originalTweet: originalTweetData,
+        amplifier: identity.id,
+        sig,
+        ttl: 10 // Boosted TTL!
+    };
+
+    // Update local state
+    tweetStore.like(id, identity.id);
+
+    // Broadcast to network
+    swarm.broadcast(amplifyMsg);
+
+    // Notify local SSE clients with the updated tweet object
+    // Frontend needs to handle updates (or we rely on reload, but better to push)
+    const updatedTweet = tweetStore.get(id);
+    
+    // We convert Set to Array for JSON serialization (like in getAll)
+    const serializableTweet = {
+        ...updatedTweet,
+        amplifiedBy: Array.from(updatedTweet.amplifiedBy || [])
+    };
+    
+    sseManager.broadcast(serializableTweet);
+
+    res.json({ success: true, likes: updatedTweet.likes });
   });
 };
 

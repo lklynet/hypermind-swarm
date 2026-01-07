@@ -40,6 +40,8 @@ class MessageHandler {
       this.handleLeave(msg, sourceSocket);
     } else if (msg.type === "TWEET") {
       this.handleTweet(msg, sourceSocket);
+    } else if (msg.type === "AMPLIFY") {
+      this.handleAmplify(msg, sourceSocket);
     }
   }
 
@@ -151,6 +153,7 @@ class MessageHandler {
 
   handleTweet(msg, sourceSocket) {
     const { author, id, sig, timestamp } = msg;
+    const ttl = typeof msg.ttl === "number" ? msg.ttl : 6; // Default TTL
 
     // Rate Limiting
     const now = Date.now();
@@ -174,12 +177,8 @@ class MessageHandler {
       return;
     }
 
-    // Check if we already have this tweet
-    if (this.tweetStore.has(id)) {
-      return;
-    }
-
-    // Verify signature
+    // Verify signature (moved before store check to ensure validity even if we have it,
+    // though for perf we might want to check store first. But strictness is good.)
     const key = createPublicKey(author);
     if (!verifySignature(`tweet:${id}`, sig, key)) {
       this.diagnostics.increment("invalidSig");
@@ -187,7 +186,8 @@ class MessageHandler {
     }
 
     // Store and Notify
-    if (this.tweetStore.add(msg)) {
+    const isNew = this.tweetStore.add(msg);
+    if (isNew) {
       rateData.count++;
       this.rateLimits.set(author, rateData);
 
@@ -196,7 +196,80 @@ class MessageHandler {
       }
     }
 
-    // NO AUTOMATIC RELAY
+    // GOSSIP / RELAY
+    // If it's new OR it has high TTL (meaning it's a fresh wave), we might relay.
+    // For now, simple gossip: if TTL > 0, relay.
+    // To prevent loops, we can rely on bloom filter?
+    // TweetStore prevents re-processing, but doesn't track if we relayed THIS instance.
+    // We should use BloomFilter for tweets too if we want to support re-gossip.
+    // But currently tweetStore.add returns false if exists.
+
+    if (isNew && ttl > 0) {
+      this.diagnostics.increment("tweetsRelayed");
+      this.relayCallback({ ...msg, ttl: ttl - 1 }, sourceSocket);
+    }
+  }
+
+  handleAmplify(msg, sourceSocket) {
+    const { id, originalTweet, amplifier, sig, ttl } = msg;
+
+    // check bloom filter for this amplify message
+    if (this.bloomFilter.hasRelayed(id, "amplify")) {
+      return;
+    }
+
+    // Verify Amplify Signature
+    const key = createPublicKey(amplifier);
+    // We assume the ID was generated as hash(amplifier + originalTweet.id + timestamp)
+    // and signed as `amplify:${id}`
+    if (!verifySignature(`amplify:${id}`, sig, key)) {
+      this.diagnostics.increment("invalidSig");
+      return;
+    }
+
+    // Verify Original Tweet Integrity & Signature
+    // We do this to prevent spamming fake tweets via amplify
+    const tweetIdBase =
+      originalTweet.author + originalTweet.content + originalTweet.timestamp;
+    const computedTweetId = crypto
+      .createHash("sha256")
+      .update(tweetIdBase)
+      .digest("hex");
+    if (computedTweetId !== originalTweet.id) return;
+
+    const tweetKey = createPublicKey(originalTweet.author);
+    if (
+      !verifySignature(`tweet:${originalTweet.id}`, originalTweet.sig, tweetKey)
+    )
+      return;
+
+    // Process Tweet (Add if missing)
+    const isNewTweet = this.tweetStore.add(originalTweet);
+    if (isNewTweet && this.tweetCallback) {
+      this.tweetCallback(originalTweet);
+    }
+
+    // Apply Like
+    if (this.tweetStore.like(originalTweet.id, amplifier)) {
+      // If like was successful (first time this user liked it locally), notify UI?
+      // We can reuse tweetCallback to push update?
+      // Or we need a specific event. For now, pushing the tweet again updates the UI state
+      // because the UI receives the tweet object.
+      // But tweetStore.add returns false if exists.
+      // We might want to force an update.
+      if (this.tweetCallback) {
+        // Fetch the updated tweet object
+        const updatedTweet = this.tweetStore.get(originalTweet.id);
+        this.tweetCallback(updatedTweet);
+      }
+    }
+
+    // Relay Amplify Message
+    if (ttl > 0) {
+      this.bloomFilter.markRelayed(id, "amplify");
+      this.diagnostics.increment("amplifyRelayed");
+      this.relayCallback({ ...msg, ttl: ttl - 1 }, sourceSocket);
+    }
   }
 }
 
@@ -241,6 +314,7 @@ const validateMessage = (msg) => {
       "id",
       "sig",
       "hops",
+      "ttl",
     ];
     const fields = Object.keys(msg);
     return (
@@ -250,6 +324,27 @@ const validateMessage = (msg) => {
       typeof msg.content === "string" &&
       msg.content.length <= 280 &&
       typeof msg.timestamp === "number"
+    );
+  }
+
+  if (msg.type === "AMPLIFY") {
+    const allowedFields = [
+      "type",
+      "id", // ID of the AMPLIFY message itself
+      "originalTweet",
+      "amplifier", // User ID of amplifier
+      "sig",
+      "ttl",
+    ];
+    const fields = Object.keys(msg);
+    return (
+      fields.every((f) => allowedFields.includes(f)) &&
+      msg.id &&
+      msg.originalTweet &&
+      validateMessage(msg.originalTweet) &&
+      msg.amplifier &&
+      msg.sig &&
+      typeof msg.ttl === "number"
     );
   }
 

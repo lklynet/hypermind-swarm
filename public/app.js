@@ -48,15 +48,41 @@ function updateStats(data) {
 }
 
 function addTweetToFeed(tweet, prepend = false) {
-  // Deduplicate in UI if needed (though store handles backend)
-  if (document.getElementById(`tweet-${tweet.id}`)) return;
+  const existingEl = document.getElementById(`tweet-${tweet.id}`);
+
+  const likes = tweet.likes || 0;
+  const amplifiedBy = tweet.amplifiedBy || [];
+  const isAmplifiedByMe =
+    Array.isArray(amplifiedBy) && amplifiedBy.includes(myId);
+  const isMe = tweet.author === myId;
+
+  // Icon: Font Awesome Bullhorn
+  const icon = `<i class="fa-solid fa-bullhorn"></i>`;
+
+  const buttonContent = `
+    ${icon}
+    <span class="count">${likes > 0 ? likes : ""}</span>
+  `;
+
+  if (existingEl) {
+    const btn = existingEl.querySelector(".tweet-actions button");
+    if (btn) {
+      btn.innerHTML = buttonContent;
+      if (isAmplifiedByMe) {
+        btn.classList.add("amplified");
+        btn.disabled = true; // Still disable to prevent double click, but style via class
+      } else if (isMe) {
+        btn.disabled = true;
+      }
+    }
+    return;
+  }
 
   const el = document.createElement("div");
   el.className = "tweet";
   el.id = `tweet-${tweet.id}`;
 
   const date = new Date(tweet.timestamp).toLocaleString();
-  const isMe = tweet.author === myId;
   const authorName = tweet.username || "..." + tweet.author.slice(-8);
   const avatarUrl = `/api/avatar/${tweet.author}`;
 
@@ -73,10 +99,12 @@ function addTweetToFeed(tweet, prepend = false) {
             </div>
             <div class="tweet-content">${escapeHtml(tweet.content)}</div>
             <div class="tweet-actions">
-                <button onclick="amplify('${tweet.id}')" ${
-    isMe ? "disabled" : ""
-  }>
-                    Amplify
+                <button class="action-btn ${
+                  isAmplifiedByMe ? "amplified" : ""
+                }" 
+                        onclick="amplify('${tweet.id}')" 
+                        ${isMe || isAmplifiedByMe ? "disabled" : ""}>
+                    ${buttonContent}
                 </button>
             </div>
         </div>
@@ -104,14 +132,22 @@ window.amplify = async (id) => {
       body: JSON.stringify({ id }),
     });
     if (res.ok) {
-      // Optional: Visual feedback
+      const data = await res.json();
       const btn = document.querySelector(`#tweet-${id} .tweet-actions button`);
       if (btn) {
-        btn.textContent = "Amplified";
+        // Icon: Font Awesome Bullhorn (reused)
+        const icon = `<i class="fa-solid fa-bullhorn"></i>`;
+
+        btn.innerHTML = `
+            ${icon}
+            <span class="count">${data.likes}</span>
+        `;
+        btn.classList.add("amplified");
         btn.disabled = true;
       }
     } else {
-      alert("Failed to amplify");
+      const err = await res.json();
+      alert(err.error || "Failed to amplify");
     }
   } catch (e) {
     console.error(e);

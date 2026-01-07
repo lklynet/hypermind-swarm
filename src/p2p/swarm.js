@@ -39,6 +39,7 @@ class SwarmManager {
         const hello = JSON.stringify({
             type: "HEARTBEAT",
             id: this.identity.id,
+            username: this.identity.username,
             seq: this.peerManager.getSeq(),
             hops: 0,
             nonce: this.identity.nonce,
@@ -117,7 +118,7 @@ class SwarmManager {
             }
 
             if (oldest) {
-                if (ENABLE_CHAT && this.chatSystemFn && oldest.peerId) {
+                if (this.chatSystemFn && oldest.peerId) {
                     this.chatSystemFn({
                         type: "SYSTEM",
                         content: `Connection with Node ...${oldest.peerId.slice(-8)} severed (Rotation).`,
@@ -159,8 +160,7 @@ class SwarmManager {
         return this.swarm;
     }
 
-    broadcastChat(msg) {
-        if (!ENABLE_CHAT) return;
+    broadcast(msg) {
         const msgStr = JSON.stringify(msg) + "\n";
         for (const socket of this.swarm.connections) {
             socket.write(msgStr);

@@ -3,119 +3,145 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { signMessage } = require("../core/security");
-const { ENABLE_CHAT, ENABLE_MAP, ENABLE_THEMES, CHAT_RATE_LIMIT, VISUAL_LIMIT } = require("../config/constants");
+const { generateAvatar } = require("../utils/avatar");
+const { CHAT_RATE_LIMIT, VISUAL_LIMIT } = require("../config/constants");
 
 const HTML_TEMPLATE = fs.readFileSync(
-    path.join(__dirname, "../../public/index.html"),
-    "utf-8"
+  path.join(__dirname, "../../public/index.html"),
+  "utf-8"
 );
 
-const setupRoutes = (app, identity, peerManager, swarm, sseManager, diagnostics) => {
-    app.use(express.json());
+const setupRoutes = (
+  app,
+  identity,
+  peerManager,
+  swarm,
+  sseManager,
+  diagnostics,
+  tweetStore
+) => {
+  app.use(express.json());
+  app.use(express.static(path.join(__dirname, "../../public")));
 
-    app.get("/", (req, res) => {
-        const count = peerManager.size;
-        const directPeers = swarm.getSwarm().connections.size;
+  app.get("/", (req, res) => {
+    const count = peerManager.size;
+    const directPeers = swarm.getSwarm().connections.size;
 
-        const html = HTML_TEMPLATE
-            .replace(/\{\{COUNT\}\}/g, count)
-            .replace(/\{\{ID\}\}/g, "..." + identity.id.slice(-8))
-            .replace(/\{\{DIRECT\}\}/g, directPeers)
-            .replace(/\{\{MAP_CLASS\}\}/g, ENABLE_MAP ? '' : 'hidden')
-            .replace(/\{\{THEMES_CLASS\}\}/g, ENABLE_THEMES ? '' : 'hidden')
-            .replace(/\{\{VISUAL_LIMIT\}\}/g, VISUAL_LIMIT);
+    const html = HTML_TEMPLATE.replace(/\{\{COUNT\}\}/g, count)
+      .replace(
+        /\{\{ID\}\}/g,
+        identity.username || "..." + identity.id.slice(-8)
+      )
+      .replace(/\{\{DIRECT\}\}/g, directPeers)
+      .replace(/\{\{VISUAL_LIMIT\}\}/g, VISUAL_LIMIT);
 
-        res.send(html);
+    res.send(html);
+  });
+
+  app.get("/events", (req, res) => {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
+
+    sseManager.addClient(res);
+
+    const data = JSON.stringify({
+      type: "INIT",
+      count: peerManager.size,
+      totalUnique: peerManager.totalUniquePeers,
+      direct: swarm.getSwarm().connections.size,
+      id: identity.id,
+      username: identity.username,
+      diagnostics: diagnostics.getStats(),
+      peers: peerManager.getPeersWithIps(),
     });
+    res.write(`data: ${data}\n\n`);
 
-    app.get("/events", (req, res) => {
-        res.setHeader("Content-Type", "text/event-stream");
-        res.setHeader("Cache-Control", "no-cache");
-        res.setHeader("Connection", "keep-alive");
-        res.flushHeaders();
-
-        sseManager.addClient(res);
-
-        const data = JSON.stringify({
-            count: peerManager.size,
-            totalUnique: peerManager.totalUniquePeers,
-            direct: swarm.getSwarm().connections.size,
-            id: identity.id,
-            diagnostics: diagnostics.getStats(),
-            chatEnabled: ENABLE_CHAT,
-            peers: peerManager.getPeersWithIps()
-        });
-        res.write(`data: ${data}\n\n`);
-
-        req.on("close", () => {
-            sseManager.removeClient(res);
-        });
+    req.on("close", () => {
+      sseManager.removeClient(res);
     });
+  });
 
-    app.get("/api/stats", (req, res) => {
-        res.json({
-            count: peerManager.size,
-            totalUnique: peerManager.totalUniquePeers,
-            direct: swarm.getSwarm().connections.size,
-            id: identity.id,
-            diagnostics: diagnostics.getStats(),
-            chatEnabled: ENABLE_CHAT,
-            peers: peerManager.getPeersWithIps()
-        });
-    });
+  app.get("/api/tweets", (req, res) => {
+    res.json(tweetStore.getAll());
+  });
 
-    let chatHistory = []; // Store timestamps of recent messages
+  app.get("/api/avatar/:id", (req, res) => {
+    const { id } = req.params;
+    try {
+      const svg = generateAvatar(id);
+      res.setHeader("Content-Type", "image/svg+xml");
+      res.setHeader("Cache-Control", "public, max-age=31536000");
+      res.send(svg);
+    } catch (e) {
+      console.error(e);
+      res.status(500).send("Error generating avatar");
+    }
+  });
 
-    app.post("/api/chat", (req, res) => {
-        if (!ENABLE_CHAT) {
-            return res.status(403).json({ error: "Chat disabled" });
-        }
+  let tweetHistory = [];
 
-        const now = Date.now();
-        // Clean up old timestamps (older than CHAT_RATE_LIMIT)
-        chatHistory = chatHistory.filter(time => now - time < CHAT_RATE_LIMIT);
+  app.post("/api/tweet", (req, res) => {
+    const now = Date.now();
+    tweetHistory = tweetHistory.filter((time) => now - time < CHAT_RATE_LIMIT);
 
-        if (chatHistory.length >= 5) {
-            return res.status(429).json({ error: `Rate limit exceeded: Max 5 messages per ${CHAT_RATE_LIMIT / 1000} seconds` });
-        }
-        
-        chatHistory.push(now);
+    if (tweetHistory.length >= 5) {
+      return res.status(429).json({ error: "Rate limit exceeded" });
+    }
 
-        const { content, scope = 'LOCAL' } = req.body;
-        if (!content || typeof content !== 'string' || content.length > 140) {
-            return res.status(400).json({ error: "Invalid content" });
-        }
-        
-        if (scope !== 'LOCAL' && scope !== 'GLOBAL') {
-             return res.status(400).json({ error: "Invalid scope" });
-        }
+    tweetHistory.push(now);
 
-        const timestamp = Date.now();
-        // Create a unique ID that depends on content to prevent replay/duplicates
-        const idBase = identity.id + content + timestamp;
-        const msgId = crypto.createHash('sha256').update(idBase).digest('hex');
+    const { content } = req.body;
+    if (!content || typeof content !== "string" || content.length > 280) {
+      return res.status(400).json({ error: "Invalid content" });
+    }
 
-        const msg = {
-            type: "CHAT",
-            id: msgId,
-            sender: identity.id,
-            content: content,
-            timestamp: timestamp,
-            scope: scope,
-            hops: 0
-        };
+    const timestamp = Date.now();
+    const idBase = identity.id + content + timestamp;
+    const msgId = crypto.createHash("sha256").update(idBase).digest("hex");
 
-        if (scope === 'GLOBAL') {
-             msg.sig = signMessage(`chat:${msgId}`, identity.privateKey);
-        }
+    const sig = signMessage(`tweet:${msgId}`, identity.privateKey);
 
-        swarm.broadcastChat(msg);
-        sseManager.broadcast(msg);
+    const msg = {
+      type: "TWEET",
+      id: msgId,
+      author: identity.id,
+      username: identity.username,
+      content,
+      timestamp,
+      sig,
+      hops: 0,
+    };
 
-        res.json({ success: true });
-    });
+    // Store locally
+    if (tweetStore.add(msg)) {
+      // Broadcast to direct peers
+      swarm.broadcast(msg);
 
-    app.use(express.static(path.join(__dirname, "../../public")));
-}
+      // Notify local SSE clients (so the user sees their own tweet)
+      sseManager.broadcast(msg);
+
+      res.json(msg);
+    } else {
+      res.status(400).json({ error: "Duplicate tweet" });
+    }
+  });
+
+  app.post("/api/amplify", (req, res) => {
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ error: "Missing tweet ID" });
+
+    const tweet = tweetStore.get(id);
+    if (!tweet) {
+      return res.status(404).json({ error: "Tweet not found" });
+    }
+
+    // Just rebroadcast the original tweet
+    swarm.broadcast(tweet);
+
+    res.json({ success: true });
+  });
+};
 
 module.exports = { setupRoutes };

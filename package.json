@@ -1,12 +1,10 @@
 {
-  "name": "hypermind",
+  "name": "hypermind-swarm",
   "version": "1.0.0",
-  "description": "A decentralized P2P counter of active deployments",
+  "description": "A decentralized P2P Twitter-like swarm",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "start:dev1": "PORT=3000 ENABLE_CHAT=true TOPIC_NAME=hypermind-dev node server.js",
-    "start:dev2": "PORT=3001 ENABLE_CHAT=true TOPIC_NAME=hypermind-dev node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -28,6 +26,8 @@
   "homepage": "https://github.com/lklynet/hypermind#readme",
   "type": "commonjs",
   "dependencies": {
+    "@dicebear/collection": "^9.2.4",
+    "@dicebear/core": "^9.2.4",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "hyperswarm": "^4.16.0"

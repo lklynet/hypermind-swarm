@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 
-const TOPIC_NAME = process.env.TOPIC_NAME || "hypermind-lklynet-v1";
+const TOPIC_NAME = process.env.TOPIC_NAME || "hypermind-swarm-v1";
 const TOPIC = crypto.createHash("sha256").update(TOPIC_NAME).digest();
 
 /**
@@ -27,9 +27,6 @@ const PEER_TIMEOUT = parseInt(process.env.PEER_TIMEOUT) || 45000;
 const BROADCAST_THROTTLE = 1000;
 const DIAGNOSTICS_INTERVAL = 10000;
 const PORT = process.env.PORT || 3000;
-const ENABLE_CHAT = process.env.ENABLE_CHAT === "true";
-const ENABLE_MAP = process.env.ENABLE_MAP === 'true';
-const ENABLE_THEMES = process.env.ENABLE_THEMES !== "false";
 const CHAT_RATE_LIMIT = parseInt(process.env.CHAT_RATE_LIMIT) || 5000;
 const VISUAL_LIMIT = parseInt(process.env.VISUAL_LIMIT) || 500;
 
@@ -48,9 +45,6 @@ module.exports = {
   BROADCAST_THROTTLE,
   DIAGNOSTICS_INTERVAL,
   PORT,
-  ENABLE_CHAT,
-  ENABLE_MAP,
-  ENABLE_THEMES,
   CHAT_RATE_LIMIT,
   VISUAL_LIMIT,
 };

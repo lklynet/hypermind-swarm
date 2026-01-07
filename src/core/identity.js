@@ -1,21 +1,23 @@
 const crypto = require("crypto");
+const { generateScreenname } = require("../utils/name-generator");
 const { MY_POW_PREFIX } = require("../config/constants");
 
 const generateIdentity = () => {
-    const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519");
-    const id = publicKey.export({ type: "spki", format: "der" }).toString("hex");
+  const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519");
+  const id = publicKey.export({ type: "spki", format: "der" }).toString("hex");
+  const username = generateScreenname(id);
 
-    let nonce = 0;
-    while (true) {
-        const hash = crypto
-            .createHash("sha256")
-            .update(id + nonce)
-            .digest("hex");
-        if (hash.startsWith(MY_POW_PREFIX)) break;
-        nonce++;
-    }
+  let nonce = 0;
+  while (true) {
+    const hash = crypto
+      .createHash("sha256")
+      .update(id + nonce)
+      .digest("hex");
+    if (hash.startsWith(MY_POW_PREFIX)) break;
+    nonce++;
+  }
 
-    return { publicKey, privateKey, id, nonce };
-}
+  return { publicKey, privateKey, id, nonce, username };
+};
 
 module.exports = { generateIdentity };

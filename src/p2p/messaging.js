@@ -4,27 +4,29 @@ const {
   createPublicKey,
 } = require("../core/security");
 const crypto = require("crypto");
-const { MAX_RELAY_HOPS, ENABLE_CHAT, CHAT_RATE_LIMIT } = require("../config/constants");
+const { MAX_RELAY_HOPS, CHAT_RATE_LIMIT } = require("../config/constants");
 const { BloomFilterManager } = require("../state/bloom");
 
 class MessageHandler {
   constructor(
     peerManager,
     diagnostics,
+    tweetStore,
     relayCallback,
     broadcastCallback,
-    chatCallback,
-    chatSystemFn
+    tweetCallback,
+    systemMessageFn
   ) {
     this.peerManager = peerManager;
     this.diagnostics = diagnostics;
+    this.tweetStore = tweetStore;
     this.relayCallback = relayCallback;
     this.broadcastCallback = broadcastCallback;
-    this.chatCallback = chatCallback;
-    this.chatSystemFn = chatSystemFn;
+    this.tweetCallback = tweetCallback;
+    this.systemMessageFn = systemMessageFn;
     this.bloomFilter = new BloomFilterManager();
     this.bloomFilter.start();
-    this.chatRateLimits = new Map();
+    this.rateLimits = new Map();
   }
 
   handleMessage(msg, sourceSocket) {
@@ -36,14 +38,14 @@ class MessageHandler {
       this.handleHeartbeat(msg, sourceSocket);
     } else if (msg.type === "LEAVE") {
       this.handleLeave(msg, sourceSocket);
-    } else if (msg.type === "CHAT") {
-      this.handleChat(msg, sourceSocket);
+    } else if (msg.type === "TWEET") {
+      this.handleTweet(msg, sourceSocket);
     }
   }
 
   handleHeartbeat(msg, sourceSocket) {
     this.diagnostics.increment("heartbeatsReceived");
-    const { id, seq, hops, nonce, sig } = msg;
+    const { id, username, seq, hops, nonce, sig } = msg;
 
     // Optimization: Check for duplicates BEFORE verifyPoW (CPU intensive)
     const stored = this.peerManager.getPeer(id);
@@ -90,8 +92,8 @@ class MessageHandler {
       if (wasNew) {
         this.diagnostics.increment("newPeersAdded");
         this.broadcastCallback();
-        if (ENABLE_CHAT && this.chatSystemFn && hops === 0) {
-          this.chatSystemFn({
+        if (this.systemMessageFn && hops === 0) {
+          this.systemMessageFn({
             type: "SYSTEM",
             content: `Connection established with Node ...${id.slice(-8)}`,
             timestamp: Date.now(),
@@ -131,8 +133,8 @@ class MessageHandler {
       this.peerManager.removePeer(id);
       this.broadcastCallback();
 
-      if (ENABLE_CHAT && this.chatSystemFn && hops === 0) {
-        this.chatSystemFn({
+      if (this.systemMessageFn && hops === 0) {
+        this.systemMessageFn({
           type: "SYSTEM",
           content: `Node ...${id.slice(-8)} disconnected.`,
           timestamp: Date.now(),
@@ -147,78 +149,54 @@ class MessageHandler {
     }
   }
 
-  handleChat(msg, sourceSocket) {
-    const { scope, sender, id, sig, hops } = msg;
+  handleTweet(msg, sourceSocket) {
+    const { author, id, sig, timestamp } = msg;
 
-    // Rate Limiting (apply to all chat messages)
+    // Rate Limiting
     const now = Date.now();
-    let rateData = this.chatRateLimits.get(sender);
-    
+    let rateData = this.rateLimits.get(author);
+
     if (!rateData || now - rateData.windowStart > 10000) {
-        // Reset window
-        rateData = { count: 0, windowStart: now };
+      // Reset window
+      rateData = { count: 0, windowStart: now };
     }
 
     if (rateData.count >= 5) {
-        return; // Drop message
+      return; // Drop message
     }
 
-    if (!scope || scope === 'LOCAL') {
-        // Identity Verification: Ensure the sender matches the authenticated socket
-        if (!sourceSocket.peerId || sourceSocket.peerId !== sender) {
-            return;
-        }
+    // Integrity Check: Ensure ID matches content/timestamp
+    const idBase = author + msg.content + msg.timestamp;
+    const computedId = crypto.createHash("sha256").update(idBase).digest("hex");
 
-        rateData.count++;
-        this.chatRateLimits.set(sender, rateData);
-
-        if (this.chatCallback) {
-            this.chatCallback(msg);
-        }
-    } else if (scope === 'GLOBAL') {
-        if (!sig || !id) return;
-
-        // Integrity Check: Ensure ID matches content/timestamp
-        // This binds the signature (which signs ID) to the content
-        const idBase = sender + msg.content + msg.timestamp;
-        const computedId = crypto.createHash('sha256').update(idBase).digest('hex');
-        
-        if (computedId !== id) {
-            this.diagnostics.increment("invalidSig"); // Reuse metric for integrity failure
-            return;
-        }
-
-        // Timestamp Check: Prevent replays beyond Bloom filter window
-        // Allow 1 minute drift/delay
-        if (Math.abs(now - msg.timestamp) > 60000) {
-             return; 
-        }
-
-        // Check signature
-        const key = createPublicKey(sender);
-        if (!verifySignature(`chat:${id}`, sig, key)) {
-            this.diagnostics.increment("invalidSig");
-            return;
-        }
-
-        // Deduplication
-        if (this.bloomFilter.hasRelayed(id, "chat")) {
-            return;
-        }
-        this.bloomFilter.markRelayed(id, "chat");
-
-        rateData.count++;
-        this.chatRateLimits.set(sender, rateData);
-
-        if (this.chatCallback) {
-            this.chatCallback(msg);
-        }
-
-        // Relay
-        if (hops < MAX_RELAY_HOPS) {
-            this.relayCallback({ ...msg, hops: hops + 1 }, sourceSocket);
-        }
+    if (computedId !== id) {
+      this.diagnostics.increment("invalidSig");
+      return;
     }
+
+    // Check if we already have this tweet
+    if (this.tweetStore.has(id)) {
+      return;
+    }
+
+    // Verify signature
+    const key = createPublicKey(author);
+    if (!verifySignature(`tweet:${id}`, sig, key)) {
+      this.diagnostics.increment("invalidSig");
+      return;
+    }
+
+    // Store and Notify
+    if (this.tweetStore.add(msg)) {
+      rateData.count++;
+      this.rateLimits.set(author, rateData);
+
+      if (this.tweetCallback) {
+        this.tweetCallback(msg);
+      }
+    }
+
+    // NO AUTOMATIC RELAY
   }
 }
 
@@ -253,13 +231,26 @@ const validateMessage = (msg) => {
     );
   }
 
-  if (msg.type === "CHAT") {
-    const allowedFields = ['type', 'sender', 'content', 'timestamp', 'scope', 'id', 'sig', 'hops'];
+  if (msg.type === "TWEET") {
+    const allowedFields = [
+      "type",
+      "author",
+      "username",
+      "content",
+      "timestamp",
+      "id",
+      "sig",
+      "hops",
+    ];
     const fields = Object.keys(msg);
-    return fields.every(f => allowedFields.includes(f)) &&
-        msg.sender && 
-        msg.content && typeof msg.content === 'string' && msg.content.length <= 140 &&
-        typeof msg.timestamp === 'number';
+    return (
+      fields.every((f) => allowedFields.includes(f)) &&
+      msg.author &&
+      msg.content &&
+      typeof msg.content === "string" &&
+      msg.content.length <= 280 &&
+      typeof msg.timestamp === "number"
+    );
   }
 
   return false;

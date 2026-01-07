@@ -1,136 +1,31 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Hypermind</title>
+<head>
+    <title>Hypermind-Swarm</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/favicon.ico" />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=palette"
-    />
-    <script>
-      (function () {
-        var savedTheme =
-          localStorage.getItem("hypermind-theme") || "default.css";
-        document.write(
-          '<link rel="stylesheet" href="/themes/' +
-            savedTheme +
-            '" id="theme-css">'
-        );
-      })();
-    </script>
     <link rel="stylesheet" href="/style.css" />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  </head>
-  <body>
-    <canvas id="network" data-visual-limit="{{VISUAL_LIMIT}}"></canvas>
-    <div class="container">
-      <div id="count" class="count" data-initial-count="{{COUNT}}">
-        {{COUNT}}
-      </div>
-      <div class="label">Active Nodes</div>
-      <div class="footer">
-        powered by
-        <a
-          href="https://github.com/lklynet/hypermind"
-          target="_blank"
-          class="footer-link"
-          >hypermind</a
-        >
-      </div>
-      <div class="debug">
-        ID: {{ID}}<br />
-        Direct Connections: <span id="direct">{{DIRECT}}</span><br />
-        <span class="debug-link" onclick="openDiagnostics()">diagnostics</span>
-        <span id="map-container" class="{{MAP_CLASS}}">
-          |
-          <span class="debug-link" id="map-link" onclick="openMap()"
-            >map</span
-          ></span
-        >
-      </div>
-    </div>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Hypermind-Swarm</h1>
+            <div class="stats">
+                <span id="peer-count">0</span> Peers | 
+                <span id="my-id">...</span>
+            </div>
+        </header>
 
-    <div id="mapModal" class="modal">
-      <div class="modal-content map-content">
-        <button class="close-btn" onclick="closeMap()">×</button>
-        <div id="map"></div>
-      </div>
-    </div>
+        <div class="compose-area">
+            <textarea id="tweet-input" placeholder="What's happening? (Max 280 chars)" maxlength="280"></textarea>
+            <button id="tweet-btn">Tweet</button>
+        </div>
 
-    <div id="diagnosticsModal" class="modal">
-      <div class="modal-content">
-        <button class="close-btn" onclick="closeDiagnostics()">×</button>
-        <div class="modal-title">Diagnostics</div>
-        <div class="stat-row">
-          <span class="stat-label">Heartbeats Received</span>
-          <span class="stat-value" id="diag-heartbeats-rx">0</span>
+        <div id="feed" class="feed">
+            <!-- Tweets go here -->
         </div>
-        <div class="stat-row">
-          <span class="stat-label">Heartbeats Relayed</span>
-          <span class="stat-value" id="diag-heartbeats-tx">0</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">New Peers Added</span>
-          <span class="stat-value" id="diag-new-peers">0</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Duplicate/Old Seq</span>
-          <span class="stat-value" id="diag-dup-seq">0</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Invalid PoW</span>
-          <span class="stat-value" id="diag-invalid-pow">0</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Invalid Signatures</span>
-          <span class="stat-value" id="diag-invalid-sig">0</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Bandwidth In</span>
-          <span class="stat-value" id="diag-bandwidth-in">0 KB</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Bandwidth Out</span>
-          <span class="stat-value" id="diag-bandwidth-out">0 KB</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">LEAVE Messages</span>
-          <span class="stat-value" id="diag-leave">0</span>
-        </div>
-        <div class="update-time" id="last-update">last 10 seconds</div>
-      </div>
-    </div>
-
-    <button
-      id="theme-switcher"
-      class="theme-btn {{THEMES_CLASS}}"
-      title="Cycle Themes"
-    >
-      <span class="material-symbols-outlined">palette</span>
-    </button>
-    <div id="terminal" class="terminal hidden">
-      <button id="terminal-toggle" class="terminal-toggle" title="Toggle Chat">
-        ▼
-      </button>
-      <div id="system-status-bar" class="system-status-bar"></div>
-      <div id="terminal-output" class="terminal-output"></div>
-      <div class="terminal-input-line">
-        <span class="prompt">&gt;</span>
-        <input
-          type="text"
-          id="terminal-input"
-          maxlength="140"
-          placeholder="Broadcast..."
-          autocomplete="off"
-        />
-      </div>
     </div>
 
     <script src="/app.js"></script>
-  </body>
+</body>
 </html>

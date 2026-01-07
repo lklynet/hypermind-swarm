@@ -81,7 +81,7 @@ class PeerManager {
         const peers = [];
         for (const [id, data] of this.seenPeers.entries()) {
             if (data.ip) {
-                peers.push({ id, ip: data.ip });
+                peers.push({ id, ip: data.ip, username: data.username });
             }
         }
         return peers;

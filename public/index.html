@@ -1,31 +1,46 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Hypermind-Swarm</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" href="/hypermind.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/style.css" />
-</head>
-<body>
+  </head>
+  <body>
     <div class="app-container">
-        <header>
-            <h1>Hypermind-Swarm</h1>
-            <div class="stats">
-                <span id="peer-count">0</span> Peers | 
-                <span id="my-id">...</span>
-            </div>
-        </header>
-
-        <div class="compose-area">
-            <textarea id="tweet-input" placeholder="What's happening? (Max 280 chars)" maxlength="280"></textarea>
-            <button id="tweet-btn">Tweet</button>
+      <header>
+        <h1>
+          <img
+            src="/hypermind.svg"
+            alt="Hypermind Logo"
+            style="height: 2em; vertical-align: middle; margin-right: 0.25em"
+          />
+          Hypermind-Swarm
+        </h1>
+        <div class="stats">
+          <div id="connection-status" class="connection-status">
+            <span id="status-dot" class="status-dot connecting"></span>
+            <span id="status-text">connecting...</span>
+          </div>
+          <span class="separator">|</span>
+          <span id="my-id">...</span>
         </div>
+      </header>
 
-        <div id="feed" class="feed">
-            <!-- Tweets go here -->
-        </div>
+      <div class="compose-area">
+        <textarea
+          id="tweet-input"
+          placeholder="What's happening? (Max 280 chars)"
+          maxlength="280"
+        ></textarea>
+        <button id="tweet-btn">Tweet</button>
+      </div>
+
+      <div id="feed" class="feed">
+        <!-- Tweets go here -->
+      </div>
     </div>
 
     <script src="/app.js"></script>
-</body>
+  </body>
 </html>

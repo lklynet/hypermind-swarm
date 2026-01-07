@@ -6,6 +6,8 @@
     --secondary-text: #8899a6;
     --tweet-bg: #15202b;
     --tweet-hover: #1c2938;
+    --status-connecting: #ffad1f;
+    --status-connected: #17bf63;
 }
 
 body {
@@ -39,7 +41,43 @@ header {
 }
 
 h1 { font-size: 1.2rem; margin: 0; }
-.stats { font-size: 0.9rem; color: var(--secondary-text); }
+.stats { 
+    font-size: 0.9rem; 
+    color: var(--secondary-text); 
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-dot.connecting {
+    background-color: var(--status-connecting);
+    box-shadow: 0 0 8px var(--status-connecting);
+    animation: pulse 2s infinite;
+}
+
+.status-dot.connected {
+    background-color: var(--status-connected);
+    box-shadow: 0 0 8px var(--status-connected);
+}
+
+@keyframes pulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
+}
 
 .compose-area {
     padding: 1rem;

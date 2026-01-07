@@ -1,7 +1,8 @@
 const feed = document.getElementById("feed");
 const tweetInput = document.getElementById("tweet-input");
 const tweetBtn = document.getElementById("tweet-btn");
-const peerCountEl = document.getElementById("peer-count");
+const statusDot = document.getElementById("status-dot");
+const statusText = document.getElementById("status-text");
 const myIdEl = document.getElementById("my-id");
 
 let myId = "";
@@ -36,7 +37,14 @@ async function init() {
 }
 
 function updateStats(data) {
-  peerCountEl.textContent = data.count;
+  const count = data.count || 0;
+  if (count > 1) {
+    statusDot.className = "status-dot connected";
+    statusText.textContent = "connected";
+  } else {
+    statusDot.className = "status-dot connecting";
+    statusText.textContent = "connecting...";
+  }
 }
 
 function addTweetToFeed(tweet, prepend = false) {
@@ -58,12 +66,16 @@ function addTweetToFeed(tweet, prepend = false) {
         </div>
         <div class="tweet-body">
             <div class="tweet-header">
-                <span class="author" title="${tweet.author}">${escapeHtml(authorName)}</span>
+                <span class="author" title="${tweet.author}">${escapeHtml(
+    authorName
+  )}</span>
                 <span class="date">${date}</span>
             </div>
             <div class="tweet-content">${escapeHtml(tweet.content)}</div>
             <div class="tweet-actions">
-                <button onclick="amplify('${tweet.id}')" ${isMe ? "disabled" : ""}>
+                <button onclick="amplify('${tweet.id}')" ${
+    isMe ? "disabled" : ""
+  }>
                     Amplify
                 </button>
             </div>

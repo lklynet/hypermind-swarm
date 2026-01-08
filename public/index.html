@@ -4,7 +4,10 @@
     <title>Hypermind-Swarm</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/hypermind.svg" type="image/svg+xml" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/style.css" />
     <link
       rel="stylesheet"
@@ -17,10 +20,18 @@
   <body>
     <div class="app-container">
       <header>
-        <h1>
-          <img src="/hypermind.svg" alt="Hypermind Logo" />
-          Hypermind-Swarm
-        </h1>
+        <div class="header-brand">
+          <img src="/hypermind.svg" alt="Hypermind Logo" class="logo" />
+          <div class="header-text">
+            <h1>Hypermind-Swarm</h1>
+            <div class="powered-by">
+              Powered by
+              <a href="https://github.com/lklynet/hypermind" target="_blank"
+                >hypermind</a
+              >
+            </div>
+          </div>
+        </div>
         <div class="stats">
           <div id="connection-status" class="connection-status">
             <span id="status-dot" class="status-dot connecting"></span>
@@ -37,7 +48,21 @@
           placeholder="What's happening? (Max 280 chars)"
           maxlength="280"
         ></textarea>
-        <button id="ping-btn">Ping</button>
+        <div
+          class="compose-actions"
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          "
+        >
+          <span
+            id="char-count"
+            style="color: var(--secondary-text); font-size: 0.9rem"
+            >0/280</span
+          >
+          <button id="ping-btn">Ping</button>
+        </div>
       </div>
 
       <div id="feed" class="feed">

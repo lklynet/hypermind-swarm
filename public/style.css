@@ -93,14 +93,40 @@ h1 {
     font-size: 1.2rem; 
     margin: 0; 
     font-weight: 800;
-    display: flex;
-    align-items: center;
     letter-spacing: -0.02em;
+    line-height: 1.1;
 }
 
-h1 img {
-    margin-right: 0.5rem;
-    height: 1.8em !important; /* Override inline style */
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.header-brand .logo {
+    height: 2.5rem;
+    width: auto;
+}
+
+.header-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.powered-by {
+    font-size: 0.75rem;
+    color: var(--secondary-text);
+    line-height: 1.2;
+}
+
+.powered-by a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.powered-by a:hover {
+    text-decoration: underline;
 }
 
 .stats { 

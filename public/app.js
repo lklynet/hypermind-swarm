@@ -4,6 +4,7 @@ const pingBtn = document.getElementById("ping-btn");
 const statusDot = document.getElementById("status-dot");
 const statusText = document.getElementById("status-text");
 const myIdEl = document.getElementById("my-id");
+const charCount = document.getElementById("char-count");
 
 let myId = "";
 
@@ -30,6 +31,20 @@ async function init() {
 
   // Setup SSE
   const evtSource = new EventSource("/events");
+
+  // Character counter
+  pingInput.addEventListener("input", () => {
+    const currentLength = pingInput.value.length;
+    charCount.textContent = `${currentLength}/280`;
+
+    if (currentLength >= 280) {
+      charCount.style.color = "#ef4444"; // red-500
+    } else if (currentLength >= 260) {
+      charCount.style.color = "#f59e0b"; // amber-500
+    } else {
+      charCount.style.color = "var(--secondary-text)";
+    }
+  });
 
   evtSource.onmessage = (e) => {
     const data = JSON.parse(e.data);

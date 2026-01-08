@@ -193,6 +193,8 @@ pingBtn.onclick = async () => {
 
     if (res.ok) {
       pingInput.value = "";
+      charCount.textContent = "0/280";
+      charCount.style.color = "var(--secondary-text)";
     } else {
       alert("Failed to post ping");
     }

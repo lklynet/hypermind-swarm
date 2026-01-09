@@ -44,11 +44,11 @@
     --bg-color: var(--color-bg-main);
     --text-color: var(--color-text-default);
     --border-color: var(--color-modal-border);
-    --primary-color: var(--color-count); /* Hypermind Green */
-    --primary-hover: #3bbd6d; /* Darker green for hover */
+    --primary-color: var(--color-count);
+    --primary-hover: #3bbd6d;
     --secondary-text: var(--color-text-main-label);
     --ping-bg: var(--color-bg-main);
-    --ping-hover: var(--color-modal-stat-div); /* Subtle hover */
+    --ping-hover: var(--color-modal-stat-div);
     --status-connecting: #ffad1f;
     --status-connected: var(--color-count);
     --card-border: 1px solid var(--border-color);
@@ -61,7 +61,7 @@ body {
     font-family: "Google Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
     padding: 0;
-    overflow-y: scroll; /* Always show scrollbar to prevent layout shift */
+    overflow-y: scroll;
     line-height: 1.6;
 }
 
@@ -219,7 +219,6 @@ code, pre, kbd, samp {
     opacity: 0.7;
 }
 
-/* Followed Accounts */
 .followed-accounts-list {
     display: flex;
     flex-direction: column;
@@ -260,7 +259,6 @@ code, pre, kbd, samp {
     color: var(--primary-color);
 }
 
-/* Ping Menu */
 .ping-menu-container {
     position: relative;
 }
@@ -325,7 +323,6 @@ code, pre, kbd, samp {
     text-align: center;
 }
 
-/* Profile Buttons */
 .profile-actions {
     display: flex;
     gap: 0.75rem;
@@ -374,7 +371,6 @@ code, pre, kbd, samp {
     color: #fff;
 }
 
-/* Header */
 header {
     padding: 1rem 1.5rem;
     border-bottom: 1px solid var(--border-color);
@@ -485,7 +481,6 @@ h1 {
     100% { opacity: 1; transform: scale(1); }
 }
 
-/* Compose Area */
 .compose-area {
     padding: 1.5rem;
     border-bottom: 1px solid var(--border-color);
@@ -545,11 +540,11 @@ textarea::placeholder {
     cursor: default;
 }
 
-/* Feed */
+
 .feed {
     display: flex;
     flex-direction: column;
-    overflow: visible; /* Ensure menus aren't clipped */
+    overflow: visible;
 }
 
 .ping {
@@ -558,7 +553,7 @@ textarea::placeholder {
     background: var(--ping-bg);
     transition: all 0.2s ease;
     display: flex;
-    flex-direction: row; /* Force row layout */
+    flex-direction: row;
     flex-wrap: nowrap;
     align-items: flex-start;
     gap: 1rem;
@@ -600,7 +595,7 @@ textarea::placeholder {
     align-items: center;
     gap: 0.3rem;
     white-space: nowrap;
-    position: relative; /* Ensure menu positions relative to header */
+    position: relative; 
 }
 
 .author { 
@@ -647,10 +642,9 @@ textarea::placeholder {
     font-weight: 400;
 }
 
-/* Actions */
 .ping-actions {
     display: flex;
-    gap: 1rem; /* Reduced gap between actions */
+    gap: 1rem;
     margin-top: 0.2rem;
 }
 
@@ -689,7 +683,7 @@ textarea::placeholder {
 }
 
 .action-btn.amplified {
-    color: var(--primary-color); /* Green when amplified */
+    color: var(--primary-color); 
 }
 
 .action-btn.amplified:disabled {
@@ -697,7 +691,6 @@ textarea::placeholder {
     cursor: default;
 }
 
-/* Animations */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -706,14 +699,13 @@ textarea::placeholder {
 .ping {
     animation: fadeIn 0.3s ease-out;
 }
-/* Comments */
+
 .comments-section {
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid var(--border-color);
 }
 
-/* Profile View */
 .profile-header {
     margin-bottom: 1rem;
     padding: 1.5rem;
@@ -748,7 +740,6 @@ textarea::placeholder {
     font-size: 0.8rem;
 }
 
-/* Swarm Controls */
 .swarm-input-container {
     display: flex;
     gap: 0.5rem;
@@ -897,8 +888,4 @@ textarea::placeholder {
 
 .comment-input-area button:hover {
     background: var(--primary-hover);
-}
-
-.action-btn.comment-btn {
-    /* Removed extra margin-left */
 }

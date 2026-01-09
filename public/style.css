@@ -52,6 +52,7 @@
     --status-connecting: #ffad1f;
     --status-connected: var(--color-count);
     --card-border: 1px solid var(--border-color);
+    --surface: var(--color-modal-stat-div);
 }
 
 body {
@@ -65,13 +66,122 @@ body {
 }
 
 .app-container {
-    max-width: 600px;
+    max-width: 1200px;
     margin: 0 auto;
     border-left: 1px solid var(--border-color);
     border-right: 1px solid var(--border-color);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+}
+
+.app-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 2rem;
+    padding: 1.5rem;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .app-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.sidebar {
+    position: sticky;
+    top: 90px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.sidebar-section {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+}
+
+.sidebar-title {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.swarm-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-color);
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.swarm-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.swarm-item.active {
+    background: rgba(74, 222, 128, 0.15);
+    color: #fff;
+    border: 1px solid var(--primary-color);
+}
+
+.swarm-name {
+    flex: 1;
+}
+
+.swarm-remove-btn {
+    opacity: 0;
+    padding: 4px 8px;
+    font-size: 1.2rem;
+    line-height: 1;
+    margin-left: 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.swarm-item:hover .swarm-remove-btn {
+    opacity: 0.4;
+}
+
+.swarm-remove-btn:hover {
+    opacity: 1 !important;
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.trending-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: var(--secondary-text);
+}
+
+.trending-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--primary-color);
+}
+
+.trending-name {
+    font-weight: 500;
+}
+
+.trending-count {
+    font-size: 0.85rem;
+    opacity: 0.7;
 }
 
 /* Header */
@@ -243,6 +353,9 @@ textarea::placeholder {
     background: var(--ping-bg);
     transition: all 0.2s ease;
     display: flex;
+    flex-direction: row; /* Force row layout */
+    flex-wrap: nowrap;
+    align-items: flex-start;
     gap: 1rem;
     cursor: pointer;
 }
@@ -279,7 +392,7 @@ textarea::placeholder {
     margin-bottom: 0.2rem;
     font-size: 0.95rem;
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 0.3rem;
     overflow: hidden;
     white-space: nowrap;
@@ -291,6 +404,23 @@ textarea::placeholder {
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 1rem;
+    cursor: pointer;
+}
+
+.topic-pill {
+    background: rgba(74, 222, 128, 0.1);
+    color: var(--primary-color);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.topic-pill:hover {
+    background: rgba(74, 222, 128, 0.2);
 }
 
 .date { 
@@ -298,11 +428,7 @@ textarea::placeholder {
     font-size: 0.85rem;
     font-weight: 400;
     opacity: 0.8;
-}
-
-.date::before {
-    content: "·";
-    margin-right: 0.3rem;
+    margin-left: 0.5rem;
 }
 
 .ping-content { 
@@ -363,4 +489,112 @@ textarea::placeholder {
 
 .ping {
     animation: fadeIn 0.3s ease-out;
+}
+/* Comments */
+.comments-section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.comments-list {
+    margin-bottom: 1rem;
+}
+
+.comment {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    gap: 0.75rem;
+}
+
+.comment:last-child {
+    border-bottom: none;
+}
+
+.comment-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--border-color);
+    flex-shrink: 0;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.comment-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.comment-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.comment-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--secondary-text);
+    margin-bottom: 0.25rem;
+}
+
+.comment-author {
+    font-weight: 700;
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.comment-date {
+    font-size: 0.8rem;
+    color: var(--secondary-text);
+}
+
+.comment-content {
+    font-size: 0.95rem;
+    color: var(--text-color);
+    line-height: 1.4;
+}
+
+.comment-input-area {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.comment-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    color: var(--text-color);
+    font-size: 0.95rem;
+}
+
+.comment-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.comment-input-area button {
+    background: var(--primary-color);
+    color: #000;
+    border: none;
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.comment-input-area button:hover {
+    opacity: 0.9;
+}
+
+.action-btn.comment-btn {
+    margin-left: 1rem;
 }

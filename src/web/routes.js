@@ -5,6 +5,7 @@ const crypto = require("crypto");
 const { signMessage } = require("../core/security");
 const { generateAvatar } = require("../utils/avatar");
 const { CHAT_RATE_LIMIT, VISUAL_LIMIT } = require("../config/constants");
+const { getSwarmId } = require("../utils/swarm-utils");
 
 const HTML_TEMPLATE = fs.readFileSync(
   path.join(__dirname, "../../public/index.html"),
@@ -71,6 +72,76 @@ const setupRoutes = (
     res.json(pingStore.getAll());
   });
 
+  app.get("/api/trending", (req, res) => {
+    const pings = pingStore.getAll();
+    const now = Date.now();
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+
+    // Filter recent pings
+    const recentPings = pings.filter((p) => now - p.timestamp < ONE_DAY);
+    const totalRecentPings = recentPings.length;
+
+    if (totalRecentPings === 0) {
+      return res.json([]);
+    }
+
+    const topicCounts = {};
+    recentPings.forEach((p) => {
+      // console.log("Processing ping for trending:", p.id, p.topic);
+      if (p.topic) {
+        topicCounts[p.topic] = (topicCounts[p.topic] || 0) + 1;
+      }
+    });
+
+    // console.log(`Trending Calc: Total=${totalRecentPings}, Counts=${JSON.stringify(topicCounts)}`);
+
+    const sorted = Object.entries(topicCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    // console.log(`Trending analysis: Total=${totalRecentPings}, Topics=${JSON.stringify(sorted)}`);
+
+    res.json(sorted);
+  });
+
+  app.get("/api/profile/:id", (req, res) => {
+    const { id } = req.params;
+    const pings = pingStore.getByAuthor(id);
+
+    // Calculate stats
+    // latest_seq? We don't track per-user seq in PingStore, but we have timestamps.
+    // user info?
+    const latest = pings[0];
+    const storedUsername = pingStore.getUsername(id);
+    const profile = {
+      id,
+      username: storedUsername || (latest ? latest.username : "Unknown"), // Best effort
+      pings,
+    };
+    res.json(profile);
+  });
+
+  app.post("/api/swarm/join", (req, res) => {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: "Missing name" });
+    const id = swarm.joinSwarm(name);
+    res.json({ success: true, id, name });
+  });
+
+  app.post("/api/swarm/leave", (req, res) => {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: "Missing name" });
+    const id = swarm.leaveSwarm(name);
+    res.json({ success: true, id, name });
+  });
+
+  app.post("/api/swarm/id", (req, res) => {
+    const { name } = req.body;
+    const id = getSwarmId(name);
+    res.json({ id });
+  });
+
   app.get("/api/avatar/:id", (req, res) => {
     const { id } = req.params;
     try {
@@ -96,9 +167,14 @@ const setupRoutes = (
 
     pingHistory.push(now);
 
-    const { content } = req.body;
+    const { content, topic } = req.body;
     if (!content || typeof content !== "string" || content.length > 280) {
       return res.status(400).json({ error: "Invalid content" });
+    }
+
+    let swarmId = 0;
+    if (topic) {
+      swarmId = getSwarmId(topic);
     }
 
     const timestamp = Date.now();
@@ -117,6 +193,8 @@ const setupRoutes = (
       sig,
       hops: 0,
       ttl: 6, // Default TTL
+      swarmId,
+      topic: topic || "",
     };
 
     // Store locally
@@ -131,7 +209,7 @@ const setupRoutes = (
       const pingWithState = {
         ...msg,
         likes: 1,
-        amplifiedBy: [identity.id]
+        amplifiedBy: [identity.id],
       };
       sseManager.broadcast(pingWithState);
 
@@ -152,17 +230,20 @@ const setupRoutes = (
 
     // Prevent double amplify (local check)
     if (ping.amplifiedBy && ping.amplifiedBy.has(identity.id)) {
-        return res.status(400).json({ error: "Already amplified" });
+      return res.status(400).json({ error: "Already amplified" });
     }
 
     // Prevent self-amplification
     if (ping.author === identity.id) {
-        return res.status(400).json({ error: "Cannot amplify your own ping" });
+      return res.status(400).json({ error: "Cannot amplify your own ping" });
     }
 
     // Create AMPLIFY message
     const amplifyIdBase = identity.id + ping.id + Date.now();
-    const amplifyId = crypto.createHash("sha256").update(amplifyIdBase).digest("hex");
+    const amplifyId = crypto
+      .createHash("sha256")
+      .update(amplifyIdBase)
+      .digest("hex");
     const sig = signMessage(`amplify:${amplifyId}`, identity.privateKey);
 
     // Strip local fields for the network message
@@ -171,12 +252,12 @@ const setupRoutes = (
     const { likes, amplifiedBy, receivedAt, ...originalPingData } = ping;
 
     const amplifyMsg = {
-        type: "AMPLIFY",
-        id: amplifyId,
-        originalPing: originalPingData,
-        amplifier: identity.id,
-        sig,
-        ttl: 10 // Boosted TTL!
+      type: "AMPLIFY",
+      id: amplifyId,
+      originalPing: originalPingData,
+      amplifier: identity.id,
+      sig,
+      ttl: 10, // Boosted TTL!
     };
 
     // Update local state
@@ -188,16 +269,63 @@ const setupRoutes = (
     // Notify local SSE clients with the updated ping object
     // Frontend needs to handle updates (or we rely on reload, but better to push)
     const updatedPing = pingStore.get(id);
-    
+
     // We convert Set to Array for JSON serialization (like in getAll)
     const serializablePing = {
-        ...updatedPing,
-        amplifiedBy: Array.from(updatedPing.amplifiedBy || [])
+      ...updatedPing,
+      amplifiedBy: Array.from(updatedPing.amplifiedBy || []),
     };
-    
+
     sseManager.broadcast(serializablePing);
 
     res.json({ success: true, likes: updatedPing.likes });
+  });
+
+  app.post("/api/comment", (req, res) => {
+    const { pingId, content } = req.body;
+    if (!pingId || !content) {
+      return res.status(400).json({ error: "Missing pingId or content" });
+    }
+
+    const ping = pingStore.get(pingId);
+    if (!ping) {
+      return res.status(404).json({ error: "Ping not found" });
+    }
+
+    const timestamp = Date.now();
+    const idBase = identity.id + pingId + content + timestamp;
+    const commentId = crypto.createHash("sha256").update(idBase).digest("hex");
+    const sig = signMessage(`comment:${commentId}`, identity.privateKey);
+
+    const commentMsg = {
+      type: "COMMENT",
+      id: commentId,
+      pingId,
+      author: identity.id,
+      username: identity.username,
+      content,
+      timestamp,
+      sig,
+      ttl: 6,
+    };
+
+    // Store locally
+    if (pingStore.addComment(pingId, commentMsg)) {
+      // Broadcast
+      swarm.broadcast(commentMsg);
+
+      // Notify local SSE clients
+      const updatedPing = pingStore.get(pingId);
+      const serializablePing = {
+        ...updatedPing,
+        amplifiedBy: Array.from(updatedPing.amplifiedBy || []),
+      };
+      sseManager.broadcast(serializablePing);
+
+      res.json(commentMsg);
+    } else {
+      res.status(400).json({ error: "Failed to add comment" });
+    }
   });
 };
 

@@ -6,6 +6,7 @@ const {
 const crypto = require("crypto");
 const { MAX_RELAY_HOPS, CHAT_RATE_LIMIT } = require("../config/constants");
 const { BloomFilterManager } = require("../state/bloom");
+const { hasSwarmSubscription } = require("../utils/swarm-utils");
 
 class MessageHandler {
   constructor(
@@ -27,27 +28,35 @@ class MessageHandler {
     this.bloomFilter = new BloomFilterManager();
     this.bloomFilter.start();
     this.rateLimits = new Map();
+    this.getSwarmFilter = () => null; // Default: accept everything (or handle null as Global only?)
+  }
+
+  setGetSwarmFilter(fn) {
+    this.getSwarmFilter = fn;
   }
 
   handleMessage(msg, sourceSocket) {
     if (!validateMessage(msg)) {
+      this.diagnostics.increment("invalidMessages");
       return;
     }
 
     if (msg.type === "HEARTBEAT") {
       this.handleHeartbeat(msg, sourceSocket);
-    } else if (msg.type === "LEAVE") {
-      this.handleLeave(msg, sourceSocket);
     } else if (msg.type === "PING") {
       this.handlePing(msg, sourceSocket);
+    } else if (msg.type === "LEAVE") {
+      this.handleLeave(msg, sourceSocket);
     } else if (msg.type === "AMPLIFY") {
       this.handleAmplify(msg, sourceSocket);
+    } else if (msg.type === "COMMENT") {
+      this.handleComment(msg, sourceSocket);
     }
   }
 
   handleHeartbeat(msg, sourceSocket) {
     this.diagnostics.increment("heartbeatsReceived");
-    const { id, username, seq, hops, nonce, sig } = msg;
+    const { id, username, seq, hops, nonce, sig, swarmFilter } = msg;
 
     // Optimization: Check for duplicates BEFORE verifyPoW (CPU intensive)
     const stored = this.peerManager.getPeer(id);
@@ -89,7 +98,14 @@ class MessageHandler {
       };
 
       const ip = hops === 0 ? getIp(sourceSocket) : null;
-      const wasNew = this.peerManager.addOrUpdatePeer(id, seq, ip);
+      // Update peer with swarmFilter and encKey
+      const wasNew = this.peerManager.addOrUpdatePeer(
+        id,
+        seq,
+        ip,
+        swarmFilter,
+        msg.encKey
+      );
 
       if (wasNew) {
         this.diagnostics.increment("newPeersAdded");
@@ -269,6 +285,53 @@ class MessageHandler {
       this.relayCallback({ ...msg, ttl: ttl - 1 }, sourceSocket);
     }
   }
+
+  handleComment(msg, sourceSocket) {
+    const { id, pingId, author, content, timestamp, sig, ttl } = msg;
+
+    // Rate Limiting
+    const now = Date.now();
+    let rateData = this.rateLimits.get(author);
+    if (!rateData || now - rateData.windowStart > 10000) {
+      rateData = { count: 0, windowStart: now };
+    }
+    if (rateData.count >= 10) return;
+
+    // Integrity Check
+    const idBase = author + pingId + content + timestamp;
+    const computedId = crypto.createHash("sha256").update(idBase).digest("hex");
+    if (computedId !== id) {
+      this.diagnostics.increment("invalidSig");
+      return;
+    }
+
+    // Verify Signature
+    const key = createPublicKey(author);
+    if (!verifySignature(`comment:${id}`, sig, key)) {
+      this.diagnostics.increment("invalidSig");
+      return;
+    }
+
+    // Store Comment
+    const isNew = this.pingStore.addComment(pingId, msg);
+    if (isNew) {
+      rateData.count++;
+      this.rateLimits.set(author, rateData);
+
+      // Notify UI
+      if (this.pingCallback) {
+        const updatedPing = this.pingStore.get(pingId);
+        if (updatedPing) {
+          this.pingCallback(updatedPing);
+        }
+      }
+    }
+
+    // Relay
+    if (isNew && ttl > 0) {
+      this.relayCallback({ ...msg, ttl: ttl - 1 }, sourceSocket);
+    }
+  }
 }
 
 const validateMessage = (msg) => {
@@ -279,7 +342,17 @@ const validateMessage = (msg) => {
   if (msgSize > require("../config/constants").MAX_MESSAGE_SIZE) return false;
 
   if (msg.type === "HEARTBEAT") {
-    const allowedFields = ["type", "id", "seq", "hops", "nonce", "sig"];
+    const allowedFields = [
+      "type",
+      "id",
+      "username",
+      "seq",
+      "hops",
+      "nonce",
+      "sig",
+      "encKey",
+      "swarmFilter",
+    ];
     const fields = Object.keys(msg);
     return (
       fields.every((f) => allowedFields.includes(f)) &&
@@ -313,6 +386,8 @@ const validateMessage = (msg) => {
       "sig",
       "hops",
       "ttl",
+      "swarmId",
+      "topic",
     ];
     const fields = Object.keys(msg);
     return (
@@ -342,6 +417,31 @@ const validateMessage = (msg) => {
       msg.originalPing &&
       validateMessage(msg.originalPing) &&
       msg.amplifier &&
+      msg.sig &&
+      typeof msg.ttl === "number"
+    );
+  }
+
+  if (msg.type === "COMMENT") {
+    const allowedFields = [
+      "type",
+      "id",
+      "pingId",
+      "author",
+      "username",
+      "content",
+      "timestamp",
+      "sig",
+      "ttl",
+    ];
+    const fields = Object.keys(msg);
+    return (
+      fields.every((f) => allowedFields.includes(f)) &&
+      msg.id &&
+      msg.pingId &&
+      msg.author &&
+      msg.content &&
+      msg.timestamp &&
       msg.sig &&
       typeof msg.ttl === "number"
     );

@@ -1,4 +1,4 @@
-require('dotenv').config();
+require("dotenv").config();
 
 const { generateIdentity } = require("./src/core/identity");
 const { PeerManager } = require("./src/state/peers");
@@ -27,7 +27,7 @@ const main = async () => {
       direct: swarmManager.getSwarm().connections.size,
       id: identity.id,
       diagnostics: diagnostics.getStats(),
-      peers: peerManager.getPeersWithIps()
+      peers: peerManager.getPeersWithIps(),
     });
   };
 
@@ -43,7 +43,14 @@ const main = async () => {
     peerManager,
     diagnostics,
     pingStore,
-    (msg, sourceSocket) => relayMessage(msg, sourceSocket, swarmManager.getSwarm(), diagnostics),
+    (msg, sourceSocket) =>
+      relayMessage(
+        msg,
+        sourceSocket,
+        swarmManager.getSwarm(),
+        diagnostics,
+        peerManager
+      ),
     broadcastUpdate,
     pingCallback,
     systemMessageFn
@@ -54,10 +61,20 @@ const main = async () => {
     peerManager,
     diagnostics,
     messageHandler,
-    (msg, sourceSocket) => relayMessage(msg, sourceSocket, swarmManager.getSwarm(), diagnostics),
+    (msg, sourceSocket) =>
+      relayMessage(
+        msg,
+        sourceSocket,
+        swarmManager.getSwarm(),
+        diagnostics,
+        peerManager
+      ),
     broadcastUpdate,
     systemMessageFn
   );
+
+  // Wire up swarm filter getter
+  messageHandler.setGetSwarmFilter(() => swarmManager.swarmFilter);
 
   await swarmManager.start();
 
@@ -70,7 +87,14 @@ const main = async () => {
     broadcastUpdate();
   }, DIAGNOSTICS_INTERVAL);
 
-  const app = createServer(identity, peerManager, swarmManager, sseManager, diagnostics, pingStore);
+  const app = createServer(
+    identity,
+    peerManager,
+    swarmManager,
+    sseManager,
+    diagnostics,
+    pingStore
+  );
   startServer(app, identity);
 
   const handleShutdown = () => {
@@ -80,6 +104,6 @@ const main = async () => {
 
   process.on("SIGINT", handleShutdown);
   process.on("SIGTERM", handleShutdown);
-}
+};
 
 main().catch(console.error);

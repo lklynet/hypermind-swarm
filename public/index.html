@@ -8,7 +8,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/style.css?v=4" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -42,31 +42,98 @@
         </div>
       </header>
 
-      <div class="compose-area">
-        <textarea
-          id="ping-input"
-          placeholder="What's happening? (Max 280 chars)"
-          maxlength="280"
-        ></textarea>
-        <div
-          class="compose-actions"
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-          "
-        >
-          <span
-            id="char-count"
-            style="color: var(--secondary-text); font-size: 0.9rem"
-            >0/280</span
-          >
-          <button id="ping-btn">Ping</button>
-        </div>
-      </div>
+      <div class="app-layout">
+        <main class="main-content">
+          <div class="compose-area">
+            <textarea
+              id="ping-input"
+              placeholder="What's happening? (Max 280 chars)"
+              maxlength="280"
+            ></textarea>
+            <div
+              class="compose-actions"
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
+              <span
+                id="char-count"
+                style="color: var(--secondary-text); font-size: 0.9rem"
+                >0/280</span
+              >
+              <button id="ping-btn">Ping</button>
+            </div>
+          </div>
 
-      <div id="feed" class="feed">
-        <!-- Pings go here -->
+          <div id="feed" class="feed">
+            <!-- Pings go here -->
+          </div>
+
+          <div id="profile-view" class="profile-view" style="display: none">
+            <div
+              class="profile-header"
+              style="
+                margin-bottom: 1rem;
+                padding: 1rem;
+                background: var(--surface);
+                border-radius: 12px;
+                border: 1px solid var(--border);
+              "
+            >
+              <button onclick="showFeed()" style="margin-bottom: 1rem">
+                ← Back
+              </button>
+              <div id="profile-info"></div>
+            </div>
+            <div id="profile-feed" class="feed"></div>
+          </div>
+
+        </main>
+
+        <aside class="sidebar">
+          <div class="sidebar-section swarm-controls">
+            <h3 class="sidebar-title">Swarms</h3>
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem">
+              <input
+                type="text"
+                id="swarm-input"
+                placeholder="Join swarm..."
+                style="
+                  flex: 1;
+                  padding: 0.5rem;
+                  border-radius: 6px;
+                  border: 1px solid var(--border);
+                  background: var(--background);
+                  color: var(--text);
+                "
+              />
+              <button id="join-swarm-btn" style="padding: 0.5rem 1rem">
+                +
+              </button>
+            </div>
+            <div
+              id="active-swarms"
+              style="
+                font-size: 0.9rem;
+                color: var(--secondary-text);
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+              "
+            >
+              <!-- Active swarms list -->
+            </div>
+          </div>
+
+          <div class="sidebar-section">
+            <h3 id="trending-title" class="sidebar-title">Trending</h3>
+            <div id="trending-list" class="trending-list">
+              <!-- Trending topics will be injected here -->
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
 

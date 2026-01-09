@@ -169,7 +169,7 @@ class MessageHandler {
 
   handlePing(msg, sourceSocket) {
     const { author, id, sig, timestamp } = msg;
-    const ttl = typeof msg.ttl === "number" ? msg.ttl : 6; // Default TTL
+    const ttl = typeof msg.ttl === "number" ? msg.ttl : 10; // Increased default TTL
 
     // Rate Limiting
     const now = Date.now();

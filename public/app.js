@@ -160,10 +160,12 @@ async function init() {
     const data = JSON.parse(e.data);
 
     if (data.type === "INIT") {
-      updateStats(data);
-      myId = data.id;
-      myIdEl.textContent = data.username || "..." + myId.slice(-8);
-    } else if (data.type === "PING") {
+        myId = data.id;
+        myIdEl.textContent = data.username || "..." + data.id.slice(-8);
+        updateStats(data);
+      } else if (data.type === "UPDATE") {
+        updateStats(data);
+      } else if (data.type === "PING") {
       addPingToFeed(data, true); // true = prepend
     } else if (data.count !== undefined) {
       // Stat update

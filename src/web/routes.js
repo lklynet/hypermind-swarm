@@ -192,7 +192,7 @@ const setupRoutes = (
       timestamp,
       sig,
       hops: 0,
-      ttl: 6, // Default TTL
+      ttl: 10, // Increased default TTL
       swarmId,
       topic: topic || "",
     };

@@ -6,10 +6,10 @@ const relayMessage = (msg, sourceSocket, swarm, diagnostics, peerManager) => {
 
   // Gossip Subsampling:
   // Instead of flooding everyone (which causes massive bandwidth usage with 50 connections),
-  // we relay to a random subset of peers (e.g., 6).
+  // we relay to a random subset of peers (e.g., 10).
   // This maintains "Epidemic" reach (O(log N)) while capping bandwidth.
 
-  const TARGET_GOSSIP_COUNT = 6;
+  const TARGET_GOSSIP_COUNT = 10;
   const allSockets = Array.from(swarm.connections);
   
   const eligible = allSockets.filter((s) => {

@@ -1,29 +1,14 @@
 const crypto = require("crypto");
-
 const TOPIC_NAME = process.env.TOPIC_NAME || "hypermind-swarm-v1";
 const TOPIC = crypto.createHash("sha256").update(TOPIC_NAME).digest();
-
-/**
- * fccview here, frankly I don't think I can make this more secure, we can change it to `00000` but
- * that means until everyone upgrade there'll be a divide between nodes.
- *
- * I ran it that way and I was fairly isolated, with hundreds of failed POW, shame.
- * adding an extra 0 makes it very expensive on attacker to make it worth the fun for them, so maybe consider it.
- * ----
- * ricardoboss: added a way to get the best of both worlds: newer nodes will use a harder POW, making them compatible
- * with others who use a harder POW while still being able to accept "old" POWs from clients
- */
 const MY_POW_PREFIX = "00000";
 const VERIFICATION_POW_PREFIX = "0000";
-
 const MAX_PEERS = parseInt(process.env.MAX_PEERS) || 100000;
 const MAX_MESSAGE_SIZE = parseInt(process.env.MAX_MESSAGE_SIZE) || 2048;
-const MAX_RELAY_HOPS = parseInt(process.env.MAX_RELAY_HOPS) || 8;
+const MAX_RELAY_HOPS = parseInt(process.env.MAX_RELAY_HOPS) || 10;
 const MAX_CONNECTIONS = parseInt(process.env.MAX_CONNECTIONS) || 50;
-
 const HEARTBEAT_INTERVAL = parseInt(process.env.HEARTBEAT_INTERVAL) || 30000;
-const CONNECTION_ROTATION_INTERVAL =
-  parseInt(process.env.CONNECTION_ROTATION_INTERVAL) || 300000;
+const CONNECTION_ROTATION_INTERVAL = parseInt(process.env.CONNECTION_ROTATION_INTERVAL) || 300000;
 const PEER_TIMEOUT = parseInt(process.env.PEER_TIMEOUT) || 45000;
 const BROADCAST_THROTTLE = 1000;
 const DIAGNOSTICS_INTERVAL = 10000;

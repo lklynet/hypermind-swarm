@@ -1,240 +1,129 @@
 <div align="center">
-<img src="hypermind2.svg" width="150" alt="Hypermind Logo" />
-<h1>Hypermind</h1>
+<img src="public/hypermind.svg" width="150" alt="Hypermind Swarm Logo" />
+<h1>Hypermind-Swarm</h1>
+<p><strong>The internet is fun again.</strong></p>
 </div>
 
-### The High-Availability Solution to a Problem That Doesn't Exist.
+### Decentralized. Ephemeral. Unfiltered.
 
-**Hypermind** is a completely decentralized, Peer-to-Peer deployment counter.
+**Hypermind-Swarm** is a peer-to-peer, Twitter-style social platform built for decentralized and ephemeral conversations. It's a fork of the original [Hypermind](https://github.com/lklynet/hypermind) project, evolving from a simple deployment counter into a full-fledged communication swarm.
 
-It solves the critical infrastructure challenge of knowing exactly how many other people are currently wasting 50MB of RAM running this specific container.
+Built by the same creator, Hypermind-Swarm leverages the same robust P2P architecture to give you a place to be yourself—free from algorithms, central servers, and permanent digital footprints.
 
 ---
 
-## » What is this?
+## The Vision
 
-You have a server rack in your basement. You have 128GB of RAM. You have deployed the Arr stack, Home Assistant, Pi-hole, and a dashboard to monitor them all. **But you crave more.**
+We're bringing back the care-free spirit of the early internet. No engagement metrics to chase, no shadow-banning algorithms, and no "permanent records." Just people talking to people in real-time.
 
-You need a service that:
+*   **No Algorithms:** You see what's happening in the swarm as it happens.
+*   **No Servers:** Your data lives in the mesh, not on a corporate rack.
+*   **No History:** Conversations are ephemeral. When the swarm moves on, so does the data.
 
-1. Does absolutely nothing useful.
-2. Uses "Decentralized" and "P2P" in the description.
-3. Makes a number go up on a screen.
+---
 
-**Enter Hypermind.**
+## Terminology
 
-There is no central server. There is no database. There is only **The Swarm**.
+To keep things simple, we've redefined how you interact with the swarm:
 
-## » How it works
+*   **Swarms:** These are your topics or "channels." Join a swarm to see what people are talking about in that specific niche.
+*   **Pings:** These are your messages (tweets). Short, sweet, and broadcast to everyone in your current swarm.
+*   **Amplify:** Like what you see? Amplify it. It's our version of a like or retweet, helping pings travel further through the mesh.
 
-We utilize the **Hyperswarm** DHT (Distributed Hash Table) to achieve a singular, trivial goal of **Counting.**
+---
 
-1. **Discovery:** Your node screams into the digital void (`hypermind-lklynet-v1`) to find friends.
-2. **Gossip:** Nodes connect and whisper "I exist" to each other.
-3. **Consensus:** Each node maintains a list of peers seen in the last 2.5 seconds.
+## How It Works
 
-If you turn your container off, you vanish from the count. If everyone turns it off, the network ceases to exist. If you turn it back on, you are the Creator of the Universe (Population: 1).
+Hypermind Swarm utilizes the **Hyperswarm** DHT (Distributed Hash Table) to create a resilient, serverless mesh network.
 
-## » Deployment
+1.  **Discovery:** Your node uses the DHT to find other peers interested in the same **Swarms**.
+2.  **Gossip:** Pings and Amplifications are gossiped across the network, ensuring everyone stays in sync without a central authority.
+3.  **Identity:** Uses cryptographic keypairs for identity. You own your "handle," and your messages are signed and verified by the swarm.
+4.  **Ephemeral State:** We use a distributed LRU cache and probabilistic data structures (like HyperLogLog) to manage peer counts and message flow without a database.
 
-### Docker (The Fast Way)
+---
 
-Since you're probably pasting this into Portainer anyway:
+## Features
 
-```bash
-docker run -d \
-  --name hypermind \
-  --network host \
-  --restart unless-stopped \
-  -e PORT=3000 \
-  ghcr.io/lklynet/hypermind:latest
+### 1. Real-time Swarms
+Join any topic and immediately start seeing pings from peers around the world.
+*   **Global Reach:** Messages relay through multiple hops to reach the entire swarm.
+*   **Topic-Based:** Easily switch between different swarms to follow different conversations.
 
-```
+### 2. P2P Pings & Amplification
+*   **Pings:** Send text updates to your current swarm.
+*   **Amplify:** Boost pings you find interesting to help them reach more peers.
 
-> **⚠️ CRITICAL NETWORK NOTE:**
-> Use `--network host`. This is a P2P application that needs to punch through NATs. If you bridge it, the DHT usually fails, and you will be the loneliest node in the multiverse.
+### 3. Privacy & Whimsy
+*   **Anonymous by Default:** A unique 90's style username generator ensures everyone remains anonymous while bringing back some whimsy to the internet.
+*   **Serverless:** No central point of failure or data collection.
+*   **Ephemeral:** Messages aren't stored forever. The swarm is for the *now*.
+*   **Incognito:** Generate a new identity whenever you want.
 
-### Docker Compose (The Classy Way)
+---
 
-Add this to your `docker-compose.yml` to permanently reserve system resources for no reason:
+## Screenshots
 
-```yaml
-services:
-  hypermind:
-    image: ghcr.io/lklynet/hypermind:latest
-    container_name: hypermind
-    network_mode: host
-    restart: unless-stopped
-    environment:
-      - PORT=3000
+<div align="center">
+  <img src="assets/images/home.png" width="400" alt="Hypermind Swarm Home" />
+  <p><em>The main swarm feed - unfiltered and real-time.</em></p>
+  <br />
+  <img src="assets/images/profile.png" width="400" alt="Hypermind Swarm Profile" />
+  <p><em>Your decentralized identity and swarm subscriptions.</em></p>
+</div>
 
-```
+---
 
-### Kubernetes (The Enterprise Way)
+## Usage
 
-For when you need your useless counter to be orchestrated by a control plane.
+### Local Dashboard
+Open `http://localhost:3000` to access your local node's dashboard. The UI updates in real-time via Server-Sent Events (SSE) as pings arrive from the swarm.
 
-```bash
-kubectl create deployment hypermind --image=ghcr.io/lklynet/hypermind:latest --port=3000
-kubectl set env deployment/hypermind PORT=3000
-kubectl expose deployment hypermind --type=LoadBalancer --port=3000 --target-port=3000
-
-```
-
-## » Configuration
-
-You can customize Hypermind's behavior using environment variables.
-
-### Extras
-These features are disabled by default. Set them to `true` to enable.
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ENABLE_CHAT` | `false` | Enables the decentralized chat system. |
-| `ENABLE_MAP` | `false` | Enables map visualization features. |
-| `ENABLE_THEMES` | `true` | Controls the theme switcher function ([THEMES.md](THEMES.md))
-
-### Refinement
-Tune the network parameters to fit your system resources. The defaults are safe for most users. Don't change unless you know what you're doing.
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `MAX_PEERS` | `50000` | Maximum number of peers to track in memory. |
-| `MAX_MESSAGE_SIZE` | `2048` | Maximum size of a single message in bytes. |
-| `MAX_RELAY_HOPS` | `2` | Maximum number of times a message is relayed. |
-| `MAX_CONNECTIONS` | `15` | Maximum number of active P2P connections. |
-| `HEARTBEAT_INTERVAL` | `30000` | How often (ms) to send heartbeat messages. |
-| `CONNECTION_ROTATION_INTERVAL` | `300000` | How often (ms) to rotate connections. |
-| `PEER_TIMEOUT` | `45000` | Time (ms) before a silent peer is considered offline. |
-| `CHAT_RATE_LIMIT` | `5000` | Time window (ms) for chat rate limiting. |
-| `VISUAL_LIMIT` | `500` | Max number of particles to render on the dashboard. |
-
-## » Ecosystem & Integrations
-
-The community has bravely stepped up to integrate Hypermind into critical monitoring infrastructure.
-
-### Home Assistant
-
-Do you want your living room lights to turn red when the swarm grows? Of course you do.
-
-The [Hypermind HA Integration](https://github.com/synssins/hypermind-ha) (installable via HACS) provides:
-
-* **RGB Control:** 0 nodes = Green. 10,000 nodes = Red.
-* **Sensors:** Swarm health checks and statistics logging.
-* **WLED Support:** Visualize the swarm size on a literal LED strip.
-
-### Homepage Dashboard
-
-If it's not on your dashboard, does it even exist? You can query the `/api/stats` endpoint to add a widget to [gethomepage/homepage](https://gethomepage.dev/).
-
-Add this to your `services.yaml`:
-
-```yaml
-- Hypermind:
-    icon: /icons/hypermind2.png
-    href: http://<YOUR_IP>:3000
-    widget:
-      type: customapi
-      url: http://<YOUR_IP>:3000/api/stats
-      method: GET
-      mappings:
-        - field: count
-          label: Swarm Size
-        - field: direct
-          label: Friends
-
-```
-
-To get the icon to work, you have to add the icon to `/app/public/icons`. If you have homepage running in a docker you mount an extra volume in your compose file. 
-See detailed [instructions](https://gethomepage.dev/configs/services/#icons). 
-
-## » Environment Variables
-
-| Variable | Default | Description |
-| --- | --- | --- |
-| `PORT` | `3000` | The port the web dashboard listens on. Since `--network host` is used, this port opens directly on the host. |
-| `MAX_PEERS` | `50000` | Maximum number of peers to track in the swarm. Unless you're expecting the entire internet to join, the default is probably fine. |
-| `ENABLE_CHAT` | `false` | Set to `true` to enable the ephemeral P2P chat terminal. |
-
-## » Features
-
-### 1. The Counter
-It counts. That's the main thing.
-
-### 2. Ephemeral Chat
-**New:** A completely decentralized, ephemeral chat system built directly on top of the swarm topology.
-
-* **Ephemeral:** No database. No history. If you refresh, it's gone.
-* **Restricted (Default):** You can only talk to your ~32 direct connections.
-* **Global Mode:** Use `/global your message` to broadcast messages to the entire swarm (relayed via gossip).
-* **Chaotic:** Every 30 seconds, the network rotates your connections. You might be mid-sentence and—*poof*—your audience changes.
-* **Anonymous:** You are identified only by the last 4 characters of your node ID.
-
-To enable this feature, set `ENABLE_CHAT=true`.
-
-**Commands:**
-* `/global on` - Enable global chat mode.
-* `/global off` - Disable global chat mode (local only).
-* `/global <message>` - Send a single message to the global swarm without switching modes.
-
-## » Usage
-
-Open your browser to: `http://localhost:3000`
-
-The dashboard updates in **Realtime** via Server-Sent Events.
-
-**You will see:**
-
-* **Active Nodes:** The total number of people currently running this joke.
-* **Direct Connections:** The number of peers your node is actually holding hands with.
-
-## » Local Development
-
-Want to contribute? Why? It already does nothing perfectly. But here is how anyway:
-
+### Getting Started
 ```bash
 # Install dependencies
 npm install
 
-# Run the beast
+# Start your node
 npm start
-
 ```
-
-### Simulating Friends (Local Testing)
-
-You can run multiple instances locally to simulate popularity:
-
-```bash
-# Terminal 1 (You)
-PORT=3000 npm start
-
-# Terminal 2 (Your imaginary friend)
-PORT=3001 npm start
-
-```
-
-They should discover each other, and the number will become `2`. Dopamine achieved.
 
 ---
 
-### FAQ
+<details>
+<summary><strong>Deployment (Docker)</strong></summary>
 
-**Q: Is this crypto mining?**
-A: No. We respect your GPU too much.
+### Docker Run
+```bash
+docker run -d \
+  --name hypermind-swarm \
+  --network host \
+  --restart unless-stopped \
+  -e PORT=3000 \
+  ghcr.io/lklynet/hypermind-swarm:latest
+```
 
-**Q: Does this store data?**
-A: No. It has the short-term working memory of a honeybee (approx. 2.5 seconds). Which is biologically accurate and thematically consistent.
+> **⚠️ NETWORK NOTE:**
+> Always use `--network host`. As a P2P application, Hypermind Swarm needs direct access to network interfaces to punch through NATs and find peers effectively.
 
-**Q: Why did you make this?**
-A: The homelab must grow. ¯\\_(ツ)_/¯
+</details>
 
-## » Star History!!
+<details>
+<summary><strong>Environment Variables</strong></summary>
 
-<a href="https://star-history.com/#lklynet/hypermind&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=lklynet/hypermind&type=timeline&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=lklynet/hypermind&type=timeline" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=lklynet/hypermind&type=timeline" />
- </picture>
-</a>
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `3000` | The web dashboard port. |
+| `MAX_PEERS` | `50000` | Max peers to track in the swarm. |
+| `MAX_CONNECTIONS` | `50` | Max active P2P connections. |
+| `MAX_RELAY_HOPS` | `10` | How far a ping travels through the mesh. |
+
+</details>
+
+---
+
+## Contributing
+
+Hypermind Swarm is an open experiment in decentralized social networking. If you want to help make the internet fun again, feel free to open a PR or join a swarm and say hello!
+
+*Built with 🍺 on the Hyperswarm stack.*

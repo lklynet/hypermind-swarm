@@ -1,8 +1,0 @@
-data: {"type":"INIT","count":1,"totalUnique":1,"direct":1,"id":"302a300506032b65700321002a94997e6045d3416176c2f00bd64a4604ef5bbb216b77f66cf82e083ff43097","username":"xXSpEc7acul4R_0unc3Xx","diagnostics":{"heartbeatsReceived":0,"heartbeatsRelayed":0,"invalidPoW":0,"duplicateSeq":0,"invalidSig":0,"newPeersAdded":0,"bytesReceived":0,"bytesRelayed":0,"leaveMessages":0,"pingsRelayed":0,"amplifyRelayed":0},"peers":[]}
-
-data: {"count":1,"totalUnique":1,"direct":1,"id":"302a300506032b65700321002a94997e6045d3416176c2f00bd64a4604ef5bbb216b77f66cf82e083ff43097","diagnostics":{"heartbeatsReceived":0,"heartbeatsRelayed":0,"invalidPoW":0,"duplicateSeq":0,"invalidSig":0,"newPeersAdded":0,"bytesReceived":0,"bytesRelayed":0,"leaveMessages":0,"pingsRelayed":0,"amplifyRelayed":0},"peers":[]}
-
-data: {"count":2,"totalUnique":2,"direct":1,"id":"302a300506032b65700321002a94997e6045d3416176c2f00bd64a4604ef5bbb216b77f66cf82e083ff43097","diagnostics":{"heartbeatsReceived":1,"heartbeatsRelayed":0,"invalidPoW":0,"duplicateSeq":0,"invalidSig":0,"newPeersAdded":1,"bytesReceived":289,"bytesRelayed":0,"leaveMessages":0,"pingsRelayed":0,"amplifyRelayed":0},"peers":[{"id":"302a300506032b6570032100222dcf062dda49ae7ba87619b2a51831fcbee696e345dc8bee1d02917d314383","ip":"75.112.142.82"}]}
-
-data: {"type":"SYSTEM","content":"Connection established with Node ...7d314383","timestamp":1767926850550}
-

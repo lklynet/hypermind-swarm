@@ -1,6 +1,0 @@
-data: {"type":"INIT","count":1,"totalUnique":1,"direct":0,"id":"302a300506032b6570032100c5d4151ec3a84f6d6f6d17a89af6bd8c8b754f7d022f6a6996c3fedbfd753e4f","username":"NebuL0UsSYRia","diagnostics":{"heartbeatsReceived":0,"heartbeatsRelayed":0,"invalidPoW":0,"duplicateSeq":0,"invalidSig":0,"newPeersAdded":0,"bytesReceived":0,"bytesRelayed":0,"leaveMessages":0,"pingsRelayed":0,"amplifyRelayed":0},"peers":[]}
-
-data: {"count":1,"totalUnique":1,"direct":0,"id":"302a300506032b6570032100c5d4151ec3a84f6d6f6d17a89af6bd8c8b754f7d022f6a6996c3fedbfd753e4f","diagnostics":{"heartbeatsReceived":0,"heartbeatsRelayed":0,"invalidPoW":0,"duplicateSeq":0,"invalidSig":0,"newPeersAdded":0,"bytesReceived":0,"bytesRelayed":0,"leaveMessages":0,"pingsRelayed":0,"amplifyRelayed":0},"peers":[]}
-
-data: {"count":1,"totalUnique":1,"direct":0,"id":"302a300506032b6570032100c5d4151ec3a84f6d6f6d17a89af6bd8c8b754f7d022f6a6996c3fedbfd753e4f","diagnostics":{"heartbeatsReceived":0,"heartbeatsRelayed":0,"invalidPoW":0,"duplicateSeq":0,"invalidSig":0,"newPeersAdded":0,"bytesReceived":0,"bytesRelayed":0,"leaveMessages":0,"pingsRelayed":0,"amplifyRelayed":0},"peers":[]}
-

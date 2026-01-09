@@ -72,18 +72,9 @@
           </div>
 
           <div id="profile-view" class="profile-view" style="display: none">
-            <div
-              class="profile-header"
-              style="
-                margin-bottom: 1rem;
-                padding: 1rem;
-                background: var(--surface);
-                border-radius: 12px;
-                border: 1px solid var(--border);
-              "
-            >
-              <button onclick="showFeed()" style="margin-bottom: 1rem">
-                ← Back
+            <div class="profile-header">
+              <button class="back-btn" onclick="showFeed()">
+                <i class="fa-solid fa-arrow-left"></i> Back
               </button>
               <div id="profile-info"></div>
             </div>
@@ -95,22 +86,14 @@
         <aside class="sidebar">
           <div class="sidebar-section swarm-controls">
             <h3 class="sidebar-title">Swarms</h3>
-            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem">
+            <div class="swarm-input-container">
               <input
                 type="text"
                 id="swarm-input"
                 placeholder="Join swarm..."
-                style="
-                  flex: 1;
-                  padding: 0.5rem;
-                  border-radius: 6px;
-                  border: 1px solid var(--border);
-                  background: var(--background);
-                  color: var(--text);
-                "
               />
-              <button id="join-swarm-btn" style="padding: 0.5rem 1rem">
-                +
+              <button id="join-swarm-btn" title="Join Swarm">
+                <i class="fa-solid fa-plus"></i>
               </button>
             </div>
             <div

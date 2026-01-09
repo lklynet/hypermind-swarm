@@ -334,6 +334,7 @@ textarea::placeholder {
 
 #ping-btn:hover {
     background: var(--primary-hover);
+    color: #000;
 }
 
 #ping-btn:disabled {
@@ -452,15 +453,25 @@ textarea::placeholder {
     background: transparent;
     border: none;
     color: var(--secondary-text);
-    padding: 0.5rem; /* Increased hit area */
-    margin-left: -0.5rem; /* Align visually */
+    width: 34px;
+    height: 34px;
     font-size: 0.9rem;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
     cursor: pointer;
     transition: all 0.2s ease;
-    border-radius: 9999px;
+    border-radius: 50%;
+    position: relative;
+}
+
+.action-btn .count {
+    position: absolute;
+    left: 100%;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-left: 2px;
 }
 
 .action-btn i {
@@ -495,6 +506,92 @@ textarea::placeholder {
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid var(--border-color);
+}
+
+/* Profile View */
+.profile-header {
+    margin-bottom: 1rem;
+    padding: 1.5rem;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.back-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.back-btn i {
+    font-size: 0.8rem;
+}
+
+/* Swarm Controls */
+.swarm-input-container {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+#swarm-input {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    border-radius: 9999px;
+    border: 1px solid var(--border-color);
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--text-color);
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+#swarm-input:focus {
+    border-color: var(--primary-color);
+    background: rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+#join-swarm-btn {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+#join-swarm-btn:hover {
+    background: var(--primary-hover);
+    color: #000;
+    transform: scale(1.05);
+}
+
+#join-swarm-btn:active {
+    transform: scale(0.95);
 }
 
 .comments-list {

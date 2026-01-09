@@ -20,13 +20,14 @@
   <body>
     <div class="app-container">
       <header>
-        <div class="header-brand">
+        <div class="header-brand" onclick="showFeed()" style="cursor: pointer">
           <img src="/hypermind.svg" alt="Hypermind Logo" class="logo" />
           <div class="header-text">
             <h1>Hypermind-Swarm</h1>
             <div class="powered-by">
               Powered by
               <a href="https://github.com/lklynet/hypermind" target="_blank"
+                onclick="event.stopPropagation()"
                 >hypermind</a
               >
             </div>
@@ -38,7 +39,7 @@
             <span id="status-text">connecting...</span>
           </div>
           <span class="separator">|</span>
-          <span id="my-id">...</span>
+          <span id="my-id" style="cursor: pointer">...</span>
         </div>
       </header>
 

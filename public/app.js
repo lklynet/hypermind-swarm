@@ -5,6 +5,11 @@ const statusDot = document.getElementById("status-dot");
 const statusText = document.getElementById("status-text");
 const myIdEl = document.getElementById("my-id");
 const charCount = document.getElementById("char-count");
+
+myIdEl.onclick = () => {
+  if (myId) showProfile(myId);
+};
+
 const swarmInput = document.getElementById("swarm-input");
 const joinSwarmBtn = document.getElementById("join-swarm-btn");
 const activeSwarmsEl = document.getElementById("active-swarms");

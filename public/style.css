@@ -211,6 +211,11 @@ h1 {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    transition: opacity 0.2s ease;
+}
+
+.header-brand:hover {
+    opacity: 0.8;
 }
 
 .header-brand .logo {
@@ -246,6 +251,14 @@ h1 {
     align-items: center;
     gap: 0.75rem;
     font-weight: 500;
+}
+
+#my-id {
+    transition: color 0.2s ease;
+}
+
+#my-id:hover {
+    color: var(--primary-color);
 }
 
 .connection-status {

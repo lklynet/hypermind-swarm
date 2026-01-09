@@ -40,10 +40,17 @@ const setupRoutes = (
   });
 
   app.get("/events", (req, res) => {
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-    res.flushHeaders();
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+      "Access-Control-Allow-Origin": "*",
+      "X-Accel-Buffering": "no" // Disable buffering for Nginx if present
+    });
+
+    // Send retry interval and a comment to keep connection alive
+    res.write("retry: 3000\n");
+    res.write(": ok\n\n");
 
     sseManager.addClient(res);
 

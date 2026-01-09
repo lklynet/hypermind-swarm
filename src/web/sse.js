@@ -4,6 +4,9 @@ class SSEManager {
     constructor() {
         this.clients = new Set();
         this.lastBroadcast = 0;
+        
+        // Keep connections alive with a heartbeat every 15 seconds
+        setInterval(() => this.heartbeat(), 15000);
     }
 
     addClient(res) {
@@ -12,6 +15,16 @@ class SSEManager {
 
     removeClient(res) {
         this.clients.delete(res);
+    }
+
+    heartbeat() {
+        for (const client of this.clients) {
+            try {
+                client.write(": heartbeat\n\n");
+            } catch (e) {
+                this.clients.delete(client);
+            }
+        }
     }
 
     broadcastUpdate(data) {
@@ -25,7 +38,12 @@ class SSEManager {
     broadcast(data) {
         const message = JSON.stringify(data);
         for (const client of this.clients) {
-            client.write(`data: ${message}\n\n`);
+            try {
+                client.write(`data: ${message}\n\n`);
+            } catch (e) {
+                console.error("Failed to write to SSE client:", e);
+                this.clients.delete(client);
+            }
         }
     }
 

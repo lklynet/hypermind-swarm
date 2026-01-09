@@ -45,7 +45,7 @@
     --text-color: var(--color-text-default);
     --border-color: var(--color-modal-border);
     --primary-color: var(--color-count); /* Hypermind Green */
-    --primary-hover: var(--color-theme-toggle-hover);
+    --primary-hover: #3bbd6d; /* Darker green for hover */
     --secondary-text: var(--color-text-main-label);
     --ping-bg: var(--color-bg-main);
     --ping-hover: var(--color-modal-stat-div); /* Subtle hover */
@@ -119,6 +119,10 @@ code, pre, kbd, samp {
     align-items: center;
     cursor: pointer;
     user-select: none;
+}
+
+.title-text {
+    text-align: left;
 }
 
 .sidebar-title:hover {
@@ -356,7 +360,6 @@ code, pre, kbd, samp {
 
 .btn-follow.active:hover {
     background: var(--primary-hover);
-    opacity: 0.9;
 }
 
 .btn-block:hover {
@@ -522,7 +525,7 @@ textarea::placeholder {
 #ping-btn {
     align-self: flex-end;
     background: var(--primary-color);
-    color: white;
+    color: black;
     border: none;
     padding: 0.6rem 1.2rem;
     border-radius: 9999px;
@@ -647,7 +650,7 @@ textarea::placeholder {
 /* Actions */
 .ping-actions {
     display: flex;
-    gap: 2rem; /* Spacing between potential future actions */
+    gap: 1rem; /* Reduced gap between actions */
     margin-top: 0.2rem;
 }
 
@@ -777,7 +780,7 @@ textarea::placeholder {
     align-items: center;
     justify-content: center;
     background: var(--primary-color);
-    color: white;
+    color: black;
     border: none;
     border-radius: 50%;
     cursor: pointer;
@@ -889,13 +892,13 @@ textarea::placeholder {
     padding: 0.5rem 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: background-color 0.2s;
 }
 
 .comment-input-area button:hover {
-    opacity: 0.9;
+    background: var(--primary-hover);
 }
 
 .action-btn.comment-btn {
-    margin-left: 1rem;
+    /* Removed extra margin-left */
 }

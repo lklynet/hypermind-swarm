@@ -37,21 +37,38 @@ function toggleSection(name) {
   const section = document.getElementById(`section-${name}`);
   if (!section) return;
 
+  const isProfile = profileView.style.display === "block";
+  const viewPrefix = isProfile ? "profile" : "feed";
+  const storageKey = `${viewPrefix}-${name}`;
+
   const isCollapsed = section.classList.toggle("collapsed");
 
   if (isCollapsed) {
-    if (!collapsedSections.includes(name)) collapsedSections.push(name);
+    if (!collapsedSections.includes(storageKey))
+      collapsedSections.push(storageKey);
   } else {
-    collapsedSections = collapsedSections.filter((s) => s !== name);
+    collapsedSections = collapsedSections.filter((s) => s !== storageKey);
   }
 
   localStorage.setItem("collapsedSections", JSON.stringify(collapsedSections));
 }
 
 function initSections() {
-  collapsedSections.forEach((name) => {
-    const section = document.getElementById(`section-${name}`);
-    if (section) section.classList.add("collapsed");
+  const isProfile = profileView.style.display === "block";
+  const viewPrefix = isProfile ? "profile" : "feed";
+
+  // Reset all sections to expanded first
+  document
+    .querySelectorAll(".sidebar-section")
+    .forEach((s) => s.classList.remove("collapsed"));
+
+  // Apply collapsed state for current view
+  collapsedSections.forEach((key) => {
+    if (key.startsWith(`${viewPrefix}-`)) {
+      const name = key.replace(`${viewPrefix}-`, "");
+      const section = document.getElementById(`section-${name}`);
+      if (section) section.classList.add("collapsed");
+    }
   });
 }
 
@@ -299,44 +316,59 @@ async function init() {
   }
 
   // 3. Load Trending
-  fetchTrending();
+  await fetchTrending();
 
   // 4. Load Followed Accounts
   renderFollowedAccounts();
 
-  // Setup SSE
-  const evtSource = new EventSource("/events");
+  // Setup SSE after page is fully loaded to avoid "interrupted while loading" errors
+  const startSSE = () => {
+    console.log("Initializing EventSource...");
+    const evtSource = new EventSource("/events");
+
+    evtSource.onerror = (err) => {
+      console.error("EventSource connection lost. Attempting to reconnect...", err);
+    };
+
+    evtSource.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+
+      if (data.type === "INIT") {
+        myId = data.id;
+        myIdEl.textContent = data.username || "..." + data.id.slice(-8);
+        updateStats(data);
+      } else if (data.type === "UPDATE") {
+        updateStats(data);
+      } else if (data.type === "PING") {
+        addPingToFeed(data, true); // true = prepend
+      } else if (data.count !== undefined) {
+        // Stat update
+        updateStats(data);
+      }
+    };
+  };
+
+  if (document.readyState === "complete") {
+    startSSE();
+  } else {
+    window.addEventListener("load", startSSE);
+  }
 
   // Character counter
-  pingInput.addEventListener("input", () => {
-    const currentLength = pingInput.value.length;
-    charCount.textContent = `${currentLength}/280`;
+  if (pingInput) {
+    pingInput.addEventListener("input", () => {
+      const currentLength = pingInput.value.length;
+      charCount.textContent = `${currentLength}/280`;
 
-    if (currentLength >= 280) {
-      charCount.style.color = "#ef4444"; // red-500
-    } else if (currentLength >= 260) {
-      charCount.style.color = "#f59e0b"; // amber-500
-    } else {
-      charCount.style.color = "var(--secondary-text)";
-    }
-  });
-
-  evtSource.onmessage = (e) => {
-    const data = JSON.parse(e.data);
-
-    if (data.type === "INIT") {
-      myId = data.id;
-      myIdEl.textContent = data.username || "..." + data.id.slice(-8);
-      updateStats(data);
-    } else if (data.type === "UPDATE") {
-      updateStats(data);
-    } else if (data.type === "PING") {
-      addPingToFeed(data, true); // true = prepend
-    } else if (data.count !== undefined) {
-      // Stat update
-      updateStats(data);
-    }
-  };
+      if (currentLength >= 280) {
+        charCount.style.color = "#ef4444"; // red-500
+      } else if (currentLength >= 260) {
+        charCount.style.color = "#f59e0b"; // amber-500
+      } else {
+        charCount.style.color = "var(--secondary-text)";
+      }
+    });
+  }
 }
 
 async function joinSwarm(topic) {
@@ -485,7 +517,12 @@ window.showFeed = () => {
   composeArea.style.display = "block"; // Only main compose area
   swarmControls.style.display = "block";
 
-  if (trendingTitle) trendingTitle.textContent = "Trending";
+  if (trendingTitle) {
+    const titleText = trendingTitle.querySelector(".title-text");
+    if (titleText) titleText.textContent = "Trending";
+  }
+
+  initSections();
   fetchTrending();
 };
 
@@ -574,7 +611,12 @@ window.showProfile = async (id) => {
     // Add "All" option
     userTopics.unshift({ name: "All", count: data.pings.length, isAll: true });
 
-    if (trendingTitle) trendingTitle.textContent = "User Swarms";
+    if (trendingTitle) {
+      const titleText = trendingTitle.querySelector(".title-text");
+      if (titleText) titleText.textContent = "User Swarms";
+    }
+
+    initSections();
     renderTrending(userTopics);
   } catch (e) {
     profileInfo.innerHTML = "Failed to load profile.";
@@ -739,7 +781,7 @@ function addPingToContainer(ping, container, prepend = false) {
                     <input type="text" placeholder="Write a comment..." class="comment-input">
                     <button onclick="postComment('${
                       ping.id
-                    }', this)">Post</button>
+                    }', this)">Reply</button>
                 </div>
             </div>
         </div>

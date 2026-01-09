@@ -8,7 +8,6 @@ const generateIdentity = () => {
   const id = publicKey.export({ type: "spki", format: "der" }).toString("hex");
   const username = generateScreenname(id);
 
-  // Generate Encryption Keypair (Curve25519) for DMs
   const curvePk = Buffer.alloc(sodium.crypto_box_PUBLICKEYBYTES);
   const curveSk = Buffer.alloc(sodium.crypto_box_SECRETKEYBYTES);
   sodium.crypto_box_keypair(curvePk, curveSk);

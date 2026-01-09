@@ -80,8 +80,7 @@ class SwarmManager {
       socket.buffer += data.toString();
 
       const lines = socket.buffer.split("\n");
-      // The last element is either an empty string (if data ended with \n)
-      // or the incomplete part of the next message.
+
       socket.buffer = lines.pop();
 
       for (const msgStr of lines) {
@@ -90,7 +89,7 @@ class SwarmManager {
           const msg = JSON.parse(msgStr);
           this.messageHandler.handleMessage(msg, socket);
         } catch (e) {
-          // Invalid JSON or partial message (shouldn't happen with buffering logic unless data is corrupted)
+
         }
       }
     });
@@ -202,7 +201,6 @@ class SwarmManager {
   joinSwarm(name) {
     const id = getSwarmId(name);
     this.swarmFilter = updateSwarmFilter(this.swarmFilter, id, true);
-    // Force immediate heartbeat to announce new subscription
     this.broadcastHeartbeat();
     return id;
   }

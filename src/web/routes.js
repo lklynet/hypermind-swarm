@@ -89,7 +89,8 @@ const setupRoutes = (
     recentPings.forEach((p) => {
       // console.log("Processing ping for trending:", p.id, p.topic);
       if (p.topic) {
-        topicCounts[p.topic] = (topicCounts[p.topic] || 0) + 1;
+        const normalized = p.topic.trim().toLowerCase();
+        topicCounts[normalized] = (topicCounts[normalized] || 0) + 1;
       }
     });
 
@@ -125,20 +126,23 @@ const setupRoutes = (
   app.post("/api/swarm/join", (req, res) => {
     const { name } = req.body;
     if (!name) return res.status(400).json({ error: "Missing name" });
-    const id = swarm.joinSwarm(name);
-    res.json({ success: true, id, name });
+    const normalized = name.trim().toLowerCase();
+    const id = swarm.joinSwarm(normalized);
+    res.json({ success: true, id, name: normalized });
   });
 
   app.post("/api/swarm/leave", (req, res) => {
     const { name } = req.body;
     if (!name) return res.status(400).json({ error: "Missing name" });
-    const id = swarm.leaveSwarm(name);
-    res.json({ success: true, id, name });
+    const normalized = name.trim().toLowerCase();
+    const id = swarm.leaveSwarm(normalized);
+    res.json({ success: true, id, name: normalized });
   });
 
   app.post("/api/swarm/id", (req, res) => {
     const { name } = req.body;
-    const id = getSwarmId(name);
+    const normalized = (name || "").trim().toLowerCase();
+    const id = getSwarmId(normalized);
     res.json({ id });
   });
 
@@ -172,9 +176,11 @@ const setupRoutes = (
       return res.status(400).json({ error: "Invalid content" });
     }
 
+    const normalizedTopic = (topic || "").trim().toLowerCase();
+
     let swarmId = 0;
-    if (topic) {
-      swarmId = getSwarmId(topic);
+    if (normalizedTopic) {
+      swarmId = getSwarmId(normalizedTopic);
     }
 
     const timestamp = Date.now();
@@ -194,7 +200,7 @@ const setupRoutes = (
       hops: 0,
       ttl: 10, // Increased default TTL
       swarmId,
-      topic: topic || "",
+      topic: normalizedTopic,
     };
 
     // Store locally

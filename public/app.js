@@ -27,15 +27,174 @@ let myId = "";
 let currentTopic = ""; // "" = Global
 let currentSwarmId = 0;
 let joinedSwarms = JSON.parse(localStorage.getItem("joinedSwarms") || '[""]');
+let following = JSON.parse(localStorage.getItem("following") || "[]");
+let blocked = JSON.parse(localStorage.getItem("blocked") || "[]");
+let collapsedSections = JSON.parse(
+  localStorage.getItem("collapsedSections") || "[]"
+);
+
+function toggleSection(name) {
+  const section = document.getElementById(`section-${name}`);
+  if (!section) return;
+
+  const isCollapsed = section.classList.toggle("collapsed");
+
+  if (isCollapsed) {
+    if (!collapsedSections.includes(name)) collapsedSections.push(name);
+  } else {
+    collapsedSections = collapsedSections.filter((s) => s !== name);
+  }
+
+  localStorage.setItem("collapsedSections", JSON.stringify(collapsedSections));
+}
+
+function initSections() {
+  collapsedSections.forEach((name) => {
+    const section = document.getElementById(`section-${name}`);
+    if (section) section.classList.add("collapsed");
+  });
+}
+
+function toggleFollow(id) {
+  const isFollowing = !following.includes(id);
+  if (following.includes(id)) {
+    following = following.filter((f) => f !== id);
+  } else {
+    following.push(id);
+  }
+  localStorage.setItem("following", JSON.stringify(following));
+  renderFollowedAccounts();
+
+  // Update all pings by this author in the feed
+  document.querySelectorAll(`.ping[data-author="${id}"]`).forEach((el) => {
+    // Update checkmark
+    const check = el.querySelector(".follow-check");
+    if (check) check.style.display = isFollowing ? "inline" : "none";
+
+    // Update ellipses menu item
+    const menuFollowItem = el.querySelector(
+      ".ping-menu .menu-item:first-child"
+    );
+    if (menuFollowItem) {
+      menuFollowItem.innerHTML = `
+        <i class="fa-solid ${
+          isFollowing ? "fa-user-minus" : "fa-user-plus"
+        }"></i>
+        <span>${isFollowing ? "Unfollow" : "Follow"}</span>
+      `;
+    }
+  });
+
+  // Update profile view if it's open for this user
+  if (profileView.style.display === "block") {
+    const profileFollowBtn = profileInfo.querySelector(".btn-follow");
+    const profileCheck = profileInfo.querySelector(".follow-check");
+
+    if (profileFollowBtn) {
+      profileFollowBtn.classList.toggle("active", isFollowing);
+      profileFollowBtn.innerHTML = `
+        <i class="fa-solid ${
+          isFollowing ? "fa-user-minus" : "fa-user-plus"
+        }"></i>
+        ${isFollowing ? "Unfollow" : "Follow"}
+      `;
+    }
+    if (profileCheck)
+      profileCheck.style.display = isFollowing ? "inline" : "none";
+  }
+}
+
+function toggleBlock(id) {
+  const isBlocking = !blocked.includes(id);
+  if (blocked.includes(id)) {
+    blocked = blocked.filter((b) => b !== id);
+  } else {
+    blocked.push(id);
+    // If we block someone, we should also unfollow them
+    if (following.includes(id)) {
+      following = following.filter((f) => f !== id);
+      localStorage.setItem("following", JSON.stringify(following));
+    }
+  }
+  localStorage.setItem("blocked", JSON.stringify(blocked));
+  renderFollowedAccounts();
+
+  if (isBlocking) {
+    // Remove all pings by this author immediately
+    document
+      .querySelectorAll(`.ping[data-author="${id}"]`)
+      .forEach((el) => el.remove());
+  }
+
+  // Update profile view if it's open for this user
+  if (profileView.style.display === "block") {
+    const profileBlockBtn = profileInfo.querySelector(".btn-block");
+    const profileFollowBtn = profileInfo.querySelector(".btn-follow");
+    const profileCheck = profileInfo.querySelector(".follow-check");
+
+    if (profileBlockBtn) {
+      profileBlockBtn.classList.toggle("active", isBlocking);
+      profileBlockBtn.innerHTML = `
+        <i class="fa-solid fa-ban"></i>
+        ${isBlocking ? "Unblock" : "Block"}
+      `;
+    }
+
+    if (isBlocking) {
+      if (profileFollowBtn) {
+        profileFollowBtn.classList.remove("active");
+        profileFollowBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Follow`;
+      }
+      if (profileCheck) profileCheck.style.display = "none";
+      profileFeed.innerHTML =
+        "<div style='padding: 1rem; color: var(--secondary-text);'>User is blocked.</div>";
+    } else {
+      // If unblocking, we might want to refresh the profile to show pings again
+      showProfile(id);
+    }
+  }
+}
+
+function renderFollowedAccounts() {
+  const container = document.getElementById("followed-accounts-list");
+  if (!container) return;
+
+  container.innerHTML = "";
+  if (following.length === 0) {
+    container.innerHTML = `<div style="padding: 0.5rem; color: var(--secondary-text); font-size: 0.9rem;">No followed accounts.</div>`;
+    return;
+  }
+
+  following.forEach(async (id) => {
+    const el = document.createElement("div");
+    el.className = "followed-item";
+    el.onclick = () => showProfile(id);
+
+    const avatarUrl = `/api/avatar/${id}`;
+    // We don't have the username here easily without fetching,
+    // but we can show the ID or try to find it from existing pings
+    let name = "..." + id.slice(-8);
+    const existingPing = document.querySelector(
+      `.ping[data-author="${id}"] .author`
+    );
+    if (existingPing) name = existingPing.textContent;
+
+    el.innerHTML = `
+      <img src="${avatarUrl}" class="followed-avatar">
+      <span class="followed-name">${escapeHtml(name)}</span>
+    `;
+    container.appendChild(el);
+  });
+}
 
 async function getSwarmId(name) {
   if (!name) return 0;
-  
+
   // Try client-side calculation first (faster, no network)
   if (window.crypto && window.crypto.subtle) {
     try {
       const msgBuffer = new TextEncoder().encode(name);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
       const hashArray = new Uint8Array(hashBuffer);
       return (hashArray[0] % 255) + 1;
     } catch (e) {
@@ -71,7 +230,7 @@ async function fetchTrending() {
 function renderTrending(topics) {
   const container = document.getElementById("trending-list");
   if (!container) return;
-  
+
   container.innerHTML = "";
 
   if (topics.length === 0) {
@@ -79,28 +238,31 @@ function renderTrending(topics) {
     return;
   }
 
-  topics.forEach(topic => {
+  topics.forEach((topic) => {
     const el = document.createElement("div");
     el.className = "trending-item";
-    
+
     if (topic.isAll) {
       el.onclick = () => selectSwarm("");
     } else {
       el.onclick = () => joinSwarm(topic.name);
     }
-    
+
     const displayName = topic.isAll ? "All" : `#${escapeHtml(topic.name)}`;
 
     el.innerHTML = `
       <span class="trending-name">${displayName}</span>
       <span class="trending-count">${topic.count} pings</span>
     `;
-    
+
     container.appendChild(el);
   });
 }
 
 async function init() {
+  // Initialize collapsed sections
+  initSections();
+
   // 1. Get identity first
   try {
     const res = await fetch("/api/whoami");
@@ -139,6 +301,9 @@ async function init() {
   // 3. Load Trending
   fetchTrending();
 
+  // 4. Load Followed Accounts
+  renderFollowedAccounts();
+
   // Setup SSE
   const evtSource = new EventSource("/events");
 
@@ -160,12 +325,12 @@ async function init() {
     const data = JSON.parse(e.data);
 
     if (data.type === "INIT") {
-        myId = data.id;
-        myIdEl.textContent = data.username || "..." + data.id.slice(-8);
-        updateStats(data);
-      } else if (data.type === "UPDATE") {
-        updateStats(data);
-      } else if (data.type === "PING") {
+      myId = data.id;
+      myIdEl.textContent = data.username || "..." + data.id.slice(-8);
+      updateStats(data);
+    } else if (data.type === "UPDATE") {
+      updateStats(data);
+    } else if (data.type === "PING") {
       addPingToFeed(data, true); // true = prepend
     } else if (data.count !== undefined) {
       // Stat update
@@ -176,8 +341,9 @@ async function init() {
 
 async function joinSwarm(topic) {
   if (!topic) return;
-  if (joinedSwarms.includes(topic)) {
-    selectSwarm(topic);
+  const normalized = topic.trim().toLowerCase();
+  if (joinedSwarms.includes(normalized)) {
+    selectSwarm(normalized);
     return;
   }
 
@@ -185,13 +351,13 @@ async function joinSwarm(topic) {
     const res = await fetch("/api/swarm/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: topic }),
+      body: JSON.stringify({ name: normalized }),
     });
     if (res.ok) {
-      joinedSwarms.push(topic);
+      joinedSwarms.push(normalized);
       localStorage.setItem("joinedSwarms", JSON.stringify(joinedSwarms));
       renderSwarmTags();
-      selectSwarm(topic);
+      selectSwarm(normalized);
     }
   } catch (e) {
     console.error(e);
@@ -200,15 +366,16 @@ async function joinSwarm(topic) {
 
 async function leaveSwarm(topic) {
   if (!topic) return;
+  const normalized = topic.trim().toLowerCase();
   try {
     await fetch("/api/swarm/leave", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: topic }),
+      body: JSON.stringify({ name: normalized }),
     });
-    joinedSwarms = joinedSwarms.filter((t) => t !== topic);
+    joinedSwarms = joinedSwarms.filter((t) => t !== normalized);
     localStorage.setItem("joinedSwarms", JSON.stringify(joinedSwarms));
-    if (currentTopic === topic) {
+    if (currentTopic === normalized) {
       selectSwarm("");
     } else {
       renderSwarmTags();
@@ -227,17 +394,18 @@ joinSwarmBtn.onclick = () => {
 };
 
 async function selectSwarm(topic) {
-  console.log(`[Swarm] Selecting topic: "${topic}"`);
-  currentTopic = topic;
-  
-  if (!topic) {
+  const normalized = (topic || "").trim().toLowerCase();
+  console.log(`[Swarm] Selecting topic: "${normalized}"`);
+  currentTopic = normalized;
+
+  if (!normalized) {
     currentSwarmId = 0;
   } else {
-    currentSwarmId = await getSwarmId(topic);
+    currentSwarmId = await getSwarmId(normalized);
   }
-  
+
   console.log(`[Swarm] Current Swarm ID set to: ${currentSwarmId}`);
-  
+
   renderSwarmTags();
   updateFeedVisibility();
 }
@@ -252,9 +420,11 @@ function renderSwarmTags() {
 
   joinedSwarms.forEach((topic) => {
     const container = document.createElement("div");
-    container.className = `swarm-item ${topic === currentTopic ? "active" : ""}`;
+    container.className = `swarm-item ${
+      topic === currentTopic ? "active" : ""
+    }`;
     container.onclick = () => selectSwarm(topic);
-    
+
     const label = document.createElement("span");
     label.className = "swarm-name";
     label.textContent = topic || "Global";
@@ -333,16 +503,49 @@ window.showProfile = async (id) => {
     const data = await res.json();
 
     const avatarUrl = `/api/avatar/${data.id}`;
+    const isFollowing = following.includes(data.id);
+    const isBlocked = blocked.includes(data.id);
+    const isMe = data.id === myId;
+
     profileInfo.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                <img src="${avatarUrl}" style="width: 64px; height: 64px; border-radius: 50%;">
-                <div>
-                    <h2 style="margin: 0;">${escapeHtml(data.username)}</h2>
-                    <div style="color: var(--secondary-text); font-size: 0.9rem;">${data.id.slice(
-                      0,
-                      16
-                    )}...</div>
+            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <img src="${avatarUrl}" style="width: 64px; height: 64px; border-radius: 50%;">
+                    <div>
+                        <h2 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                            ${escapeHtml(data.username)}
+                            <i class="fa-solid fa-circle-check follow-check" style="color: #4ade80; font-size: 1rem; display: ${
+                              isFollowing ? "inline" : "none"
+                            };"></i>
+                        </h2>
+                        <div style="color: var(--secondary-text); font-size: 0.9rem;">${data.id.slice(
+                          0,
+                          16
+                        )}...</div>
+                    </div>
                 </div>
+                ${
+                  !isMe
+                    ? `
+                <div class="profile-actions">
+                    <button class="btn-follow ${
+                      isFollowing ? "active" : ""
+                    }" onclick="toggleFollow('${data.id}')">
+                        <i class="fa-solid ${
+                          isFollowing ? "fa-user-minus" : "fa-user-plus"
+                        }"></i>
+                        ${isFollowing ? "Unfollow" : "Follow"}
+                    </button>
+                    <button class="btn-block ${
+                      isBlocked ? "active" : ""
+                    }" onclick="toggleBlock('${data.id}')">
+                        <i class="fa-solid fa-ban"></i>
+                        ${isBlocked ? "Unblock" : "Block"}
+                    </button>
+                </div>
+                `
+                    : ""
+                }
             </div>
         `;
 
@@ -384,6 +587,8 @@ function addPingToFeed(ping, prepend = false) {
 }
 
 function addPingToContainer(ping, container, prepend = false) {
+  if (blocked.includes(ping.author)) return;
+
   const isProfile = container === profileFeed;
   const domId = isProfile ? `profile-ping-${ping.id}` : `ping-${ping.id}`;
 
@@ -408,7 +613,9 @@ function addPingToContainer(ping, container, prepend = false) {
   `;
 
   if (existingEl) {
-    const btn = existingEl.querySelector(".ping-actions button.action-btn:first-child");
+    const btn = existingEl.querySelector(
+      ".ping-actions button.action-btn:first-child"
+    );
     if (btn) {
       btn.innerHTML = buttonContent;
       if (isAmplifiedByMe) {
@@ -436,6 +643,7 @@ function addPingToContainer(ping, container, prepend = false) {
   el.className = "ping";
   el.id = domId;
   el.dataset.swarmId = swarmId;
+  el.dataset.author = ping.author;
 
   // Initial visibility check (Only for main feed)
   if (!isProfile && currentSwarmId !== 0 && swarmId !== currentSwarmId) {
@@ -445,6 +653,7 @@ function addPingToContainer(ping, container, prepend = false) {
   const date = new Date(ping.timestamp).toLocaleString();
   const authorName = ping.username || "..." + ping.author.slice(-8);
   const avatarUrl = `/api/avatar/${ping.author}`;
+  const isFollowing = following.includes(ping.author);
 
   let topicPill = "";
   if (ping.topic) {
@@ -453,9 +662,13 @@ function addPingToContainer(ping, container, prepend = false) {
     )}')">#${escapeHtml(ping.topic)}</span>`;
   }
 
-  const avatarOnClick = isProfile ? "" : `onclick="showProfile('${ping.author}')"`;
+  const avatarOnClick = isProfile
+    ? ""
+    : `onclick="showProfile('${ping.author}')"`;
   const avatarStyle = isProfile ? "" : 'style="cursor: pointer;"';
-  const authorOnClick = isProfile ? "" : `onclick="showProfile('${ping.author}')"`;
+  const authorOnClick = isProfile
+    ? ""
+    : `onclick="showProfile('${ping.author}')"`;
   const authorStyle = isProfile ? "" : 'style="cursor: pointer;"';
 
   el.innerHTML = `
@@ -464,11 +677,45 @@ function addPingToContainer(ping, container, prepend = false) {
         </div>
         <div class="ping-body">
             <div class="ping-header">
-                <span class="author" title="${
-                  ping.author
-                }" ${authorOnClick} ${authorStyle}>${escapeHtml(authorName)}</span>
-                ${topicPill}
-                <span class="date">${date}</span>
+                <div style="display: flex; align-items: center; gap: 0.3rem; flex: 1; min-width: 0;">
+                    <span class="author" title="${
+                      ping.author
+                    }" ${authorOnClick} ${authorStyle}>${escapeHtml(
+    authorName
+  )}</span>
+                    <i class="fa-solid fa-circle-check follow-check" style="color: #4ade80; font-size: 0.8rem; display: ${
+                      isFollowing ? "inline" : "none"
+                    };"></i>
+                    ${topicPill}
+                    <span class="date">${date}</span>
+                </div>
+                ${
+                  !isMe
+                    ? `
+                <div class="ping-menu-container">
+                    <button class="ping-menu-btn" onclick="event.stopPropagation(); togglePingMenu('${domId}')">
+                        <i class="fa-solid fa-ellipsis"></i>
+                    </button>
+                    <div class="ping-menu" id="menu-${domId}" style="display: none;">
+                        <div class="menu-item" onclick="event.stopPropagation(); toggleFollow('${
+                          ping.author
+                        }')">
+                            <i class="fa-solid ${
+                              isFollowing ? "fa-user-minus" : "fa-user-plus"
+                            }"></i>
+                            <span>${isFollowing ? "Unfollow" : "Follow"}</span>
+                        </div>
+                        <div class="menu-item delete" onclick="event.stopPropagation(); toggleBlock('${
+                          ping.author
+                        }')">
+                            <i class="fa-solid fa-ban"></i>
+                            <span>Block</span>
+                        </div>
+                    </div>
+                </div>
+                `
+                    : ""
+                }
             </div>
             <div class="ping-content">${escapeHtml(ping.content)}</div>
             <div class="ping-actions">
@@ -481,14 +728,18 @@ function addPingToContainer(ping, container, prepend = false) {
                 </button>
                 <button class="action-btn comment-btn" onclick="toggleComments('${domId}')">
                     <i class="fa-regular fa-comment"></i>
-                    <span class="count">${commentCount > 0 ? commentCount : ""}</span>
+                    <span class="count">${
+                      commentCount > 0 ? commentCount : ""
+                    }</span>
                 </button>
             </div>
             <div class="comments-section" style="display: none;">
                 <div class="comments-list"></div>
                 <div class="comment-input-area">
                     <input type="text" placeholder="Write a comment..." class="comment-input">
-                    <button onclick="postComment('${ping.id}', this)">Post</button>
+                    <button onclick="postComment('${
+                      ping.id
+                    }', this)">Post</button>
                 </div>
             </div>
         </div>
@@ -571,6 +822,25 @@ pingBtn.onclick = async () => {
   }
 };
 
+window.togglePingMenu = (domId) => {
+  const menu = document.getElementById(`menu-${domId}`);
+  if (!menu) return;
+
+  // Close all other menus first
+  document.querySelectorAll(".ping-menu").forEach((m) => {
+    if (m.id !== `menu-${domId}`) m.style.display = "none";
+  });
+
+  menu.style.display = menu.style.display === "none" ? "block" : "none";
+};
+
+// Close menus on click outside
+document.addEventListener("click", () => {
+  document.querySelectorAll(".ping-menu").forEach((m) => {
+    m.style.display = "none";
+  });
+});
+
 window.toggleComments = (domId) => {
   const el = document.getElementById(domId);
   if (!el) return;
@@ -605,10 +875,10 @@ window.postComment = async (pingId, btn) => {
 function renderComments(container, comments) {
   const list = container.querySelector(".comments-list");
   if (!list) return;
-  
+
   // Simple re-render
   list.innerHTML = "";
-  
+
   comments.forEach((c) => {
     const div = document.createElement("div");
     div.className = "comment";
@@ -622,7 +892,9 @@ function renderComments(container, comments) {
         </div>
         <div class="comment-body">
             <div class="comment-header">
-                <span class="comment-author" onclick="showProfile('${c.author}')">${escapeHtml(authorName)}</span>
+                <span class="comment-author" onclick="showProfile('${
+                  c.author
+                }')">${escapeHtml(authorName)}</span>
                 <span class="comment-date">${date}</span>
             </div>
             <div class="comment-content">${escapeHtml(c.content)}</div>

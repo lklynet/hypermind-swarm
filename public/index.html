@@ -4,8 +4,10 @@
     <title>Hypermind-Swarm</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/hypermind.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Google+Sans+Code:ital,wght@0,300..800;1,300..800&family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/style.css?v=4" />
@@ -26,7 +28,9 @@
             <h1>Hypermind-Swarm</h1>
             <div class="powered-by">
               Powered by
-              <a href="https://github.com/lklynet/hypermind" target="_blank"
+              <a
+                href="https://github.com/lklynet/hypermind"
+                target="_blank"
                 onclick="event.stopPropagation()"
                 >hypermind</a
               >
@@ -81,40 +85,65 @@
             </div>
             <div id="profile-feed" class="feed"></div>
           </div>
-
         </main>
 
         <aside class="sidebar">
-          <div class="sidebar-section swarm-controls">
-            <h3 class="sidebar-title">Swarms</h3>
-            <div class="swarm-input-container">
-              <input
-                type="text"
-                id="swarm-input"
-                placeholder="Join swarm..."
-              />
-              <button id="join-swarm-btn" title="Join Swarm">
-                <i class="fa-solid fa-plus"></i>
-              </button>
-            </div>
-            <div
-              id="active-swarms"
-              style="
-                font-size: 0.9rem;
-                color: var(--secondary-text);
-                display: flex;
-                flex-direction: column;
-                gap: 0.5rem;
-              "
-            >
-              <!-- Active swarms list -->
+          <div class="sidebar-section swarm-controls" id="section-swarms">
+            <h3 class="sidebar-title" onclick="toggleSection('swarms')">
+              Swarms
+              <i class="fa-solid fa-chevron-down toggle-icon"></i>
+            </h3>
+            <div class="section-content">
+              <div class="swarm-input-container">
+                <input
+                  type="text"
+                  id="swarm-input"
+                  placeholder="Join swarm..."
+                />
+                <button id="join-swarm-btn" title="Join Swarm">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
+              <div
+                id="active-swarms"
+                style="
+                  font-size: 0.9rem;
+                  color: var(--secondary-text);
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.5rem;
+                "
+              >
+                <!-- Active swarms list -->
+              </div>
             </div>
           </div>
 
-          <div class="sidebar-section">
-            <h3 id="trending-title" class="sidebar-title">Trending</h3>
-            <div id="trending-list" class="trending-list">
-              <!-- Trending topics will be injected here -->
+          <div class="sidebar-section" id="section-followed">
+            <h3 class="sidebar-title" onclick="toggleSection('followed')">
+              Followed
+              <i class="fa-solid fa-chevron-down toggle-icon"></i>
+            </h3>
+            <div class="section-content">
+              <div id="followed-accounts-list" class="followed-accounts-list">
+                <!-- Followed accounts will be injected here -->
+              </div>
+            </div>
+          </div>
+
+          <div class="sidebar-section" id="section-trending">
+            <h3
+              id="trending-title"
+              class="sidebar-title"
+              onclick="toggleSection('trending')"
+            >
+              Trending
+              <i class="fa-solid fa-chevron-down toggle-icon"></i>
+            </h3>
+            <div class="section-content">
+              <div id="trending-list" class="trending-list">
+                <!-- Trending topics will be injected here -->
+              </div>
             </div>
           </div>
         </aside>

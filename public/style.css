@@ -58,11 +58,15 @@
 body {
     background: var(--bg-color);
     color: var(--text-color);
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: "Google Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
     padding: 0;
     overflow-y: scroll; /* Always show scrollbar to prevent layout shift */
     line-height: 1.6;
+}
+
+code, pre, kbd, samp {
+    font-family: "Google Sans Code", monospace;
 }
 
 .app-container {
@@ -110,6 +114,33 @@ body {
     font-size: 1rem;
     font-weight: 700;
     color: var(--text-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.sidebar-title:hover {
+    color: var(--primary-color);
+}
+
+.toggle-icon {
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+    opacity: 0.5;
+}
+
+.sidebar-section.collapsed .toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.sidebar-section.collapsed .section-content {
+    display: none;
+}
+
+.sidebar-section.collapsed .sidebar-title {
+    margin-bottom: 0;
 }
 
 .swarm-item {
@@ -182,6 +213,162 @@ body {
 .trending-count {
     font-size: 0.85rem;
     opacity: 0.7;
+}
+
+/* Followed Accounts */
+.followed-accounts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.followed-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.followed-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.followed-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.followed-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--secondary-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.followed-item:hover .followed-name {
+    color: var(--primary-color);
+}
+
+/* Ping Menu */
+.ping-menu-container {
+    position: relative;
+}
+
+.ping-menu-btn {
+    background: transparent;
+    border: none;
+    color: var(--secondary-text);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ping-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+}
+
+.ping-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #1a1a1a;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    min-width: 150px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.menu-item {
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.2s;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.menu-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--primary-color);
+}
+
+.menu-item.delete:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.menu-item i {
+    width: 16px;
+    text-align: center;
+}
+
+/* Profile Buttons */
+.profile-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-follow, .btn-block {
+    padding: 0.5rem 1.25rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-color);
+}
+
+.btn-follow:hover {
+    background: rgba(74, 222, 128, 0.1);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-follow.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #000;
+}
+
+.btn-follow.active:hover {
+    background: var(--primary-hover);
+    opacity: 0.9;
+}
+
+.btn-block:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.btn-block.active {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: #fff;
 }
 
 /* Header */
@@ -315,7 +502,7 @@ textarea {
     color: var(--text-color);
     padding: 1rem;
     resize: none;
-    font-family: inherit;
+    font-family: "Google Sans Code", monospace;
     font-size: 1.1rem;
     outline: none;
     box-sizing: border-box;
@@ -359,6 +546,7 @@ textarea::placeholder {
 .feed {
     display: flex;
     flex-direction: column;
+    overflow: visible; /* Ensure menus aren't clipped */
 }
 
 .ping {
@@ -408,8 +596,8 @@ textarea::placeholder {
     display: flex;
     align-items: center;
     gap: 0.3rem;
-    overflow: hidden;
     white-space: nowrap;
+    position: relative; /* Ensure menu positions relative to header */
 }
 
 .author { 
@@ -451,6 +639,7 @@ textarea::placeholder {
     line-height: 1.6; 
     word-wrap: break-word; 
     color: var(--text-color);
+    font-family: "Google Sans Code", monospace;
     font-size: 1.05rem;
     font-weight: 400;
 }
@@ -664,6 +853,7 @@ textarea::placeholder {
 }
 
 .comment-content {
+    font-family: "Google Sans Code", monospace;
     font-size: 0.95rem;
     color: var(--text-color);
     line-height: 1.4;
@@ -682,6 +872,7 @@ textarea::placeholder {
     border-radius: 20px;
     padding: 0.5rem 1rem;
     color: var(--text-color);
+    font-family: "Google Sans Code", monospace;
     font-size: 0.95rem;
 }
 

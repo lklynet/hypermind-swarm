@@ -9,7 +9,8 @@ const crypto = require("crypto");
  */
 const getSwarmId = (name) => {
   if (!name || name.trim() === "") return 0; // Global
-  const hash = crypto.createHash("sha256").update(name).digest();
+  const normalized = name.trim().toLowerCase();
+  const hash = crypto.createHash("sha256").update(normalized).digest();
   // Use first byte, mod 255 + 1 to get range 1-255
   return (hash[0] % 255) + 1;
 };

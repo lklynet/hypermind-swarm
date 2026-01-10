@@ -361,9 +361,9 @@ async function init() {
       charCount.textContent = `${currentLength}/280`;
 
       if (currentLength >= 280) {
-        charCount.style.color = "#ef4444"; // red-500
+        charCount.style.color = "var(--color-error)";
       } else if (currentLength >= 260) {
-        charCount.style.color = "#f59e0b"; // amber-500
+        charCount.style.color = "var(--color-warning)";
       } else {
         charCount.style.color = "var(--secondary-text)";
       }
@@ -551,7 +551,7 @@ window.showProfile = async (id) => {
                     <div>
                         <h2 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
                             ${escapeHtml(data.username)}
-                            <i class="fa-solid fa-circle-check follow-check" style="color: #4ade80; font-size: 1rem; display: ${
+                            <i class="fa-solid fa-circle-check follow-check" style="color: var(--color-success); font-size: 1rem; display: ${
                               isFollowing ? "inline" : "none"
                             };"></i>
                         </h2>
@@ -725,7 +725,7 @@ function addPingToContainer(ping, container, prepend = false) {
                     }" ${authorOnClick} ${authorStyle}>${escapeHtml(
     authorName
   )}</span>
-                    <i class="fa-solid fa-circle-check follow-check" style="color: #4ade80; font-size: 0.8rem; display: ${
+                    <i class="fa-solid fa-circle-check follow-check" style="color: var(--color-success); font-size: 0.8rem; display: ${
                       isFollowing ? "inline" : "none"
                     };"></i>
                     ${topicPill}

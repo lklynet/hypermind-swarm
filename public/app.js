@@ -14,17 +14,15 @@ const swarmInput = document.getElementById("swarm-input");
 const joinSwarmBtn = document.getElementById("join-swarm-btn");
 const activeSwarmsEl = document.getElementById("active-swarms");
 const trendingTitle = document.getElementById("trending-title");
-
-// Profile View Elements
 const profileView = document.getElementById("profile-view");
 const profileInfo = document.getElementById("profile-info");
 const profileFeed = document.getElementById("profile-feed");
-const feedEl = document.getElementById("feed"); // same as feed
-const composeArea = document.querySelector(".compose-area"); // Main compose area
+const feedEl = document.getElementById("feed");
+const composeArea = document.querySelector(".compose-area");
 const swarmControls = document.querySelector(".swarm-controls");
 
 let myId = "";
-let currentTopic = ""; // "" = Global
+let currentTopic = "";
 let currentSwarmId = 0;
 let joinedSwarms = JSON.parse(localStorage.getItem("joinedSwarms") || '[""]');
 let following = JSON.parse(localStorage.getItem("following") || "[]");
@@ -57,12 +55,10 @@ function initSections() {
   const isProfile = profileView.style.display === "block";
   const viewPrefix = isProfile ? "profile" : "feed";
 
-  // Reset all sections to expanded first
   document
     .querySelectorAll(".sidebar-section")
     .forEach((s) => s.classList.remove("collapsed"));
 
-  // Apply collapsed state for current view
   collapsedSections.forEach((key) => {
     if (key.startsWith(`${viewPrefix}-`)) {
       const name = key.replace(`${viewPrefix}-`, "");
@@ -82,13 +78,10 @@ function toggleFollow(id) {
   localStorage.setItem("following", JSON.stringify(following));
   renderFollowedAccounts();
 
-  // Update all pings by this author in the feed
   document.querySelectorAll(`.ping[data-author="${id}"]`).forEach((el) => {
-    // Update checkmark
     const check = el.querySelector(".follow-check");
     if (check) check.style.display = isFollowing ? "inline" : "none";
 
-    // Update ellipses menu item
     const menuFollowItem = el.querySelector(
       ".ping-menu .menu-item:first-child"
     );
@@ -102,7 +95,6 @@ function toggleFollow(id) {
     }
   });
 
-  // Update profile view if it's open for this user
   if (profileView.style.display === "block") {
     const profileFollowBtn = profileInfo.querySelector(".btn-follow");
     const profileCheck = profileInfo.querySelector(".follow-check");
@@ -127,7 +119,6 @@ function toggleBlock(id) {
     blocked = blocked.filter((b) => b !== id);
   } else {
     blocked.push(id);
-    // If we block someone, we should also unfollow them
     if (following.includes(id)) {
       following = following.filter((f) => f !== id);
       localStorage.setItem("following", JSON.stringify(following));
@@ -137,13 +128,11 @@ function toggleBlock(id) {
   renderFollowedAccounts();
 
   if (isBlocking) {
-    // Remove all pings by this author immediately
     document
       .querySelectorAll(`.ping[data-author="${id}"]`)
       .forEach((el) => el.remove());
   }
 
-  // Update profile view if it's open for this user
   if (profileView.style.display === "block") {
     const profileBlockBtn = profileInfo.querySelector(".btn-block");
     const profileFollowBtn = profileInfo.querySelector(".btn-follow");
@@ -166,7 +155,6 @@ function toggleBlock(id) {
       profileFeed.innerHTML =
         "<div style='padding: 1rem; color: var(--secondary-text);'>User is blocked.</div>";
     } else {
-      // If unblocking, we might want to refresh the profile to show pings again
       showProfile(id);
     }
   }
@@ -188,8 +176,7 @@ function renderFollowedAccounts() {
     el.onclick = () => showProfile(id);
 
     const avatarUrl = `/api/avatar/${id}`;
-    // We don't have the username here easily without fetching,
-    // but we can show the ID or try to find it from existing pings
+
     let name = "..." + id.slice(-8);
     const existingPing = document.querySelector(
       `.ping[data-author="${id}"] .author`
@@ -207,7 +194,6 @@ function renderFollowedAccounts() {
 async function getSwarmId(name) {
   if (!name) return 0;
 
-  // Try client-side calculation first (faster, no network)
   if (window.crypto && window.crypto.subtle) {
     try {
       const msgBuffer = new TextEncoder().encode(name);
@@ -277,10 +263,8 @@ function renderTrending(topics) {
 }
 
 async function init() {
-  // Initialize collapsed sections
   initSections();
 
-  // 1. Get identity first
   try {
     const res = await fetch("/api/whoami");
     if (res.ok) {
@@ -291,7 +275,6 @@ async function init() {
     console.error("Failed to fetch identity", e);
   }
 
-  // Restore subscriptions
   renderSwarmTags();
 
   for (const topic of joinedSwarms) {
@@ -304,7 +287,6 @@ async function init() {
     }
   }
 
-  // 2. Load initial pings
   try {
     const res = await fetch("/api/pings");
     const pings = await res.json();
@@ -315,13 +297,10 @@ async function init() {
     console.error("Failed to fetch pings", e);
   }
 
-  // 3. Load Trending
   await fetchTrending();
 
-  // 4. Load Followed Accounts
   renderFollowedAccounts();
 
-  // Setup SSE after page is fully loaded to avoid "interrupted while loading" errors
   const startSSE = () => {
     console.log("Initializing EventSource...");
     const evtSource = new EventSource("/events");
@@ -340,9 +319,8 @@ async function init() {
       } else if (data.type === "UPDATE") {
         updateStats(data);
       } else if (data.type === "PING") {
-        addPingToFeed(data, true); // true = prepend
+        addPingToFeed(data, true);
       } else if (data.count !== undefined) {
-        // Stat update
         updateStats(data);
       }
     };
@@ -354,7 +332,6 @@ async function init() {
     window.addEventListener("load", startSSE);
   }
 
-  // Character counter
   if (pingInput) {
     pingInput.addEventListener("input", () => {
       const currentLength = pingInput.value.length;
@@ -514,7 +491,7 @@ function updateStats(data) {
 window.showFeed = () => {
   profileView.style.display = "none";
   feedEl.style.display = "block";
-  composeArea.style.display = "block"; // Only main compose area
+  composeArea.style.display = "block"; 
   swarmControls.style.display = "block";
 
   if (trendingTitle) {
@@ -595,7 +572,6 @@ window.showProfile = async (id) => {
       });
     }
 
-    // Calculate user's top topics
     const topicCounts = {};
     data.pings.forEach((p) => {
       if (p.topic) {
@@ -608,7 +584,6 @@ window.showProfile = async (id) => {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
-    // Add "All" option
     userTopics.unshift({ name: "All", count: data.pings.length, isAll: true });
 
     if (trendingTitle) {
@@ -646,7 +621,6 @@ function addPingToContainer(ping, container, prepend = false) {
   const isMe = ping.author === myId;
   const swarmId = ping.swarmId || 0;
 
-  // Icon: Font Awesome Bullhorn
   const icon = `<i class="fa-solid fa-bullhorn"></i>`;
 
   const buttonContent = `
@@ -668,7 +642,6 @@ function addPingToContainer(ping, container, prepend = false) {
       }
     }
 
-    // Update comments
     const commentsSection = existingEl.querySelector(".comments-section");
     if (commentsSection) {
       renderComments(commentsSection, comments);
@@ -687,7 +660,6 @@ function addPingToContainer(ping, container, prepend = false) {
   el.dataset.swarmId = swarmId;
   el.dataset.author = ping.author;
 
-  // Initial visibility check (Only for main feed)
   if (!isProfile && currentSwarmId !== 0 && swarmId !== currentSwarmId) {
     el.style.display = "none";
   }
@@ -787,7 +759,6 @@ function addPingToContainer(ping, container, prepend = false) {
         </div>
     `;
 
-  // Initial render of comments
   renderComments(el.querySelector(".comments-section"), comments);
 
   if (prepend) {
@@ -813,7 +784,6 @@ window.amplify = async (id) => {
     });
     if (res.ok) {
       const data = await res.json();
-      // Update both feed and profile feed if present
       updatePingButton(`ping-${id}`, data.likes);
       updatePingButton(`profile-ping-${id}`, data.likes);
     } else {
@@ -868,7 +838,6 @@ window.togglePingMenu = (domId) => {
   const menu = document.getElementById(`menu-${domId}`);
   if (!menu) return;
 
-  // Close all other menus first
   document.querySelectorAll(".ping-menu").forEach((m) => {
     if (m.id !== `menu-${domId}`) m.style.display = "none";
   });
@@ -876,7 +845,6 @@ window.togglePingMenu = (domId) => {
   menu.style.display = menu.style.display === "none" ? "block" : "none";
 };
 
-// Close menus on click outside
 document.addEventListener("click", () => {
   document.querySelectorAll(".ping-menu").forEach((m) => {
     m.style.display = "none";
@@ -918,7 +886,6 @@ function renderComments(container, comments) {
   const list = container.querySelector(".comments-list");
   if (!list) return;
 
-  // Simple re-render
   list.innerHTML = "";
 
   comments.forEach((c) => {

@@ -2,16 +2,12 @@ const Hyperswarm = require("hyperswarm");
 const { signMessage } = require("../core/security");
 const {
   TOPIC,
-  TOPIC_NAME,
   HEARTBEAT_INTERVAL,
   MAX_CONNECTIONS,
   CONNECTION_ROTATION_INTERVAL,
-  ENABLE_CHAT,
 } = require("../config/constants");
 const {
   createSwarmFilter,
-  updateSwarmFilter,
-  getSwarmId,
 } = require("../utils/swarm-utils");
 
 class SwarmManager {

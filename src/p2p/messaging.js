@@ -4,9 +4,8 @@ const {
   createPublicKey,
 } = require("../core/security");
 const crypto = require("crypto");
-const { MAX_RELAY_HOPS, CHAT_RATE_LIMIT } = require("../config/constants");
+const { MAX_RELAY_HOPS } = require("../config/constants");
 const { BloomFilterManager } = require("../state/bloom");
-const { hasSwarmSubscription } = require("../utils/swarm-utils");
 
 class MessageHandler {
   constructor(
@@ -100,7 +99,8 @@ class MessageHandler {
         seq,
         ip,
         swarmFilter,
-        msg.encKey
+        msg.encKey,
+        username
       );
 
       if (wasNew) {

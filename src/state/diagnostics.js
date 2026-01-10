@@ -33,7 +33,7 @@ class DiagnosticsManager {
         Object.keys(this.stats).forEach(k => this.stats[k] = 0);
     }
 
-    startLogging(getPeerCount, getConnectionCount) {
+    startLogging() {
         this.interval = setInterval(() => {
             this.reset();
         }, DIAGNOSTICS_INTERVAL);

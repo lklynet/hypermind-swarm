@@ -22,7 +22,6 @@ class PingStore {
     const ping = this.cache.get(id);
     if (!ping) return false;
 
-    // Ensure amplifiedBy is a Set (in case it was serialized/deserialized differently)
     if (!(ping.amplifiedBy instanceof Set)) {
       ping.amplifiedBy = new Set(ping.amplifiedBy || []);
     }
@@ -45,13 +44,11 @@ class PingStore {
   getAll() {
     const pings = [];
     for (const [id, ping] of this.cache.entries()) {
-      // Convert Set to Array for JSON serialization
       pings.push({
         ...ping,
         amplifiedBy: Array.from(ping.amplifiedBy || []),
       });
     }
-    // Sort by timestamp descending (newest first)
     return pings.sort((a, b) => b.timestamp - a.timestamp);
   }
 
@@ -76,7 +73,6 @@ class PingStore {
       ping.comments = [];
     }
 
-    // Check for duplicate comment
     if (ping.comments.some((c) => c.id === comment.id)) {
       return false;
     }
@@ -86,7 +82,6 @@ class PingStore {
   }
 
   getUsername(authorId) {
-    // Try to find the most recent username for this author
     for (const [id, ping] of this.cache.entries()) {
       if (ping.author === authorId && ping.username) {
         return ping.username;

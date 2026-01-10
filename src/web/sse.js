@@ -5,7 +5,6 @@ class SSEManager {
         this.clients = new Set();
         this.lastBroadcast = 0;
         
-        // Keep connections alive with a heartbeat every 15 seconds
         setInterval(() => this.heartbeat(), 15000);
     }
 

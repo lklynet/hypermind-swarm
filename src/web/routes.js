@@ -45,10 +45,9 @@ const setupRoutes = (
       "Cache-Control": "no-cache",
       "Connection": "keep-alive",
       "Access-Control-Allow-Origin": "*",
-      "X-Accel-Buffering": "no" // Disable buffering for Nginx if present
+      "X-Accel-Buffering": "no"
     });
 
-    // Send retry interval and a comment to keep connection alive
     res.write("retry: 3000\n");
     res.write(": ok\n\n");
 
@@ -84,7 +83,6 @@ const setupRoutes = (
     const now = Date.now();
     const ONE_DAY = 24 * 60 * 60 * 1000;
 
-    // Filter recent pings
     const recentPings = pings.filter((p) => now - p.timestamp < ONE_DAY);
     const totalRecentPings = recentPings.length;
 
@@ -94,21 +92,16 @@ const setupRoutes = (
 
     const topicCounts = {};
     recentPings.forEach((p) => {
-      // console.log("Processing ping for trending:", p.id, p.topic);
       if (p.topic) {
         const normalized = p.topic.trim().toLowerCase();
         topicCounts[normalized] = (topicCounts[normalized] || 0) + 1;
       }
     });
 
-    // console.log(`Trending Calc: Total=${totalRecentPings}, Counts=${JSON.stringify(topicCounts)}`);
-
     const sorted = Object.entries(topicCounts)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
-
-    // console.log(`Trending analysis: Total=${totalRecentPings}, Topics=${JSON.stringify(sorted)}`);
 
     res.json(sorted);
   });
@@ -116,15 +109,11 @@ const setupRoutes = (
   app.get("/api/profile/:id", (req, res) => {
     const { id } = req.params;
     const pings = pingStore.getByAuthor(id);
-
-    // Calculate stats
-    // latest_seq? We don't track per-user seq in PingStore, but we have timestamps.
-    // user info?
     const latest = pings[0];
     const storedUsername = pingStore.getUsername(id);
     const profile = {
       id,
-      username: storedUsername || (latest ? latest.username : "Unknown"), // Best effort
+      username: storedUsername || (latest ? latest.username : "Unknown"),
       pings,
     };
     res.json(profile);
@@ -205,20 +194,16 @@ const setupRoutes = (
       timestamp,
       sig,
       hops: 0,
-      ttl: 10, // Increased default TTL
+      ttl: 10,
       swarmId,
       topic: normalizedTopic,
     };
 
-    // Store locally
     if (pingStore.add(msg)) {
-      // Auto-amplify (Pre-amplify)
       pingStore.like(msg.id, identity.id);
 
-      // Broadcast to direct peers
       swarm.broadcast(msg);
 
-      // Notify local SSE clients with updated state (likes: 1)
       const pingWithState = {
         ...msg,
         likes: 1,
@@ -241,27 +226,20 @@ const setupRoutes = (
       return res.status(404).json({ error: "Ping not found" });
     }
 
-    // Prevent double amplify (local check)
     if (ping.amplifiedBy && ping.amplifiedBy.has(identity.id)) {
       return res.status(400).json({ error: "Already amplified" });
     }
 
-    // Prevent self-amplification
     if (ping.author === identity.id) {
       return res.status(400).json({ error: "Cannot amplify your own ping" });
     }
 
-    // Create AMPLIFY message
     const amplifyIdBase = identity.id + ping.id + Date.now();
     const amplifyId = crypto
       .createHash("sha256")
       .update(amplifyIdBase)
       .digest("hex");
     const sig = signMessage(`amplify:${amplifyId}`, identity.privateKey);
-
-    // Strip local fields for the network message
-    // We need to send a valid PING object as 'originalPing'
-    // 'ping' from store has 'likes', 'amplifiedBy', 'receivedAt' which are not allowed in PING validation
     const { likes, amplifiedBy, receivedAt, ...originalPingData } = ping;
 
     const amplifyMsg = {
@@ -270,20 +248,15 @@ const setupRoutes = (
       originalPing: originalPingData,
       amplifier: identity.id,
       sig,
-      ttl: 10, // Boosted TTL!
+      ttl: 10,
     };
 
-    // Update local state
     pingStore.like(id, identity.id);
 
-    // Broadcast to network
     swarm.broadcast(amplifyMsg);
 
-    // Notify local SSE clients with the updated ping object
-    // Frontend needs to handle updates (or we rely on reload, but better to push)
     const updatedPing = pingStore.get(id);
 
-    // We convert Set to Array for JSON serialization (like in getAll)
     const serializablePing = {
       ...updatedPing,
       amplifiedBy: Array.from(updatedPing.amplifiedBy || []),
@@ -322,12 +295,9 @@ const setupRoutes = (
       ttl: 6,
     };
 
-    // Store locally
     if (pingStore.addComment(pingId, commentMsg)) {
-      // Broadcast
       swarm.broadcast(commentMsg);
 
-      // Notify local SSE clients
       const updatedPing = pingStore.get(pingId);
       const serializablePing = {
         ...updatedPing,

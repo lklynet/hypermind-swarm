@@ -9,11 +9,10 @@ class PeerManager {
         this.mySeq = 0;
     }
 
-    addOrUpdatePeer(id, seq, ip = null, swarmFilter = null, encKey = null) {
+    addOrUpdatePeer(id, seq, ip = null, swarmFilter = null, encKey = null, username = null) {
         const stored = this.seenPeers.get(id);
         const wasNew = !stored;
 
-        // Track in HyperLogLog for total unique estimation
         this.uniquePeersHLL.add(id);
 
         this.seenPeers.set(id, {
@@ -22,6 +21,7 @@ class PeerManager {
             ip: ip || (stored ? stored.ip : null),
             swarmFilter: swarmFilter || (stored ? stored.swarmFilter : null),
             encKey: encKey || (stored ? stored.encKey : null),
+            username: username || (stored ? stored.username : null),
         });
 
         return wasNew;
@@ -53,9 +53,6 @@ class PeerManager {
                 this.seenPeers.delete(id);
                 removed++;
             } else {
-                // Optimization: Since LRUCache maintains insertion order (updated on access),
-                // the Map is sorted by lastSeen (ascending).
-                // If we find a non-stale peer, all subsequent peers are also non-stale.
                 break;
             }
         }

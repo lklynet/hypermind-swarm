@@ -1,7 +1,3 @@
-/**
- * Simple Bloom filter for message deduplication
- * Prevents re-relaying messages we've already seen
- */
 class BloomFilter {
     constructor(size = 200000, hashCount = 3) {
         this.size = size;
@@ -39,10 +35,6 @@ class BloomFilter {
     }
 }
 
-/**
- * Time-bucketed bloom filter manager
- * Rotates every 30 seconds to prevent unbounded growth
- */
 class BloomFilterManager {
     constructor() {
         this.currentBloom = new BloomFilter();

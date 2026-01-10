@@ -78,10 +78,7 @@ const main = async () => {
 
   await swarmManager.start();
 
-  diagnostics.startLogging(
-    () => peerManager.size,
-    () => swarmManager.getSwarm().connections.size
-  );
+  diagnostics.startLogging();
 
   setInterval(() => {
     broadcastUpdate();

@@ -21,8 +21,22 @@ const hasSwarmSubscription = (filterHex, swarmId) => {
   return (buffer[byteIndex] & (1 << bitIndex)) !== 0;
 };
 
+const updateSwarmFilter = (filterHex, swarmId, subscribe) => {
+  if (!filterHex) return filterHex;
+  const buffer = Buffer.from(filterHex, "hex");
+  const byteIndex = Math.floor(swarmId / 8);
+  const bitIndex = swarmId % 8;
+  if (subscribe) {
+    buffer[byteIndex] |= 1 << bitIndex;
+  } else {
+    buffer[byteIndex] &= ~(1 << bitIndex);
+  }
+  return buffer.toString("hex");
+};
+
 module.exports = {
   getSwarmId,
   createSwarmFilter,
   hasSwarmSubscription,
+  updateSwarmFilter,
 };

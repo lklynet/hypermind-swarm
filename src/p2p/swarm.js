@@ -7,7 +7,9 @@ const {
   CONNECTION_ROTATION_INTERVAL,
 } = require("../config/constants");
 const {
+  getSwarmId,
   createSwarmFilter,
+  updateSwarmFilter,
 } = require("../utils/swarm-utils");
 
 class SwarmManager {

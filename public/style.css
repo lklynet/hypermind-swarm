@@ -1,16 +1,24 @@
 :root {
-    --color-count: #a17e3e;
-    --color-particle: #a17e3e;
-    --color-particle-link: rgba(161, 126, 62, 0.15);
-    --color-pulse: #c8b491;
-    --color-theme-toggle: #a17e3e;
-    --color-theme-toggle-hover: #c8b491;
+    --color-red: #8c4f4a;
+    --color-olive: #57553c;
+    --color-blue: #65788f;
+    --color-purple: #85678f;
+    --color-green: #718062;
+    --color-light-purple: #b294bb;
+    --color-teal: #8abeb7;
+
+    --color-count: var(--color-teal);
+    --color-particle: var(--color-teal);
+    --color-particle-link: rgba(138, 190, 183, 0.15);
+    --color-pulse: var(--color-light-purple);
+    --color-theme-toggle: var(--color-purple);
+    --color-theme-toggle-hover: var(--color-light-purple);
     --color-bg-main: #191716;
     --color-bg-overlay: rgba(25, 23, 22, 0.8);
 
     --color-text-default: #daba8b;
-    --color-text-main-label: rgba(218, 186, 139, 0.6); 
-    --color-text-footer: rgba(87, 85, 60, 0.6);
+    --color-text-main-label: rgba(101, 120, 143, 0.6); 
+    --color-text-footer: rgba(101, 120, 143, 0.6);
     --color-text-footer-hover: #daba8b;
     --color-text-debug: rgba(87, 85, 60, 0.8);
     --color-text-debug-link: rgba(87, 85, 60, 0.8);
@@ -19,9 +27,9 @@
 
     --color-modal-bg: #0f0e0d;
     --color-modal-border: rgba(87, 85, 60, 0.3);
-    --color-modal-title: #c8b491;
+    --color-modal-title: var(--color-teal);
     --color-modal-close-btn: rgba(87, 85, 60, 0.5);
-    --color-modal-close-btn-hover: #c8b491;
+    --color-modal-close-btn-hover: var(--color-teal);
     --color-modal-stat-div: #0f0e0d;
     --color-modal-stat-label: rgba(87, 85, 60, 0.8);
     --color-modal-stat-value: #daba8b;
@@ -33,13 +41,13 @@
     --color-terminal-input-text: #daba8b;
     --color-terminal-input-divider: rgba(87, 85, 60, 0.3);
     --color-terminal-output-message: #daba8b;
-    --color-terminal-tab-arrow: #a17e3e;
-    --color-terminal-tab-arrow-hover: #c8b491;
+    --color-terminal-tab-arrow: var(--color-teal);
+    --color-terminal-tab-arrow-hover: var(--color-blue);
     --color-terminal-tab-bg-hover: rgba(87, 85, 60, 0.1);
     --color-terminal-status-message: rgba(87, 85, 60, 0.8);
     --color-terminal-scrollbar: rgba(87, 85, 60, 0.3);
     --color-terminal-scrollbar-hover: rgba(87, 85, 60, 0.5);
-    --color-terminal-text-default: #a17e3e;
+    --color-terminal-text-default: var(--color-teal);
 
     --color-error: #8c4f4a;
     --color-warning: #a17e3e;
@@ -48,13 +56,13 @@
     --bg-color: var(--color-bg-main);
     --text-color: var(--color-text-default);
     --border-color: var(--color-modal-border);
-    --primary-color: var(--color-count);
-    --primary-hover: #8c6d35;
+    --primary-color: var(--color-teal);
+    --primary-hover: var(--color-blue);
     --secondary-text: var(--color-text-main-label);
     --ping-bg: var(--color-bg-main);
     --ping-hover: rgba(87, 85, 60, 0.05);
-    --status-connecting: #a17e3e;
-    --status-connected: #718062;
+    --status-connecting: var(--color-warning);
+    --status-connected: var(--color-success);
     --card-border: 1px solid var(--border-color);
     --surface: var(--color-modal-stat-div);
 }
@@ -186,7 +194,7 @@ code, pre, kbd, samp {
 }
 
 .swarm-item.active {
-    background: rgba(161, 126, 62, 0.15);
+    background: rgba(138, 190, 183, 0.15);
     color: var(--color-text-default);
     border: 1px solid var(--primary-color);
 }
@@ -364,7 +372,7 @@ code, pre, kbd, samp {
 }
 
 .btn-follow:hover {
-    background: rgba(161, 126, 62, 0.1);
+    background: rgba(138, 190, 183, 0.1);
     border-color: var(--primary-color);
     color: var(--primary-color);
 }
@@ -539,8 +547,8 @@ textarea::placeholder {
 
 #ping-btn {
     align-self: flex-end;
-    background: var(--primary-color);
-    color: var(--color-bg-main);
+    background: var(--color-blue);
+    color: var(--color-text-default);
     border: none;
     padding: 0.6rem 1.2rem;
     border-radius: 9999px;
@@ -551,8 +559,8 @@ textarea::placeholder {
 }
 
 #ping-btn:hover {
-    background: var(--primary-hover);
-    color: var(--color-bg-main);
+    background: var(--color-purple);
+    color: var(--color-text-default);
 }
 
 #ping-btn:disabled {
@@ -628,8 +636,8 @@ textarea::placeholder {
 }
 
 .topic-pill {
-    background: rgba(161, 126, 62, 0.1);
-    color: var(--primary-color);
+    background: rgba(133, 103, 143, 0.15);
+    color: var(--color-purple);
     padding: 2px 8px;
     border-radius: 999px;
     font-size: 0.8rem;
@@ -640,7 +648,7 @@ textarea::placeholder {
 }
 
 .topic-pill:hover {
-    background: rgba(161, 126, 62, 0.2);
+    background: rgba(133, 103, 143, 0.25);
 }
 
 .date { 
@@ -698,12 +706,12 @@ textarea::placeholder {
 }
 
 .action-btn:hover:not(:disabled) {
-    color: var(--primary-color);
-    background: rgba(161, 126, 62, 0.1);
+    color: var(--color-red);
+    background: rgba(140, 79, 74, 0.1);
 }
 
 .action-btn.amplified {
-    color: var(--primary-color); 
+    color: var(--color-red); 
 }
 
 .action-btn.amplified:disabled {

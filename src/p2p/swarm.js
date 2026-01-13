@@ -248,6 +248,9 @@ class SwarmManager {
         swarmFilter: this.swarmFilter,
         encKey: this.identity.encryptionPublicKey,
         sig,
+        coreKey: this.persistenceManager
+          ? this.persistenceManager.getPrimaryPublicKey()
+          : null,
       }) + "\n";
 
     for (const socket of this.swarm.connections) {

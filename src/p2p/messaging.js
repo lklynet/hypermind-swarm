@@ -338,6 +338,7 @@ const validateMessage = (msg) => {
       "sig",
       "encKey",
       "swarmFilter",
+      "coreKey",
     ];
     const fields = Object.keys(msg);
     return (

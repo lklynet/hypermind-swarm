@@ -20,7 +20,8 @@ const setupRoutes = (
   swarm,
   sseManager,
   diagnostics,
-  pingStore
+  pingStore,
+  persistenceManager
 ) => {
   app.use(express.json());
   app.use(express.static(path.join(__dirname, "../../public")));
@@ -211,6 +212,12 @@ const setupRoutes = (
     if (pingStore.add(msg)) {
       pingStore.like(msg.id, identity.id);
 
+      if (persistenceManager) {
+        persistenceManager.append(msg).catch((err) => {
+          console.error("Failed to persist local ping:", err);
+        });
+      }
+
       swarm.broadcast(msg);
 
       const pingWithState = {
@@ -262,6 +269,12 @@ const setupRoutes = (
 
     pingStore.like(id, identity.id);
 
+    if (persistenceManager) {
+      persistenceManager.append(amplifyMsg).catch((err) => {
+        console.error("Failed to persist local amplify:", err);
+      });
+    }
+
     swarm.broadcast(amplifyMsg);
 
     const updatedPing = pingStore.get(id);
@@ -305,6 +318,12 @@ const setupRoutes = (
     };
 
     if (pingStore.addComment(pingId, commentMsg)) {
+      if (persistenceManager) {
+        persistenceManager.append(commentMsg).catch((err) => {
+          console.error("Failed to persist local comment:", err);
+        });
+      }
+
       swarm.broadcast(commentMsg);
 
       const updatedPing = pingStore.get(pingId);

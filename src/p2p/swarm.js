@@ -20,7 +20,8 @@ class SwarmManager {
     messageHandler,
     relayFn,
     broadcastFn,
-    chatSystemFn
+    chatSystemFn,
+    persistenceManager
   ) {
     this.identity = identity;
     this.peerManager = peerManager;
@@ -29,6 +30,7 @@ class SwarmManager {
     this.relayFn = relayFn;
     this.broadcastFn = broadcastFn;
     this.chatSystemFn = chatSystemFn;
+    this.persistenceManager = persistenceManager;
 
     this.swarm = new Hyperswarm();
     this.heartbeatInterval = null;
@@ -52,6 +54,10 @@ class SwarmManager {
       return;
     }
 
+    if (this.persistenceManager) {
+      this.persistenceManager.replicate(socket);
+    }
+
     socket.connectedAt = Date.now();
 
     const sig = signMessage(
@@ -66,7 +72,10 @@ class SwarmManager {
       hops: 0,
       nonce: this.identity.nonce,
       sig,
-      encKey: this.identity.encryptionPublicKey, // Include encryption key
+      encKey: this.identity.encryptionPublicKey,
+      coreKey: this.persistenceManager
+        ? this.persistenceManager.getPrimaryPublicKey()
+        : null,
     });
     socket.write(hello + "\n");
     this.diagnostics.increment("bytesSent", hello.length + 1);
@@ -115,6 +124,9 @@ class SwarmManager {
           hops: 0,
           nonce: this.identity.nonce,
           sig,
+          coreKey: this.persistenceManager
+            ? this.persistenceManager.getPrimaryPublicKey()
+            : null,
         }) + "\n";
 
       for (const socket of this.swarm.connections) {
@@ -236,6 +248,9 @@ class SwarmManager {
         swarmFilter: this.swarmFilter,
         encKey: this.identity.encryptionPublicKey,
         sig,
+        coreKey: this.persistenceManager
+          ? this.persistenceManager.getPrimaryPublicKey()
+          : null,
       }) + "\n";
 
     for (const socket of this.swarm.connections) {

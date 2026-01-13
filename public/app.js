@@ -24,6 +24,7 @@ let myId = "";
 let currentTopic = "";
 let currentSwarmId = 0;
 let currentTab = "foryou";
+let currentProfileId = "";
 let joinedSwarms = JSON.parse(localStorage.getItem("joinedSwarms") || '[""]');
 let following = JSON.parse(localStorage.getItem("following") || "[]");
 let blocked = JSON.parse(localStorage.getItem("blocked") || "[]");
@@ -188,6 +189,9 @@ async function init() {
           updateStats(data);
         } else if (data.type === "PING") {
           addPingToFeed(data, true);
+          if (currentProfileId === data.author) {
+            addPingToContainer(data, profileFeed, true);
+          }
         } else if (data.count !== undefined) {
           updateStats(data);
         }
@@ -410,13 +414,26 @@ function addPingToContainer(ping, container, prepend = false) {
   const domId = isProfile ? `profile-ping-${ping.id}` : `ping-${ping.id}`;
   const existingEl = document.getElementById(domId);
 
+  if (existingEl) {
+    // Update likes
+    const countEl = existingEl.querySelector(`.amplify-count`);
+    if (countEl) countEl.textContent = ping.likes || 0;
+
+    // Update comments
+    const commentCountEl = existingEl.querySelector(`.comment-count`);
+    if (commentCountEl)
+      commentCountEl.textContent = ping.comments ? ping.comments.length : 0;
+
+    const list = existingEl.querySelector(`.comments-list`);
+    if (list && ping.comments) {
+      list.innerHTML = ping.comments.map((c) => renderComment(c)).join("");
+    }
+    return;
+  }
+
   const likes = ping.likes || 0;
   const isMe = ping.author === myId;
   const swarmId = ping.swarmId || 0;
-
-  if (existingEl) {
-    return;
-  }
 
   const el = document.createElement("div");
   el.className = "ping";
@@ -473,30 +490,26 @@ function addPingToContainer(ping, container, prepend = false) {
             <button class="action-btn amplify" onclick="amplifyPing('${
               ping.id
             }')">
-                <i class="fa-solid fa-bullhorn"></i> <span id="amplify-count-${
-                  ping.id
-                }">${ping.likes || 0}</span>
+                <i class="fa-solid fa-bullhorn"></i> <span class="amplify-count">${
+                  ping.likes || 0
+                }</span>
             </button>
             <button class="action-btn comment" onclick="toggleComment('${
               ping.id
             }')">
-                <i class="fa-regular fa-comment"></i> <span id="comment-count-${
-                  ping.id
-                }">${ping.comments ? ping.comments.length : 0}</span>
+                <i class="fa-regular fa-comment"></i> <span class="comment-count">${
+                  ping.comments ? ping.comments.length : 0
+                }</span>
             </button>
         </div>
-        <div id="comment-section-${
-          ping.id
-        }" class="comment-section" style="display: none;">
+        <div class="comment-section" style="display: none;">
             <div class="comment-input-wrapper">
-                <input type="text" id="comment-input-${
+                <input type="text" class="comment-input" placeholder="Write a comment..." onkeydown="handleCommentKey(event, '${
                   ping.id
-                }" placeholder="Write a comment..." onkeydown="handleCommentKey(event, '${
-    ping.id
-  }')">
+                }')">
                 <button onclick="submitComment('${ping.id}')">Reply</button>
             </div>
-            <div id="comments-list-${ping.id}" class="comments-list">
+            <div class="comments-list">
                 ${(ping.comments || []).map((c) => renderComment(c)).join("")}
             </div>
         </div>
@@ -545,8 +558,11 @@ async function amplifyPing(id) {
     });
     if (res.ok) {
       const data = await res.json();
-      const countEl = document.getElementById(`amplify-count-${id}`);
-      if (countEl) countEl.textContent = data.likes;
+      // Update all instances of this ping (main feed and profile feed)
+      const countEls = document.querySelectorAll(
+        `[id$="ping-${id}"] .amplify-count`
+      );
+      countEls.forEach((el) => (el.textContent = data.likes));
     } else {
       const err = await res.json();
       alert(err.error || "Failed to amplify");
@@ -557,15 +573,17 @@ async function amplifyPing(id) {
 }
 
 function toggleComment(id) {
-  const section = document.getElementById(`comment-section-${id}`);
-  if (section) {
+  const sections = document.querySelectorAll(
+    `[id$="ping-${id}"] .comment-section`
+  );
+  sections.forEach((section) => {
     const isHidden = section.style.display === "none";
     section.style.display = isHidden ? "block" : "none";
     if (isHidden) {
-      const input = document.getElementById(`comment-input-${id}`);
+      const input = section.querySelector(".comment-input");
       if (input) input.focus();
     }
-  }
+  });
 }
 
 function handleCommentKey(e, id) {
@@ -575,9 +593,19 @@ function handleCommentKey(e, id) {
 }
 
 async function submitComment(id) {
-  const input = document.getElementById(`comment-input-${id}`);
-  if (!input) return;
-  const content = input.value.trim();
+  // Find all inputs for this ping and get the one with content
+  const inputs = document.querySelectorAll(`[id$="ping-${id}"] .comment-input`);
+  let content = "";
+  let activeInput = null;
+
+  for (const input of inputs) {
+    if (input.value.trim()) {
+      content = input.value.trim();
+      activeInput = input;
+      break;
+    }
+  }
+
   if (!content) return;
 
   try {
@@ -587,21 +615,9 @@ async function submitComment(id) {
       body: JSON.stringify({ pingId: id, content }),
     });
     if (res.ok) {
-      const comment = await res.json();
-      input.value = "";
-
-      const list = document.getElementById(`comments-list-${id}`);
-      if (list) {
-        const el = document.createElement("div");
-        el.innerHTML = renderComment(comment);
-
-        list.insertAdjacentHTML("beforeend", renderComment(comment));
-      }
-
-      const countEl = document.getElementById(`comment-count-${id}`);
-      if (countEl) {
-        countEl.textContent = parseInt(countEl.textContent || "0") + 1;
-      }
+      // Clear all inputs for this ping
+      inputs.forEach((input) => (input.value = ""));
+      // The SSE event will handle updating the comments list and count
     }
   } catch (e) {
     console.error(e);
@@ -635,6 +651,7 @@ window.showMyProfile = () => {
 };
 
 window.showProfile = async (id) => {
+  currentProfileId = id;
   mainView.style.display = "none";
   profileView.style.display = "block";
 
@@ -700,6 +717,7 @@ window.showProfile = async (id) => {
 };
 
 window.showFeed = () => {
+  currentProfileId = "";
   profileView.style.display = "none";
   mainView.style.display = "block";
 };

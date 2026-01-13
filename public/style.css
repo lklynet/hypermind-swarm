@@ -28,8 +28,7 @@ body {
     font-family: "Google Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
     padding: 0;
-    overflow-y: hidden; 
-    height: 100vh;
+    min-height: 100vh;
 }
 
 
@@ -50,43 +49,26 @@ body {
 .app-container {
     display: grid;
     grid-template-columns: 275px 1fr 350px;
-    height: 100vh;
+    min-height: 100vh;
     max-width: 1300px;
     margin: 0 auto;
 }
-
-@media (max-width: 1000px) {
-    .app-container {
-        grid-template-columns: 80px 1fr 290px;
-    }
-    .nav-label, .profile-info {
-        display: none;
-    }
-    .logo-text {
-        display: none;
-    }
-    .sidebar-left {
-        align-items: center;
-    }
-}
-
-@media (max-width: 700px) {
-    .app-container {
-        grid-template-columns: 1fr;
-    }
-    .sidebar-left, .sidebar-right {
-        display: none;
-    }
-}
-
 
 .sidebar-left {
     display: flex;
     flex-direction: column;
     padding: 1rem 1rem 1rem 2rem;
     border-right: 1px solid var(--border-color);
-    height: 100%;
+    position: sticky;
+    top: 0;
+    height: 100vh;
     overflow-y: auto;
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+    -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+}
+
+.sidebar-left::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for Chrome/Safari */
 }
 
 .logo-container {
@@ -293,8 +275,7 @@ body {
     display: flex;
     flex-direction: column;
     border-right: 1px solid var(--border-color);
-    height: 100%;
-    overflow-y: hidden;
+    min-height: 100vh;
 }
 
 .header-tabs {
@@ -401,7 +382,6 @@ body {
 }
 
 .feed-container {
-    overflow-y: auto;
     flex: 1;
 }
 
@@ -510,10 +490,13 @@ body {
 
 .sidebar-right {
     padding: 1rem 2rem 1rem 1rem;
-    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: fit-content;
 }
 
 .right-panel {
@@ -740,4 +723,108 @@ body {
 
 .comment-text {
     color: var(--text-color);
+}
+
+/* Responsive Overrides */
+@media (max-width: 1000px) {
+    .app-container {
+        grid-template-columns: 80px 1fr 290px;
+    }
+    
+    .sidebar-left {
+        align-items: center;
+        padding: 2rem 0;
+        height: 100vh;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--border-color);
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .sidebar-left::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Hide everything except the three essentials */
+    .nav-menu, 
+    .nav-label, 
+    .profile-info, 
+    .logo-container div, 
+    .diag-header, 
+    .diag-label, 
+    .diag-value, 
+    #status-text, 
+    .diag-section:not(:first-child),
+    .diag-item:not(:first-child),
+    .ping-btn-large {
+        display: none !important;
+    }
+
+    /* Container resets */
+    .logo-container {
+        margin-bottom: 1.5rem !important;
+        padding: 0 !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    .diagnostics-panel {
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    .user-profile-widget {
+        margin-top: auto !important;
+        margin-bottom: 2rem !important;
+        padding: 0 !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+
+    .diag-section, .diag-grid, .diag-item, .connection-status {
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    /* Sizing for the visible elements */
+    .logo, 
+    .user-avatar {
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
+        margin: 0 !important;
+    }
+
+    .status-dot {
+        width: 12px !important;
+        height: 12px !important;
+        min-width: 12px !important;
+        min-height: 12px !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+    }
+}
+
+@media (max-width: 700px) {
+    .app-container {
+        grid-template-columns: 80px 1fr !important;
+    }
+    .sidebar-right {
+        display: none !important;
+    }
+    .main-column {
+        border-right: none !important;
+    }
 }

@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Google+Sans+Code:ital,wght@0,300..800;1,300..800&family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/style.css?v=4" />
+    <link rel="stylesheet" href="/style.css?v=7" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -21,129 +21,117 @@
   </head>
   <body>
     <div class="app-container">
-      <header>
-        <div class="header-brand" onclick="showFeed()" style="cursor: pointer">
+      <aside class="sidebar-left">
+        <div class="logo-container" onclick="showFeed()">
           <img src="/hypermind.svg" alt="Hypermind Logo" class="logo" />
-          <div class="header-text">
-            <h1>Hypermind-Swarm</h1>
-            <div class="powered-by">
-              Powered by
-              <a
-                href="https://github.com/lklynet/hypermind"
-                target="_blank"
-                onclick="event.stopPropagation()"
-                >hypermind</a
-              >
+          <div style="display: flex; flex-direction: column;">
+            <span class="logo-text">Hypermind-Swarm</span>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">
+                Powered by <a href="https://github.com/lklynet/hypermind" target="_blank" style="color: var(--primary-color); text-decoration: none;">hypermind</a>
             </div>
           </div>
         </div>
-        <div class="stats">
-          <div id="connection-status" class="connection-status">
-            <span id="status-dot" class="status-dot connecting"></span>
-            <span id="status-text">connecting...</span>
-          </div>
-          <span class="separator">|</span>
-          <span id="my-id" style="cursor: pointer">...</span>
+
+        <div class="stats-section" style="margin-top: 2rem; padding: 0 1rem;">
+            <div class="stat-row" style="margin-bottom: 1rem;">
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem;">Network Status</div>
+                <div class="connection-status" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span id="status-dot" class="status-dot connecting" style="width: 8px; height: 8px;"></span>
+                    <span id="status-text" style="font-size: 1rem; font-weight: 500;">connecting...</span>
+                </div>
+            </div>
+            <div class="stat-row">
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem;">Active Nodes</div>
+                <div id="stat-node-count" style="font-size: 1.5rem; font-weight: 300; font-family: 'Google Sans Code', monospace;">0</div>
+            </div>
         </div>
-      </header>
 
-      <div class="app-layout">
-        <main class="main-content">
-          <div class="compose-area">
-            <textarea
-              id="ping-input"
-              placeholder="What's happening? (Max 280 chars)"
-              maxlength="280"
-            ></textarea>
-            <div
-              class="compose-actions"
-              style="
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-              "
-            >
-              <span
-                id="char-count"
-                style="color: var(--secondary-text); font-size: 0.9rem"
-                >0/280</span
-              >
-              <button id="ping-btn">Ping</button>
+        <div class="user-profile-widget" id="my-profile-widget" onclick="showMyProfile()">
+          <div class="user-avatar" id="my-avatar-small"></div>
+          <div class="profile-info">
+            <span class="profile-name" id="my-name-display">Loading...</span>
+            <span class="profile-handle" id="my-id">...</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-column">
+        <div id="main-view">
+            <div class="header-tabs">
+              <div class="tab active" id="tab-foryou" onclick="switchTab('foryou')">For you</div>
+              <div class="tab" id="tab-following" onclick="switchTab('following')">Following</div>
             </div>
-          </div>
 
-          <div id="feed" class="feed">
-          </div>
-
-          <div id="profile-view" class="profile-view" style="display: none">
-            <div class="profile-header">
-              <button class="back-btn" onclick="showFeed()">
-                <i class="fa-solid fa-arrow-left"></i> Back
-              </button>
-              <div id="profile-info"></div>
+            <div class="compose-area">
+            <div class="compose-avatar" id="compose-avatar"></div>
+            <div class="compose-input-wrapper">
+                <textarea
+                id="ping-input"
+                placeholder="What is happening?!"
+                maxlength="280"
+                ></textarea>
+                <div class="compose-actions">
+                <span
+                    id="char-count"
+                    style="color: var(--primary-color); font-size: 0.9rem; display: none;"
+                    >0/280</span
+                >
+                <button id="ping-btn" style="margin-left: auto;">Ping</button>
+                </div>
             </div>
-            <div id="profile-feed" class="feed"></div>
-          </div>
-        </main>
+            </div>
 
-        <aside class="sidebar">
-          <div class="sidebar-section swarm-controls" id="section-swarms">
-            <h3 class="sidebar-title" onclick="toggleSection('swarms')">
-              <span class="title-text">Swarms</span>
-              <i class="fa-solid fa-chevron-down toggle-icon"></i>
-            </h3>
-            <div class="section-content">
-              <div class="swarm-input-container">
-                <input
-                  type="text"
-                  id="swarm-input"
-                  placeholder="Join swarm..."
-                />
-                <button id="join-swarm-btn" title="Join Swarm">
-                  <i class="fa-solid fa-plus"></i>
+            <div id="feed" class="feed-container">
+            </div>
+        </div>
+
+        <div id="profile-view" class="profile-view">
+            <div class="profile-header-large">
+                <button class="back-btn" onclick="showFeed()">
+                    <i class="fa-solid fa-arrow-left"></i> Back
                 </button>
-              </div>
-              <div
-                id="active-swarms"
-                style="
-                  font-size: 0.9rem;
-                  color: var(--secondary-text);
-                  display: flex;
-                  flex-direction: column;
-                  gap: 0.5rem;
-                "
-              >
-              </div>
+                <div id="profile-info"></div>
             </div>
-          </div>
+            <div id="profile-feed" class="feed-container"></div>
+        </div>
+      </main>
 
-          <div class="sidebar-section" id="section-followed">
-            <h3 class="sidebar-title" onclick="toggleSection('followed')">
-              <span class="title-text">Followed</span>
-              <i class="fa-solid fa-chevron-down toggle-icon"></i>
-            </h3>
-            <div class="section-content">
-              <div id="followed-accounts-list" class="followed-accounts-list">
-              </div>
-            </div>
+      <aside class="sidebar-right">
+        <div class="right-panel">
+          <h3 class="panel-title">Swarms</h3>
+          <div class="swarm-input-container">
+            <input
+              type="text"
+              id="swarm-input"
+              placeholder="Join swarm..."
+            />
+            <button id="join-swarm-btn" title="Join Swarm">
+              <i class="fa-solid fa-plus"></i>
+            </button>
           </div>
+          <div
+            id="active-swarms"
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 0.5rem;
+            "
+          >
+          </div>
+        </div>
 
-          <div class="sidebar-section" id="section-trending">
-            <h3
-              id="trending-title"
-              class="sidebar-title"
-              onclick="toggleSection('trending')"
-            >
-              <span class="title-text">Trending</span>
-              <i class="fa-solid fa-chevron-down toggle-icon"></i>
-            </h3>
-            <div class="section-content">
-              <div id="trending-list" class="trending-list">
-              </div>
+        <div class="right-panel">
+            <h3 class="panel-title">Following</h3>
+            <div id="followed-accounts-list" class="followed-accounts-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
             </div>
+        </div>
+
+        <div class="right-panel">
+          <h3 class="panel-title">Trending</h3>
+          <div id="trending-list" class="trending-list">
           </div>
-        </aside>
-      </div>
+        </div>
+      </aside>
     </div>
 
     <script src="/app.js"></script>

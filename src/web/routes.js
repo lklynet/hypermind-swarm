@@ -4,6 +4,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { signMessage } = require("../core/security");
 const { generateAvatar } = require("../utils/avatar");
+const { generateScreenname } = require("../utils/name-generator");
 const { CHAT_RATE_LIMIT, VISUAL_LIMIT } = require("../config/constants");
 const { getSwarmId } = require("../utils/swarm-utils");
 
@@ -71,7 +72,7 @@ const setupRoutes = (
   });
 
   app.get("/api/whoami", (req, res) => {
-    res.json({ id: identity.id });
+    res.json({ id: identity.id, username: identity.username });
   });
 
   app.get("/api/pings", (req, res) => {
@@ -113,7 +114,7 @@ const setupRoutes = (
     const storedUsername = pingStore.getUsername(id);
     const profile = {
       id,
-      username: storedUsername || (latest ? latest.username : "Unknown"),
+      username: storedUsername || (latest ? latest.username : generateScreenname(id)),
       pings,
     };
     res.json(profile);

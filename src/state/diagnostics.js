@@ -36,21 +36,18 @@ class DiagnosticsManager {
     };
   }
 
+  getAndResetStats() {
+    const stats = this.getStats();
+    this.reset();
+    return stats;
+  }
+
   reset() {
     Object.keys(this.stats).forEach((k) => (this.stats[k] = 0));
   }
 
-  startLogging() {
-    this.interval = setInterval(() => {
-      this.reset();
-    }, DIAGNOSTICS_INTERVAL);
-  }
-
   stopLogging() {
-    if (this.interval) {
-      clearInterval(this.interval);
-      this.interval = null;
-    }
+    // No-op, interval removed
   }
 }
 

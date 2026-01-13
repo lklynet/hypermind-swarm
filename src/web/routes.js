@@ -41,13 +41,16 @@ const setupRoutes = (
   });
 
   app.get("/events", (req, res) => {
+    console.log("New SSE connection request");
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
-      "Connection": "keep-alive",
+      Connection: "keep-alive",
       "Access-Control-Allow-Origin": "*",
-      "X-Accel-Buffering": "no"
+      "X-Accel-Buffering": "no",
     });
+
+    if (res.flushHeaders) res.flushHeaders();
 
     res.write("retry: 3000\n");
     res.write(": ok\n\n");
@@ -67,7 +70,10 @@ const setupRoutes = (
     });
     res.write(`data: ${data}\n\n`);
 
+    if (res.flush) res.flush();
+
     req.on("close", () => {
+      console.log("SSE connection closed");
       sseManager.removeClient(res);
     });
   });
@@ -115,7 +121,8 @@ const setupRoutes = (
     const storedUsername = pingStore.getUsername(id);
     const profile = {
       id,
-      username: storedUsername || (latest ? latest.username : generateScreenname(id)),
+      username:
+        storedUsername || (latest ? latest.username : generateScreenname(id)),
       pings,
     };
     res.json(profile);

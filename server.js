@@ -20,13 +20,15 @@ const main = async () => {
 
   peerManager.addOrUpdatePeer(identity.id, peerManager.getSeq());
 
-  const broadcastUpdate = () => {
+  const broadcastUpdate = (reset = false) => {
     sseManager.broadcastUpdate({
       count: peerManager.size,
       totalUnique: peerManager.totalUniquePeers,
       direct: swarmManager.getSwarm().connections.size,
       id: identity.id,
-      diagnostics: diagnostics.getStats(),
+      diagnostics: reset
+        ? diagnostics.getAndResetStats()
+        : diagnostics.getStats(),
       peers: peerManager.getPeersWithIps(),
     });
   };
@@ -78,10 +80,11 @@ const main = async () => {
 
   await swarmManager.start();
 
-  diagnostics.startLogging();
+  // Initial broadcast
+  broadcastUpdate();
 
   setInterval(() => {
-    broadcastUpdate();
+    broadcastUpdate(true);
   }, DIAGNOSTICS_INTERVAL);
 
   const app = createServer(

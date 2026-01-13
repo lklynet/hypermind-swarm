@@ -40,19 +40,28 @@ function switchTab(tab) {
 }
 
 function updateStats(data) {
+  console.log("Updating stats:", data);
+
+  // Helper to safely update text content
+  const setText = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.textContent = val;
+    } else {
+      console.warn(`Element with id '${id}' not found`);
+    }
+  };
+
   if (data.count !== undefined) {
-    const activeNodesEl = document.getElementById("diag-active-nodes");
-    if (activeNodesEl) activeNodesEl.textContent = data.count;
+    setText("diag-active-nodes", data.count);
   }
 
   if (data.totalUnique !== undefined) {
-    const totalUniqueEl = document.getElementById("diag-total-unique");
-    if (totalUniqueEl) totalUniqueEl.textContent = data.totalUnique;
+    setText("diag-total-unique", data.totalUnique);
   }
 
   if (data.direct !== undefined) {
-    const directConnsEl = document.getElementById("diag-direct-conns");
-    if (directConnsEl) directConnsEl.textContent = data.direct;
+    setText("diag-direct-conns", data.direct);
 
     if (statusDot && statusText) {
       if (data.direct > 0) {
@@ -69,33 +78,27 @@ function updateStats(data) {
     const d = data.diagnostics;
 
     // Traffic
-    updateDiagValue("diag-bytes-in", formatBytes(d.bytesReceived / 10) + "/s");
-    updateDiagValue("diag-bytes-out", formatBytes(d.bytesSent / 10) + "/s");
-    updateDiagValue(
+    setText("diag-bytes-in", formatBytes((d.bytesReceived || 0) / 10) + "/s");
+    setText("diag-bytes-out", formatBytes((d.bytesSent || 0) / 10) + "/s");
+    setText(
       "diag-relayed",
-      d.heartbeatsRelayed + d.pingsRelayed + d.amplifyRelayed
+      (d.heartbeatsRelayed || 0) +
+        (d.pingsRelayed || 0) +
+        (d.amplifyRelayed || 0)
     );
-    updateDiagValue("diag-pings-sent", d.pingsSent || 0);
+    setText("diag-pings-sent", d.pingsSent || 0);
 
     // Security
-    updateDiagValue("diag-invalid-sig", d.invalidSig);
-    updateDiagValue("diag-invalid-pow", d.invalidPoW);
-    updateDiagValue("diag-duplicates", d.duplicateSeq);
+    setText("diag-invalid-sig", d.invalidSig || 0);
+    setText("diag-invalid-pow", d.invalidPoW || 0);
+    setText("diag-duplicates", d.duplicateSeq || 0);
 
     // System
-    updateDiagValue("diag-uptime", formatUptime(d.uptime));
+    setText("diag-uptime", formatUptime(d.uptime || 0));
     if (d.memory && d.memory.rss) {
-      updateDiagValue(
-        "diag-memory",
-        Math.round(d.memory.rss / 1024 / 1024) + " MB"
-      );
+      setText("diag-memory", Math.round(d.memory.rss / 1024 / 1024) + " MB");
     }
   }
-}
-
-function updateDiagValue(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value;
 }
 
 function formatBytes(bytes) {
@@ -163,23 +166,33 @@ async function init() {
     console.log("Initializing EventSource...");
     const evtSource = new EventSource("/events");
 
+    evtSource.onopen = () => {
+      console.log("EventSource connected");
+    };
+
     evtSource.onerror = (err) => {
-      console.error("EventSource connection lost.", err);
+      console.error("EventSource connection lost or failed.", err);
     };
 
     evtSource.onmessage = (e) => {
-      const data = JSON.parse(e.data);
+      console.log("Received event:", e.data);
+      try {
+        const data = JSON.parse(e.data);
 
-      if (data.type === "INIT") {
-        myId = data.id;
-        updateMyProfileWidget(data);
-        updateStats(data);
-      } else if (data.type === "UPDATE") {
-        updateStats(data);
-      } else if (data.type === "PING") {
-        addPingToFeed(data, true);
-      } else if (data.count !== undefined) {
-        updateStats(data);
+        if (data.type === "INIT") {
+          console.log("Processing INIT event");
+          myId = data.id;
+          updateMyProfileWidget(data);
+          updateStats(data);
+        } else if (data.type === "UPDATE") {
+          updateStats(data);
+        } else if (data.type === "PING") {
+          addPingToFeed(data, true);
+        } else if (data.count !== undefined) {
+          updateStats(data);
+        }
+      } catch (err) {
+        console.error("Error processing event data:", err);
       }
     };
   };
@@ -837,24 +850,6 @@ function timeSince(date) {
   interval = seconds / 60;
   if (interval > 1) return Math.floor(interval) + "m";
   return Math.floor(seconds) + "s";
-}
-
-function updateStats(data) {
-  if (statusDot && statusText) {
-    const count = data.count || 0;
-    if (count > 1) {
-      statusDot.className = "status-dot connected";
-      statusText.textContent = "connected";
-    } else {
-      statusDot.className = "status-dot connecting";
-      statusText.textContent = "connecting...";
-    }
-  }
-
-  const nodeCountEl = document.getElementById("stat-node-count");
-  if (nodeCountEl) {
-    nodeCountEl.textContent = data.count || 0;
-  }
 }
 
 function focusInput() {

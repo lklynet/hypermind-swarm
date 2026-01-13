@@ -15,7 +15,8 @@ class MessageHandler {
     relayCallback,
     broadcastCallback,
     pingCallback,
-    systemMessageFn
+    systemMessageFn,
+    persistenceManager
   ) {
     this.peerManager = peerManager;
     this.diagnostics = diagnostics;
@@ -24,6 +25,7 @@ class MessageHandler {
     this.broadcastCallback = broadcastCallback;
     this.pingCallback = pingCallback;
     this.systemMessageFn = systemMessageFn;
+    this.persistenceManager = persistenceManager;
     this.bloomFilter = new BloomFilterManager();
     this.bloomFilter.start();
     this.rateLimits = new Map();
@@ -55,7 +57,7 @@ class MessageHandler {
 
   handleHeartbeat(msg, sourceSocket) {
     this.diagnostics.increment("heartbeatsReceived");
-    const { id, username, seq, hops, nonce, sig, swarmFilter } = msg;
+    const { id, username, seq, hops, nonce, sig, swarmFilter, coreKey } = msg;
 
     const stored = this.peerManager.getPeer(id);
     if (stored && seq <= stored.seq) {
@@ -82,6 +84,12 @@ class MessageHandler {
 
       if (hops === 0) {
         sourceSocket.peerId = id;
+      }
+
+      if (coreKey && this.persistenceManager) {
+        this.persistenceManager.getPeerCore(coreKey).catch((err) => {
+          console.error(`Failed to load peer core ${coreKey}:`, err);
+        });
       }
 
       const getIp = (sock) => {
@@ -167,12 +175,11 @@ class MessageHandler {
     let rateData = this.rateLimits.get(author);
 
     if (!rateData || now - rateData.windowStart > 10000) {
-
       rateData = { count: 0, windowStart: now };
     }
 
     if (rateData.count >= 5) {
-      return; 
+      return;
     }
 
     const idBase = author + msg.content + msg.timestamp;
@@ -193,6 +200,13 @@ class MessageHandler {
     if (isNew) {
       rateData.count++;
       this.rateLimits.set(author, rateData);
+
+      // Save to persistence if it's our own ping
+      if (author === this.peerManager.myId && this.persistenceManager) {
+        this.persistenceManager.append(msg).catch((err) => {
+          console.error("Failed to persist own ping:", err);
+        });
+      }
 
       if (this.pingCallback) {
         this.pingCallback(msg);
@@ -237,9 +251,14 @@ class MessageHandler {
     }
 
     if (this.pingStore.like(originalPing.id, amplifier)) {
+      // Save to persistence if it's our own amplify
+      if (amplifier === this.peerManager.myId && this.persistenceManager) {
+        this.persistenceManager.append(msg).catch((err) => {
+          console.error("Failed to persist own amplify:", err);
+        });
+      }
 
       if (this.pingCallback) {
-
         const updatedPing = this.pingStore.get(originalPing.id);
         this.pingCallback(updatedPing);
       }
@@ -279,6 +298,13 @@ class MessageHandler {
     if (isNew) {
       rateData.count++;
       this.rateLimits.set(author, rateData);
+
+      // Save to persistence if it's our own comment
+      if (author === this.peerManager.myId && this.persistenceManager) {
+        this.persistenceManager.append(msg).catch((err) => {
+          console.error("Failed to persist own comment:", err);
+        });
+      }
 
       if (this.pingCallback) {
         const updatedPing = this.pingStore.get(pingId);
@@ -365,7 +391,7 @@ const validateMessage = (msg) => {
     const allowedFields = [
       "type",
       "id",
-      "originalPing", 
+      "originalPing",
       "amplifier",
       "sig",
       "ttl",

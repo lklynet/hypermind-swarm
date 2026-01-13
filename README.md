@@ -114,9 +114,15 @@ docker run -d \
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | `3000` | The web dashboard port. |
+| `HYPERMIND_ID` | `(random)` | A unique seed to persist your identity across restarts. |
 | `MAX_PEERS` | `50000` | Max peers to track in the swarm. |
 | `MAX_CONNECTIONS` | `50` | Max active P2P connections. |
 | `MAX_RELAY_HOPS` | `10` | How far a ping travels through the mesh. |
+
+> **💡 TIP:** To persist your account across restarts, generate a unique ID and set it as `HYPERMIND_ID`:
+> ```bash
+> openssl rand -base64 24
+> ```
 
 </details>
 

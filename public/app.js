@@ -5,17 +5,14 @@ const statusDot = document.getElementById("status-dot");
 const statusText = document.getElementById("status-text");
 const charCount = document.getElementById("char-count");
 
-
 const myAvatarSmall = document.getElementById("my-avatar-small");
 const myNameDisplay = document.getElementById("my-name-display");
 const myIdDisplay = document.getElementById("my-id");
-
 
 const swarmInput = document.getElementById("swarm-input");
 const joinSwarmBtn = document.getElementById("join-swarm-btn");
 const activeSwarmsEl = document.getElementById("active-swarms");
 const trendingList = document.getElementById("trending-list");
-
 
 const mainView = document.getElementById("main-view");
 const profileView = document.getElementById("profile-view");
@@ -23,26 +20,103 @@ const profileInfo = document.getElementById("profile-info");
 const profileFeed = document.getElementById("profile-feed");
 const feedEl = document.getElementById("feed");
 
-
 let myId = "";
 let currentTopic = "";
 let currentSwarmId = 0;
-let currentTab = "foryou"; 
+let currentTab = "foryou";
 let joinedSwarms = JSON.parse(localStorage.getItem("joinedSwarms") || '[""]');
 let following = JSON.parse(localStorage.getItem("following") || "[]");
 let blocked = JSON.parse(localStorage.getItem("blocked") || "[]");
 
-
 function switchTab(tab) {
   currentTab = tab;
-  
-  
-  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-  document.getElementById(`tab-${tab}`).classList.add('active');
-  
+
+  document
+    .querySelectorAll(".tab")
+    .forEach((el) => el.classList.remove("active"));
+  document.getElementById(`tab-${tab}`).classList.add("active");
+
   updateFeedVisibility();
 }
 
+function updateStats(data) {
+  if (data.count !== undefined) {
+    const activeNodesEl = document.getElementById("diag-active-nodes");
+    if (activeNodesEl) activeNodesEl.textContent = data.count;
+  }
+
+  if (data.totalUnique !== undefined) {
+    const totalUniqueEl = document.getElementById("diag-total-unique");
+    if (totalUniqueEl) totalUniqueEl.textContent = data.totalUnique;
+  }
+
+  if (data.direct !== undefined) {
+    const directConnsEl = document.getElementById("diag-direct-conns");
+    if (directConnsEl) directConnsEl.textContent = data.direct;
+
+    if (statusDot && statusText) {
+      if (data.direct > 0) {
+        statusDot.className = "status-dot connected";
+        statusText.textContent = "connected";
+      } else {
+        statusDot.className = "status-dot connecting";
+        statusText.textContent = "connecting...";
+      }
+    }
+  }
+
+  if (data.diagnostics) {
+    const d = data.diagnostics;
+
+    // Traffic
+    updateDiagValue("diag-bytes-in", formatBytes(d.bytesReceived / 10) + "/s");
+    updateDiagValue("diag-bytes-out", formatBytes(d.bytesSent / 10) + "/s");
+    updateDiagValue(
+      "diag-relayed",
+      d.heartbeatsRelayed + d.pingsRelayed + d.amplifyRelayed
+    );
+    updateDiagValue("diag-pings-sent", d.pingsSent || 0);
+
+    // Security
+    updateDiagValue("diag-invalid-sig", d.invalidSig);
+    updateDiagValue("diag-invalid-pow", d.invalidPoW);
+    updateDiagValue("diag-duplicates", d.duplicateSeq);
+
+    // System
+    updateDiagValue("diag-uptime", formatUptime(d.uptime));
+    if (d.memory && d.memory.rss) {
+      updateDiagValue(
+        "diag-memory",
+        Math.round(d.memory.rss / 1024 / 1024) + " MB"
+      );
+    }
+  }
+}
+
+function updateDiagValue(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function formatBytes(bytes) {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+}
+
+function formatUptime(ms) {
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `${days}d ${hours % 24}h`;
+  if (hours > 0) return `${hours}h ${minutes % 60}m`;
+  if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
+  return `${seconds}s`;
+}
 
 async function init() {
   try {
@@ -58,13 +132,11 @@ async function init() {
 
   renderSwarmTags();
   renderFollowedAccounts();
-  
-  
+
   if (pingInput) {
     pingInput.placeholder = "What is happening in Global?!";
   }
 
-  
   for (const topic of joinedSwarms) {
     if (topic) {
       await fetch("/api/swarm/join", {
@@ -75,7 +147,6 @@ async function init() {
     }
   }
 
-  
   try {
     const res = await fetch("/api/pings");
     const pings = await res.json();
@@ -87,8 +158,7 @@ async function init() {
   }
 
   await fetchTrending();
-  
-  
+
   const startSSE = () => {
     console.log("Initializing EventSource...");
     const evtSource = new EventSource("/events");
@@ -120,11 +190,10 @@ async function init() {
     window.addEventListener("load", startSSE);
   }
 
-  
   if (pingInput) {
     pingInput.addEventListener("input", () => {
       const currentLength = pingInput.value.length;
-      charCount.style.display = currentLength > 0 ? 'inline' : 'none';
+      charCount.style.display = currentLength > 0 ? "inline" : "none";
       charCount.textContent = `${currentLength}/280`;
 
       if (currentLength >= 280) {
@@ -136,37 +205,35 @@ async function init() {
       }
     });
   }
-  
-  
-  const composeAvatar = document.getElementById('compose-avatar');
+
+  const composeAvatar = document.getElementById("compose-avatar");
   if (composeAvatar && myId) {
-      composeAvatar.style.backgroundImage = `url(/api/avatar/${myId})`;
-      composeAvatar.style.backgroundSize = 'cover';
-      composeAvatar.style.backgroundColor = getColorFromId(myId);
+    composeAvatar.style.backgroundImage = `url(/api/avatar/${myId})`;
+    composeAvatar.style.backgroundSize = "cover";
+    composeAvatar.style.backgroundColor = getColorFromId(myId);
   }
 }
 
 function updateMyProfileWidget(data) {
-    if (myNameDisplay) myNameDisplay.textContent = data.username || "Anonymous";
-    if (myIdDisplay) myIdDisplay.textContent = "@" + data.id.slice(-8);
-    if (myAvatarSmall) {
-        myAvatarSmall.style.backgroundImage = `url(/api/avatar/${data.id})`;
-        myAvatarSmall.style.backgroundSize = 'cover';
-        myAvatarSmall.style.backgroundColor = getColorFromId(data.id + "pfp");
-    }
-    
-    const composeAvatar = document.getElementById('compose-avatar');
-    if (composeAvatar) {
-        composeAvatar.style.backgroundImage = `url(/api/avatar/${data.id})`;
-        composeAvatar.style.backgroundSize = 'cover';
-        composeAvatar.style.backgroundColor = getColorFromId(data.id + "pfp");
-    }
-}
+  if (myNameDisplay) myNameDisplay.textContent = data.username || "Anonymous";
+  if (myIdDisplay) myIdDisplay.textContent = "@" + data.id.slice(-8);
+  if (myAvatarSmall) {
+    myAvatarSmall.style.backgroundImage = `url(/api/avatar/${data.id})`;
+    myAvatarSmall.style.backgroundSize = "cover";
+    myAvatarSmall.style.backgroundColor = getColorFromId(data.id + "pfp");
+  }
 
+  const composeAvatar = document.getElementById("compose-avatar");
+  if (composeAvatar) {
+    composeAvatar.style.backgroundImage = `url(/api/avatar/${data.id})`;
+    composeAvatar.style.backgroundSize = "cover";
+    composeAvatar.style.backgroundColor = getColorFromId(data.id + "pfp");
+  }
+}
 
 async function getSwarmId(name) {
   if (!name) return 0;
-  
+
   if (window.crypto && window.crypto.subtle) {
     try {
       const msgBuffer = new TextEncoder().encode(name);
@@ -177,7 +244,7 @@ async function getSwarmId(name) {
       console.warn("Client-side crypto failed", e);
     }
   }
-  return 0; 
+  return 0;
 }
 
 async function joinSwarm(topic) {
@@ -227,13 +294,13 @@ async function leaveSwarm(topic) {
 }
 
 if (joinSwarmBtn) {
-    joinSwarmBtn.onclick = () => {
+  joinSwarmBtn.onclick = () => {
     const topic = swarmInput.value.trim();
     if (topic) {
-        joinSwarm(topic);
-        swarmInput.value = "";
+      joinSwarm(topic);
+      swarmInput.value = "";
     }
-    };
+  };
 }
 
 async function selectSwarm(topic) {
@@ -262,18 +329,20 @@ function renderSwarmTags() {
 
   joinedSwarms.forEach((topic) => {
     const container = document.createElement("div");
-    container.className = `swarm-item ${topic === currentTopic ? "active" : ""}`;
-    container.style.display = 'flex';
-    container.style.justifyContent = 'space-between';
-    container.style.alignItems = 'center';
-    container.style.padding = '0.5rem';
-    container.style.cursor = 'pointer';
-    container.style.borderRadius = '4px';
+    container.className = `swarm-item ${
+      topic === currentTopic ? "active" : ""
+    }`;
+    container.style.display = "flex";
+    container.style.justifyContent = "space-between";
+    container.style.alignItems = "center";
+    container.style.padding = "0.5rem";
+    container.style.cursor = "pointer";
+    container.style.borderRadius = "4px";
     if (topic === currentTopic) {
-        container.style.backgroundColor = 'var(--hover-bg)';
-        container.style.color = 'var(--primary-color)';
+      container.style.backgroundColor = "var(--hover-bg)";
+      container.style.color = "var(--primary-color)";
     }
-    
+
     container.onclick = () => selectSwarm(topic);
 
     const label = document.createElement("span");
@@ -282,7 +351,7 @@ function renderSwarmTags() {
 
     if (topic !== "") {
       const removeBtn = document.createElement("span");
-      removeBtn.className = 'swarm-remove-btn';
+      removeBtn.className = "swarm-remove-btn";
       removeBtn.innerHTML = "&times;";
       removeBtn.onclick = (e) => {
         e.stopPropagation();
@@ -295,26 +364,22 @@ function renderSwarmTags() {
   });
 }
 
-
-
 function updateFeedVisibility() {
   const pings = feedEl.querySelectorAll(".ping");
   pings.forEach((el) => {
     const pingSwarmId = parseInt(el.dataset.swarmId || "0");
     const authorId = el.dataset.author;
-    
+
     let visible = true;
 
-    
     if (currentSwarmId !== 0 && pingSwarmId !== currentSwarmId) {
       visible = false;
     }
-    
-    
-    if (currentTab === 'following') {
-        if (!following.includes(authorId) && authorId !== myId) {
-            visible = false;
-        }
+
+    if (currentTab === "following") {
+      if (!following.includes(authorId) && authorId !== myId) {
+        visible = false;
+      }
     }
 
     el.style.display = visible ? "flex" : "none";
@@ -336,9 +401,7 @@ function addPingToContainer(ping, container, prepend = false) {
   const isMe = ping.author === myId;
   const swarmId = ping.swarmId || 0;
 
-  
   if (existingEl) {
-    
     return;
   }
 
@@ -348,14 +411,17 @@ function addPingToContainer(ping, container, prepend = false) {
   el.dataset.swarmId = swarmId;
   el.dataset.author = ping.author;
 
-  
   if (!isProfile) {
-      if (currentSwarmId !== 0 && swarmId !== currentSwarmId) {
-          el.style.display = "none";
-      }
-      if (currentTab === 'following' && !following.includes(ping.author) && !isMe) {
-          el.style.display = "none";
-      }
+    if (currentSwarmId !== 0 && swarmId !== currentSwarmId) {
+      el.style.display = "none";
+    }
+    if (
+      currentTab === "following" &&
+      !following.includes(ping.author) &&
+      !isMe
+    ) {
+      el.style.display = "none";
+    }
   }
 
   const date = new Date(ping.timestamp).toLocaleString();
@@ -365,34 +431,60 @@ function addPingToContainer(ping, container, prepend = false) {
 
   let topicPill = "";
   if (ping.topic) {
-    topicPill = `<span style="color: var(--primary-color); cursor: pointer;" onclick="event.stopPropagation(); joinSwarm('${escapeHtml(ping.topic)}')">#${escapeHtml(ping.topic)}</span>`;
+    topicPill = `<span style="color: var(--primary-color); cursor: pointer;" onclick="event.stopPropagation(); joinSwarm('${escapeHtml(
+      ping.topic
+    )}')">#${escapeHtml(ping.topic)}</span>`;
   }
 
   el.innerHTML = `
-    <div class="ping-avatar" style="background-image: url('${avatarUrl}'); background-size: cover; background-color: ${getColorFromId(ping.author)};" onclick="showProfile('${ping.author}')"></div>
+    <div class="ping-avatar" style="background-image: url('${avatarUrl}'); background-size: cover; background-color: ${getColorFromId(
+    ping.author
+  )};" onclick="showProfile('${ping.author}')"></div>
     <div class="ping-content">
         <div class="ping-header">
-            <span class="ping-author" onclick="showProfile('${ping.author}')" style="cursor: pointer;">${escapeHtml(authorName)}</span>
+            <span class="ping-author" onclick="showProfile('${
+              ping.author
+            }')" style="cursor: pointer;">${escapeHtml(authorName)}</span>
             <span class="ping-handle">@${ping.author.slice(-8)}</span>
-            <span class="ping-time">· ${timeSince(new Date(ping.timestamp))}</span>
-            ${topicPill ? `<span style="margin-left: auto; font-size: 0.8rem;">${topicPill}</span>` : ''}
+            <span class="ping-time">· ${timeSince(
+              new Date(ping.timestamp)
+            )}</span>
+            ${
+              topicPill
+                ? `<span style="margin-left: auto; font-size: 0.8rem;">${topicPill}</span>`
+                : ""
+            }
         </div>
         <div class="ping-text">${escapeHtml(ping.content)}</div>
         <div class="ping-actions">
-            <button class="action-btn amplify" onclick="amplifyPing('${ping.id}')">
-                <i class="fa-solid fa-bullhorn"></i> <span id="amplify-count-${ping.id}">${ping.likes || 0}</span>
+            <button class="action-btn amplify" onclick="amplifyPing('${
+              ping.id
+            }')">
+                <i class="fa-solid fa-bullhorn"></i> <span id="amplify-count-${
+                  ping.id
+                }">${ping.likes || 0}</span>
             </button>
-            <button class="action-btn comment" onclick="toggleComment('${ping.id}')">
-                <i class="fa-regular fa-comment"></i> <span id="comment-count-${ping.id}">${ping.comments ? ping.comments.length : 0}</span>
+            <button class="action-btn comment" onclick="toggleComment('${
+              ping.id
+            }')">
+                <i class="fa-regular fa-comment"></i> <span id="comment-count-${
+                  ping.id
+                }">${ping.comments ? ping.comments.length : 0}</span>
             </button>
         </div>
-        <div id="comment-section-${ping.id}" class="comment-section" style="display: none;">
+        <div id="comment-section-${
+          ping.id
+        }" class="comment-section" style="display: none;">
             <div class="comment-input-wrapper">
-                <input type="text" id="comment-input-${ping.id}" placeholder="Write a comment..." onkeydown="handleCommentKey(event, '${ping.id}')">
+                <input type="text" id="comment-input-${
+                  ping.id
+                }" placeholder="Write a comment..." onkeydown="handleCommentKey(event, '${
+    ping.id
+  }')">
                 <button onclick="submitComment('${ping.id}')">Reply</button>
             </div>
             <div id="comments-list-${ping.id}" class="comments-list">
-                ${(ping.comments || []).map(c => renderComment(c)).join('')}
+                ${(ping.comments || []).map((c) => renderComment(c)).join("")}
             </div>
         </div>
     </div>
@@ -404,8 +496,6 @@ function addPingToContainer(ping, container, prepend = false) {
     container.appendChild(el);
   }
 }
-
-
 
 async function ping() {
   const content = pingInput.value.trim();
@@ -422,7 +512,7 @@ async function ping() {
     });
     if (res.ok) {
       pingInput.value = "";
-      charCount.style.display = 'none';
+      charCount.style.display = "none";
     }
   } catch (e) {
     console.error(e);
@@ -430,92 +520,96 @@ async function ping() {
 }
 
 if (pingBtn) {
-    pingBtn.onclick = ping;
+  pingBtn.onclick = ping;
 }
 
 async function amplifyPing(id) {
-    try {
-        const res = await fetch("/api/amplify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id }),
-        });
-        if (res.ok) {
-            const data = await res.json();
-            const countEl = document.getElementById(`amplify-count-${id}`);
-            if (countEl) countEl.textContent = data.likes;
-        } else {
-            const err = await res.json();
-            alert(err.error || "Failed to amplify");
-        }
-    } catch (e) {
-        console.error(e);
+  try {
+    const res = await fetch("/api/amplify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const countEl = document.getElementById(`amplify-count-${id}`);
+      if (countEl) countEl.textContent = data.likes;
+    } else {
+      const err = await res.json();
+      alert(err.error || "Failed to amplify");
     }
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 function toggleComment(id) {
-    const section = document.getElementById(`comment-section-${id}`);
-    if (section) {
-        const isHidden = section.style.display === "none";
-        section.style.display = isHidden ? "block" : "none";
-        if (isHidden) {
-            const input = document.getElementById(`comment-input-${id}`);
-            if (input) input.focus();
-        }
+  const section = document.getElementById(`comment-section-${id}`);
+  if (section) {
+    const isHidden = section.style.display === "none";
+    section.style.display = isHidden ? "block" : "none";
+    if (isHidden) {
+      const input = document.getElementById(`comment-input-${id}`);
+      if (input) input.focus();
     }
+  }
 }
 
 function handleCommentKey(e, id) {
-    if (e.key === "Enter") {
-        submitComment(id);
-    }
+  if (e.key === "Enter") {
+    submitComment(id);
+  }
 }
 
 async function submitComment(id) {
-    const input = document.getElementById(`comment-input-${id}`);
-    if (!input) return;
-    const content = input.value.trim();
-    if (!content) return;
+  const input = document.getElementById(`comment-input-${id}`);
+  if (!input) return;
+  const content = input.value.trim();
+  if (!content) return;
 
-    try {
-        const res = await fetch("/api/comment", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ pingId: id, content }),
-        });
-        if (res.ok) {
-            const comment = await res.json();
-            input.value = "";
-            
-            
-            const list = document.getElementById(`comments-list-${id}`);
-            if (list) {
-                const el = document.createElement("div");
-                el.innerHTML = renderComment(comment); 
-                
-                list.insertAdjacentHTML('beforeend', renderComment(comment));
-            }
-            
-            
-            const countEl = document.getElementById(`comment-count-${id}`);
-            if (countEl) {
-                countEl.textContent = parseInt(countEl.textContent || "0") + 1;
-            }
-        }
-    } catch (e) {
-        console.error(e);
+  try {
+    const res = await fetch("/api/comment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pingId: id, content }),
+    });
+    if (res.ok) {
+      const comment = await res.json();
+      input.value = "";
+
+      const list = document.getElementById(`comments-list-${id}`);
+      if (list) {
+        const el = document.createElement("div");
+        el.innerHTML = renderComment(comment);
+
+        list.insertAdjacentHTML("beforeend", renderComment(comment));
+      }
+
+      const countEl = document.getElementById(`comment-count-${id}`);
+      if (countEl) {
+        countEl.textContent = parseInt(countEl.textContent || "0") + 1;
+      }
     }
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 function renderComment(c) {
-    const avatarUrl = `/api/avatar/${c.author}`;
-    return `
+  const avatarUrl = `/api/avatar/${c.author}`;
+  return `
         <div class="comment-item">
-            <div class="comment-avatar" style="background-image: url('${avatarUrl}'); background-size: cover; background-color: ${getColorFromId(c.author)}; cursor: pointer;" onclick="showProfile('${c.author}')"></div>
+            <div class="comment-avatar" style="background-image: url('${avatarUrl}'); background-size: cover; background-color: ${getColorFromId(
+    c.author
+  )}; cursor: pointer;" onclick="showProfile('${c.author}')"></div>
             <div class="comment-content">
                 <div>
-                    <span class="comment-author" style="cursor: pointer;" onclick="showProfile('${c.author}')">${escapeHtml(c.username || "Anonymous")}</span>
-                    <span style="font-size: 0.8rem; color: var(--text-muted);">${timeSince(new Date(c.timestamp))}</span>
+                    <span class="comment-author" style="cursor: pointer;" onclick="showProfile('${
+                      c.author
+                    }')">${escapeHtml(c.username || "Anonymous")}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">${timeSince(
+                      new Date(c.timestamp)
+                    )}</span>
                 </div>
                 <div class="comment-text">${escapeHtml(c.content)}</div>
             </div>
@@ -523,16 +617,14 @@ function renderComment(c) {
     `;
 }
 
-
-
 window.showMyProfile = () => {
-    if (myId) showProfile(myId);
+  if (myId) showProfile(myId);
 };
 
 window.showProfile = async (id) => {
   mainView.style.display = "none";
   profileView.style.display = "block";
-  
+
   profileInfo.innerHTML = "Loading...";
   profileFeed.innerHTML = "";
 
@@ -546,34 +638,48 @@ window.showProfile = async (id) => {
     const isMe = data.id === myId;
 
     profileInfo.innerHTML = `
-        <div class="profile-cover" style="background-color: ${getColorFromId(data.id + "banner")};"></div>
+        <div class="profile-cover" style="background-color: ${getColorFromId(
+          data.id + "banner"
+        )};"></div>
         <div class="profile-details">
             <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                <div class="profile-avatar-large" style="background-image: url('${avatarUrl}'); background-size: cover; background-color: ${getColorFromId(data.id + "pfp")};"></div>
-                ${!isMe ? `
-                    <button class="ping-btn-large" style="width: auto; padding: 0.5rem 1.5rem; margin: 0;" onclick="toggleFollow('${data.id}')">
-                        ${isFollowing ? 'Unfollow' : 'Follow'}
+                <div class="profile-avatar-large" style="background-image: url('${avatarUrl}'); background-size: cover; background-color: ${getColorFromId(
+      data.id + "pfp"
+    )};"></div>
+                ${
+                  !isMe
+                    ? `
+                    <button class="ping-btn-large" style="width: auto; padding: 0.5rem 1.5rem; margin: 0;" onclick="toggleFollow('${
+                      data.id
+                    }')">
+                        ${isFollowing ? "Unfollow" : "Follow"}
                     </button>
-                ` : ''}
+                `
+                    : ""
+                }
             </div>
             <div>
-                <div class="profile-name-large">${escapeHtml(data.username)}</div>
+                <div class="profile-name-large">${escapeHtml(
+                  data.username
+                )}</div>
                 <div class="profile-handle-large">@${data.id.slice(-8)}</div>
             </div>
             <div class="profile-stats">
-                <span><span class="stat-value">${data.pings.length}</span> Pings</span>
+                <span><span class="stat-value">${
+                  data.pings.length
+                }</span> Pings</span>
             </div>
         </div>
     `;
 
     if (data.pings.length === 0) {
-      profileFeed.innerHTML = "<div style='padding: 2rem; text-align: center; color: var(--text-muted);'>No pings yet.</div>";
+      profileFeed.innerHTML =
+        "<div style='padding: 2rem; text-align: center; color: var(--text-muted);'>No pings yet.</div>";
     } else {
       data.pings.forEach((ping) => {
         addPingToContainer(ping, profileFeed, false);
       });
     }
-
   } catch (e) {
     profileInfo.innerHTML = "Failed to load profile.";
     console.error(e);
@@ -593,17 +699,15 @@ function toggleFollow(id) {
     following.push(id);
   }
   localStorage.setItem("following", JSON.stringify(following));
-  
+
   renderFollowedAccounts();
-  
-  
-  if (profileView.style.display === 'block') {
-      showProfile(id);
+
+  if (profileView.style.display === "block") {
+    showProfile(id);
   }
-  
-  
-  if (currentTab === 'following') {
-      updateFeedVisibility();
+
+  if (currentTab === "following") {
+    updateFeedVisibility();
   }
 }
 
@@ -620,30 +724,36 @@ function renderFollowedAccounts() {
   following.forEach(async (id) => {
     const el = document.createElement("div");
     el.className = "followed-item";
-    el.style.display = 'flex';
-    el.style.alignItems = 'center';
-    el.style.gap = '0.75rem';
-    el.style.padding = '0.5rem';
-    el.style.cursor = 'pointer';
-    el.style.borderRadius = '8px';
-    el.style.transition = 'background-color 0.2s';
-    
-    el.onmouseover = () => { el.style.backgroundColor = 'var(--hover-bg)'; };
-    el.onmouseout = () => { el.style.backgroundColor = 'transparent'; };
+    el.style.display = "flex";
+    el.style.alignItems = "center";
+    el.style.gap = "0.75rem";
+    el.style.padding = "0.5rem";
+    el.style.cursor = "pointer";
+    el.style.borderRadius = "8px";
+    el.style.transition = "background-color 0.2s";
+
+    el.onmouseover = () => {
+      el.style.backgroundColor = "var(--hover-bg)";
+    };
+    el.onmouseout = () => {
+      el.style.backgroundColor = "transparent";
+    };
     el.onclick = () => showProfile(id);
 
     const avatarUrl = `/api/avatar/${id}`;
     let name = "..." + id.slice(-8);
 
     el.innerHTML = `
-      <img src="${avatarUrl}" style="width: 32px; height: 32px; border-radius: 50%; background-color: ${getColorFromId(id + "pfp")};">
-      <span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(name)}</span>
+      <img src="${avatarUrl}" style="width: 32px; height: 32px; border-radius: 50%; background-color: ${getColorFromId(
+      id + "pfp"
+    )};">
+      <span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(
+        name
+      )}</span>
     `;
     container.appendChild(el);
   });
 }
-
-
 
 async function fetchTrending() {
   try {
@@ -668,8 +778,8 @@ function renderTrending(topics) {
     const el = document.createElement("div");
     el.className = "trend-item";
     el.onclick = () => {
-        if (topic.isAll) selectSwarm("");
-        else joinSwarm(topic.name);
+      if (topic.isAll) selectSwarm("");
+      else joinSwarm(topic.name);
     };
 
     const displayName = topic.isAll ? "Global" : `#${escapeHtml(topic.name)}`;
@@ -683,8 +793,6 @@ function renderTrending(topics) {
   });
 }
 
-
-
 const PALETTE = [
   "var(--color-red)",
   "var(--color-olive)",
@@ -692,7 +800,7 @@ const PALETTE = [
   "var(--color-blue)",
   "var(--color-purple)",
   "var(--color-green)",
-  "var(--color-beige)"
+  "var(--color-beige)",
 ];
 
 function getColorFromId(id) {
@@ -733,25 +841,24 @@ function timeSince(date) {
 
 function updateStats(data) {
   if (statusDot && statusText) {
-      const count = data.count || 0;
-      if (count > 1) {
-        statusDot.className = "status-dot connected";
-        statusText.textContent = "connected";
-      } else {
-        statusDot.className = "status-dot connecting";
-        statusText.textContent = "connecting...";
-      }
+    const count = data.count || 0;
+    if (count > 1) {
+      statusDot.className = "status-dot connected";
+      statusText.textContent = "connected";
+    } else {
+      statusDot.className = "status-dot connecting";
+      statusText.textContent = "connecting...";
+    }
   }
-  
+
   const nodeCountEl = document.getElementById("stat-node-count");
   if (nodeCountEl) {
-      nodeCountEl.textContent = data.count || 0;
+    nodeCountEl.textContent = data.count || 0;
   }
 }
 
 function focusInput() {
-    if (pingInput) pingInput.focus();
+  if (pingInput) pingInput.focus();
 }
-
 
 init();

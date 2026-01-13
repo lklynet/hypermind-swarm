@@ -161,6 +161,88 @@ body {
     opacity: 0.9;
 }
 
+.diagnostics-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    padding: 0 0.5rem;
+}
+
+.diag-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.diag-header {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary-color);
+    opacity: 0.8;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.25rem;
+}
+
+.diag-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+}
+
+.diag-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Google Sans Code', monospace;
+    font-size: 0.85rem;
+}
+
+.diag-label {
+    color: var(--text-muted);
+}
+
+.diag-value {
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-dot.connecting {
+    background-color: var(--color-gold);
+    box-shadow: 0 0 8px var(--color-gold);
+    animation: pulse 2s infinite;
+}
+
+.status-dot.connected {
+    background-color: var(--color-green);
+    box-shadow: 0 0 8px var(--color-green);
+}
+
+.status-dot.error {
+    background-color: var(--color-red);
+    box-shadow: 0 0 8px var(--color-red);
+}
+
+@keyframes pulse {
+    0% { opacity: 0.4; }
+    50% { opacity: 1; }
+    100% { opacity: 0.4; }
+}
+
 .user-profile-widget {
     display: flex;
     align-items: center;

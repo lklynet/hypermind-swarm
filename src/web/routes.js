@@ -61,6 +61,7 @@ const setupRoutes = (
       direct: swarm.getSwarm().connections.size,
       id: identity.id,
       username: identity.username,
+      visualLimit: VISUAL_LIMIT,
       diagnostics: diagnostics.getStats(),
       peers: peerManager.getPeersWithIps(),
     });

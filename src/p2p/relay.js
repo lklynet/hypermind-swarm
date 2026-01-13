@@ -37,6 +37,7 @@ const relayMessage = (msg, sourceSocket, swarm, diagnostics, peerManager) => {
 
   if (diagnostics) {
     diagnostics.increment("bytesRelayed", data.length * targets.length);
+    diagnostics.increment("bytesSent", data.length * targets.length);
   }
 
   for (const socket of targets) {

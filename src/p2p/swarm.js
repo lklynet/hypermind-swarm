@@ -69,6 +69,7 @@ class SwarmManager {
       encKey: this.identity.encryptionPublicKey, // Include encryption key
     });
     socket.write(hello + "\n");
+    this.diagnostics.increment("bytesSent", hello.length + 1);
     this.broadcastFn();
 
     socket.buffer = "";
@@ -86,9 +87,7 @@ class SwarmManager {
         try {
           const msg = JSON.parse(msgStr);
           this.messageHandler.handleMessage(msg, socket);
-        } catch (e) {
-
-        }
+        } catch (e) {}
       }
     });
 
@@ -120,6 +119,7 @@ class SwarmManager {
 
       for (const socket of this.swarm.connections) {
         socket.write(heartbeat);
+        this.diagnostics.increment("bytesSent", heartbeat.length);
       }
 
       const removed = this.peerManager.cleanupStalePeers();
@@ -170,6 +170,7 @@ class SwarmManager {
 
     for (const socket of this.swarm.connections) {
       socket.write(goodbye);
+      this.diagnostics.increment("bytesSent", goodbye.length);
     }
 
     if (this.heartbeatInterval) {
@@ -191,8 +192,12 @@ class SwarmManager {
 
   broadcast(msg) {
     const msgStr = JSON.stringify(msg) + "\n";
+    if (msg.type === "PING") {
+      this.diagnostics.increment("pingsSent");
+    }
     for (const socket of this.swarm.connections) {
       socket.write(msgStr);
+      this.diagnostics.increment("bytesSent", msgStr.length);
     }
   }
 

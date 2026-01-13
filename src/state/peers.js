@@ -87,9 +87,12 @@ class PeerManager {
   getPeersWithIps() {
     const peers = [];
     for (const [id, data] of this.seenPeers.entries()) {
-      if (data.ip) {
-        peers.push({ id, ip: data.ip, username: data.username });
-      }
+      peers.push({
+        id,
+        ip: data.ip,
+        username: data.username,
+        isLocal: id === this.myId,
+      });
     }
     return peers;
   }

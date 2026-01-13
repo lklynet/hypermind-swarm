@@ -27,28 +27,47 @@ class PersistenceManager {
   }
 
   _watchCore(core) {
-    core.on("append", async () => {
-      const seq = core.length - 1;
-      const msg = await core.get(seq);
-      if (this.onMessage) this.onMessage(msg);
-    });
+    let lastRead = -1;
 
-    this._readExisting(core);
+    const readMore = async () => {
+      while (lastRead < core.length - 1) {
+        const seq = ++lastRead;
+        try {
+          const msg = await core.get(seq, { wait: true });
+          if (this.onMessage) this.onMessage(msg);
+        } catch (err) {
+          console.error(
+            `Error reading from core ${b4a
+              .toString(core.key, "hex")
+              .slice(0, 8)}:`,
+            err
+          );
+          break;
+        }
+      }
+    };
+
+    core.on("append", readMore);
+
+    // For remote cores, we need to update to find the latest length
+    if (!core.writable) {
+      core.update().then(() => {
+        if (core.length > 0) {
+          console.log(
+            `Remote core ${b4a
+              .toString(core.key, "hex")
+              .slice(0, 8)} updated. Length: ${core.length}`
+          );
+        }
+        readMore();
+      });
+    } else {
+      readMore();
+    }
   }
 
   async _readExisting(core) {
-    await core.ready();
-    if (core.length > 0) {
-      console.log(
-        `Loading ${core.length} existing messages from core ${b4a
-          .toString(core.key, "hex")
-          .slice(0, 8)}...`
-      );
-    }
-    for (let i = 0; i < core.length; i++) {
-      const msg = await core.get(i);
-      if (this.onMessage) this.onMessage(msg);
-    }
+    // This is now handled by _watchCore's initial readMore() and update()
   }
 
   async append(msg) {

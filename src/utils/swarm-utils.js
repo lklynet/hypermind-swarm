@@ -1,4 +1,17 @@
 const crypto = require("crypto");
+const os = require("os");
+
+const getMacAddress = () => {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (!iface.internal && iface.mac !== "00:00:00:00:00:00") {
+        return iface.mac;
+      }
+    }
+  }
+  return null;
+};
 
 const getSwarmId = (name) => {
   if (!name || name.trim() === "") return 0;
@@ -35,6 +48,7 @@ const updateSwarmFilter = (filterHex, swarmId, subscribe) => {
 };
 
 module.exports = {
+  getMacAddress,
   getSwarmId,
   createSwarmFilter,
   hasSwarmSubscription,

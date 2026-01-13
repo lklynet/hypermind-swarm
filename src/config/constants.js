@@ -16,6 +16,7 @@ const DIAGNOSTICS_INTERVAL = 10000;
 const PORT = process.env.PORT || 3000;
 const CHAT_RATE_LIMIT = parseInt(process.env.CHAT_RATE_LIMIT) || 5000;
 const VISUAL_LIMIT = parseInt(process.env.VISUAL_LIMIT) || 500;
+const DEVICE_PERSISTENCE = process.env.DEVICE_PERSISTENCE === "true";
 
 module.exports = {
   TOPIC_NAME,
@@ -34,4 +35,5 @@ module.exports = {
   PORT,
   CHAT_RATE_LIMIT,
   VISUAL_LIMIT,
+  DEVICE_PERSISTENCE,
 };

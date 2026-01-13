@@ -28,6 +28,7 @@ let currentProfileId = "";
 let joinedSwarms = JSON.parse(localStorage.getItem("joinedSwarms") || '[""]');
 let following = JSON.parse(localStorage.getItem("following") || "[]");
 let blocked = JSON.parse(localStorage.getItem("blocked") || "[]");
+const usernameCache = new Map();
 
 function switchTab(tab) {
   currentTab = tab;
@@ -410,6 +411,10 @@ function addPingToFeed(ping, prepend = false) {
 function addPingToContainer(ping, container, prepend = false) {
   if (blocked.includes(ping.author)) return;
 
+  if (ping.username) {
+    usernameCache.set(ping.author, ping.username);
+  }
+
   const isProfile = container === profileFeed;
   const domId = isProfile ? `profile-ping-${ping.id}` : `ping-${ping.id}`;
   const existingEl = document.getElementById(domId);
@@ -671,6 +676,10 @@ window.showProfile = async (id) => {
     const res = await fetch(`/api/profile/${id}`);
     const data = await res.json();
 
+    if (data.username) {
+      usernameCache.set(data.id, data.username);
+    }
+
     const avatarUrl = `/api/avatar/${data.id}`;
     const isFollowing = following.includes(data.id);
     const isBlocked = blocked.includes(data.id);
@@ -790,7 +799,7 @@ function updateFollowedStateInFeed(userId, isFollowing) {
   });
 }
 
-function renderFollowedAccounts() {
+async function renderFollowedAccounts() {
   const container = document.getElementById("followed-accounts-list");
   if (!container) return;
 
@@ -800,7 +809,7 @@ function renderFollowedAccounts() {
     return;
   }
 
-  following.forEach(async (id) => {
+  for (const id of following) {
     const el = document.createElement("div");
     el.className = "followed-item";
     el.style.display = "flex";
@@ -820,7 +829,20 @@ function renderFollowedAccounts() {
     el.onclick = () => showProfile(id);
 
     const avatarUrl = `/api/avatar/${id}`;
-    let name = "..." + id.slice(-8);
+    let name = usernameCache.get(id) || "..." + id.slice(-8);
+
+    if (!usernameCache.has(id)) {
+      try {
+        const res = await fetch(`/api/profile/${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          name = data.username;
+          usernameCache.set(id, name);
+        }
+      } catch (e) {
+        console.error("Failed to fetch profile for", id, e);
+      }
+    }
 
     el.innerHTML = `
       <img src="${avatarUrl}" style="width: 32px; height: 32px; border-radius: 50%; background-color: ${getColorFromId(
@@ -831,7 +853,7 @@ function renderFollowedAccounts() {
       )}</span>
     `;
     container.appendChild(el);
-  });
+  }
 }
 
 async function fetchTrending() {

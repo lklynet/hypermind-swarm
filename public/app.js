@@ -474,7 +474,11 @@ function addPingToContainer(ping, container, prepend = false) {
         <div class="ping-header">
             <span class="ping-author" onclick="showProfile('${
               ping.author
-            }')" style="cursor: pointer;">${escapeHtml(authorName)}</span>
+            }')" style="cursor: pointer;">${escapeHtml(authorName)}${
+    isFollowing
+      ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.85rem;" title="Following"></i>'
+      : ""
+  }</span>
             <span class="ping-handle">@${ping.author.slice(-8)}</span>
             <span class="ping-time">· ${timeSince(
               new Date(ping.timestamp)
@@ -626,6 +630,7 @@ async function submitComment(id) {
 
 function renderComment(c) {
   const avatarUrl = `/api/avatar/${c.author}`;
+  const isFollowing = following.includes(c.author);
   return `
         <div class="comment-item">
             <div class="comment-avatar" style="background-image: url('${avatarUrl}'); background-size: cover; background-color: ${getColorFromId(
@@ -635,7 +640,11 @@ function renderComment(c) {
                 <div>
                     <span class="comment-author" style="cursor: pointer;" onclick="showProfile('${
                       c.author
-                    }')">${escapeHtml(c.username || "Anonymous")}</span>
+                    }')">${escapeHtml(c.username || "Anonymous")}${
+    isFollowing
+      ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.75rem;" title="Following"></i>'
+      : ""
+  }</span>
                     <span style="font-size: 0.8rem; color: var(--text-muted);">${timeSince(
                       new Date(c.timestamp)
                     )}</span>
@@ -689,9 +698,11 @@ window.showProfile = async (id) => {
                 }
             </div>
             <div>
-                <div class="profile-name-large">${escapeHtml(
-                  data.username
-                )}</div>
+                <div class="profile-name-large">${escapeHtml(data.username)}${
+      isFollowing
+        ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 1.2rem;" title="Following"></i>'
+        : ""
+    }</div>
                 <div class="profile-handle-large">@${data.id.slice(-8)}</div>
             </div>
             <div class="profile-stats">
@@ -723,15 +734,16 @@ window.showFeed = () => {
 };
 
 function toggleFollow(id) {
-  const isFollowing = !following.includes(id);
   if (following.includes(id)) {
     following = following.filter((f) => f !== id);
   } else {
     following.push(id);
   }
+  const isNowFollowing = following.includes(id);
   localStorage.setItem("following", JSON.stringify(following));
 
   renderFollowedAccounts();
+  updateFollowedStateInFeed(id, isNowFollowing);
 
   if (profileView.style.display === "block") {
     showProfile(id);
@@ -740,6 +752,42 @@ function toggleFollow(id) {
   if (currentTab === "following") {
     updateFeedVisibility();
   }
+}
+
+function updateFollowedStateInFeed(userId, isFollowing) {
+  const pings = document.querySelectorAll(`[data-author="${userId}"]`);
+  pings.forEach((pingEl) => {
+    const authorSpan = pingEl.querySelector(".ping-author");
+    if (authorSpan) {
+      const existingCheck = authorSpan.querySelector(".fa-circle-check");
+      if (isFollowing && !existingCheck) {
+        authorSpan.insertAdjacentHTML(
+          "beforeend",
+          ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.85rem;" title="Following"></i>'
+        );
+      } else if (!isFollowing && existingCheck) {
+        existingCheck.remove();
+      }
+    }
+
+    // Also update comments
+    const commentAuthors = pingEl.querySelectorAll(".comment-author");
+    commentAuthors.forEach((commentAuthor) => {
+      // We need to check if this specific comment author is the one we toggled
+      // The comment author span doesn't have a data-author, but we can check the onclick
+      if (commentAuthor.getAttribute("onclick")?.includes(`'${userId}'`)) {
+        const existingCheck = commentAuthor.querySelector(".fa-circle-check");
+        if (isFollowing && !existingCheck) {
+          commentAuthor.insertAdjacentHTML(
+            "beforeend",
+            ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.75rem;" title="Following"></i>'
+          );
+        } else if (!isFollowing && existingCheck) {
+          existingCheck.remove();
+        }
+      }
+    });
+  });
 }
 
 function renderFollowedAccounts() {

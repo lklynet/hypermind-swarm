@@ -284,9 +284,14 @@ async function joinSwarm(topic) {
       localStorage.setItem("joinedSwarms", JSON.stringify(joinedSwarms));
       renderSwarmTags();
       selectSwarm(normalized);
+      showToast(`Joined swarm #${normalized}`, "success");
+    } else {
+      const err = await res.json();
+      showToast(err.error || "Failed to join swarm", "error");
     }
   } catch (e) {
     console.error(e);
+    showToast("Network error occurred", "error");
   }
 }
 
@@ -306,8 +311,10 @@ async function leaveSwarm(topic) {
     } else {
       renderSwarmTags();
     }
+    showToast(`Left swarm #${normalized}`, "info");
   } catch (e) {
     console.error(e);
+    showToast("Failed to leave swarm", "error");
   }
 }
 
@@ -558,14 +565,43 @@ async function ping() {
     if (res.ok) {
       pingInput.value = "";
       charCount.style.display = "none";
+      showToast("Ping sent!", "success");
+    } else {
+      const err = await res.json();
+      showToast(err.error || "Failed to send ping", "error");
     }
   } catch (e) {
     console.error(e);
+    showToast("Network error occurred", "error");
   }
 }
 
 if (pingBtn) {
   pingBtn.onclick = ping;
+}
+
+function showToast(message, type = "info") {
+  const container = document.getElementById("toast-container");
+  if (!container) return;
+
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+
+  let icon = "fa-info-circle";
+  if (type === "error") icon = "fa-circle-exclamation";
+  if (type === "success") icon = "fa-circle-check";
+
+  toast.innerHTML = `
+        <i class="fa-solid ${icon}"></i>
+        <span>${message}</span>
+    `;
+
+  container.appendChild(toast);
+
+  // Remove from DOM after animation
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
 }
 
 async function amplifyPing(id) {
@@ -584,10 +620,11 @@ async function amplifyPing(id) {
       countEls.forEach((el) => (el.textContent = data.likes));
     } else {
       const err = await res.json();
-      alert(err.error || "Failed to amplify");
+      showToast(err.error || "Failed to amplify", "error");
     }
   } catch (e) {
     console.error(e);
+    showToast("Network error occurred", "error");
   }
 }
 
@@ -637,9 +674,14 @@ async function submitComment(id) {
       // Clear all inputs for this ping
       inputs.forEach((input) => (input.value = ""));
       // The SSE event will handle updating the comments list and count
+      showToast("Reply sent!", "success");
+    } else {
+      const err = await res.json();
+      showToast(err.error || "Failed to send reply", "error");
     }
   } catch (e) {
     console.error(e);
+    showToast("Network error occurred", "error");
   }
 }
 

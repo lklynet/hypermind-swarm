@@ -356,6 +356,28 @@ body {
     color: var(--text-muted);
 }
 
+.markdown-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0;
+}
+
+.markdown-toolbar button {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.markdown-toolbar button:hover {
+    background: var(--hover-bg);
+    color: var(--primary-color);
+}
+
 .compose-actions {
     display: flex;
     justify-content: space-between;
@@ -701,6 +723,10 @@ body {
 
 .comment-text {
     color: var(--text-color);
+}
+
+.ping-text a:hover, .comment-text a:hover {
+    text-decoration: underline !important;
 }
 
 /* Responsive Overrides */

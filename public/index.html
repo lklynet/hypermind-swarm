@@ -160,16 +160,26 @@
                 maxlength="280"
               ></textarea>
               <div class="compose-actions">
+                <div class="markdown-toolbar">
+                  <button type="button" onclick="insertMarkdown('**', '**')" title="Bold"><i class="fa-solid fa-bold"></i></button>
+                  <button type="button" onclick="insertMarkdown('*', '*')" title="Italic"><i class="fa-solid fa-italic"></i></button>
+                  <button type="button" onclick="insertMarkdown('__', '__')" title="Underline"><i class="fa-solid fa-underline"></i></button>
+                  <button type="button" onclick="insertMarkdown('~~', '~~')" title="Strikethrough"><i class="fa-solid fa-strikethrough"></i></button>
+                  <button type="button" onclick="insertMarkdown('[', '](url)')" title="Link"><i class="fa-solid fa-link"></i></button>
+                  <button type="button" onclick="insertMarkdown('![alt](', ')')" title="Image"><i class="fa-solid fa-image"></i></button>
+                </div>
                 <span
                   id="char-count"
                   style="
                     color: var(--primary-color);
                     font-size: 0.9rem;
                     display: none;
+                    margin-left: auto;
+                    margin-right: 1rem;
                   "
                   >0/280</span
                 >
-                <button id="ping-btn" style="margin-left: auto">Ping</button>
+                <button id="ping-btn">Ping</button>
               </div>
             </div>
           </div>

@@ -494,7 +494,7 @@ function addPingToContainer(ping, container, prepend = false) {
                 : ""
             }
         </div>
-        <div class="ping-text">${escapeHtml(ping.content)}</div>
+        <div class="ping-text">${renderMarkdown(ping.content)}</div>
         <div class="ping-actions">
             <button class="action-btn amplify" onclick="amplifyPing('${
               ping.id
@@ -516,7 +516,17 @@ function addPingToContainer(ping, container, prepend = false) {
                 <input type="text" class="comment-input" placeholder="Write a comment..." onkeydown="handleCommentKey(event, '${
                   ping.id
                 }')">
-                <button onclick="submitComment('${ping.id}')">Reply</button>
+            </div>
+            <div class="compose-actions" style="margin-bottom: 0.5rem;">
+                <div class="markdown-toolbar">
+                    <button type="button" onclick="insertCommentMarkdown('${ping.id}', '**', '**')" title="Bold"><i class="fa-solid fa-bold" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" onclick="insertCommentMarkdown('${ping.id}', '*', '*')" title="Italic"><i class="fa-solid fa-italic" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" onclick="insertCommentMarkdown('${ping.id}', '__', '__')" title="Underline"><i class="fa-solid fa-underline" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" onclick="insertCommentMarkdown('${ping.id}', '~~', '~~')" title="Strikethrough"><i class="fa-solid fa-strikethrough" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" onclick="insertCommentMarkdown('${ping.id}', '[', '](url)')" title="Link"><i class="fa-solid fa-link" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" onclick="insertCommentMarkdown('${ping.id}', '![alt](', ')')" title="Image"><i class="fa-solid fa-image" style="font-size: 0.8rem;"></i></button>
+                </div>
+                <button onclick="submitComment('${ping.id}')" style="margin-left: auto; background: var(--primary-color); color: var(--color-bg); border: none; border-radius: 9999px; padding: 0.25rem 1rem; font-weight: 700; cursor: pointer;">Reply</button>
             </div>
             <div class="comments-list">
                 ${(ping.comments || []).map((c) => renderComment(c)).join("")}
@@ -654,7 +664,7 @@ function renderComment(c) {
                       new Date(c.timestamp)
                     )}</span>
                 </div>
-                <div class="comment-text">${escapeHtml(c.content)}</div>
+                <div class="comment-text">${renderMarkdown(c.content)}</div>
             </div>
         </div>
     `;
@@ -914,6 +924,39 @@ function getColorFromId(id) {
   return PALETTE[index];
 }
 
+function renderMarkdown(text) {
+  if (!text) return "";
+
+  // Escape HTML first
+  let html = escapeHtml(text);
+
+  // Bold: **text**
+  html = html.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
+
+  // Underline: __text__
+  html = html.replace(/__(.*?)__/g, "<u>$1</u>");
+
+  // Italic: *text*
+  html = html.replace(/\*(.*?)\*/g, "<i>$1</i>");
+
+  // Strikethrough: ~~text~~
+  html = html.replace(/~~(.*?)~~/g, "<s>$1</s>");
+
+  // Images: ![alt](url)
+  html = html.replace(
+    /!\[(.*?)\]\((.*?)\)/g,
+    '<img src="$2" alt="$1" style="max-width: 100%; border-radius: 8px; margin-top: 0.5rem; display: block;">'
+  );
+
+  // Links: [text](url)
+  html = html.replace(
+    /\[(.*?)\]\((.*?)\)/g,
+    '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: var(--primary-color); text-decoration: none;">$1</a>'
+  );
+
+  return html;
+}
+
 function escapeHtml(text) {
   if (!text) return "";
   return text
@@ -943,5 +986,49 @@ function timeSince(date) {
 function focusInput() {
   if (pingInput) pingInput.focus();
 }
+
+window.insertCommentMarkdown = (pingId, before, after) => {
+  const inputs = document.querySelectorAll(`[id$="ping-${pingId}"] .comment-input`);
+  // Use the first visible input
+  let input = null;
+  for (const i of inputs) {
+    if (i.offsetParent !== null) {
+      input = i;
+      break;
+    }
+  }
+  
+  if (!input) return;
+
+  const start = input.selectionStart;
+  const end = input.selectionEnd;
+  const text = input.value;
+  const selected = text.substring(start, end);
+  const replacement = before + selected + after;
+  
+  input.value = text.substring(0, start) + replacement + text.substring(end);
+  
+  input.focus();
+  const newPos = start + before.length + selected.length + after.length;
+  input.setSelectionRange(newPos, newPos);
+};
+
+window.insertMarkdown = (before, after) => {
+  const start = pingInput.selectionStart;
+  const end = pingInput.selectionEnd;
+  const text = pingInput.value;
+  const selected = text.substring(start, end);
+  const replacement = before + selected + after;
+  
+  pingInput.value = text.substring(0, start) + replacement + text.substring(end);
+  
+  // Set focus back and set cursor position
+  pingInput.focus();
+  const newPos = start + before.length + selected.length + after.length;
+  pingInput.setSelectionRange(newPos, newPos);
+  
+  // Trigger input event to update char count
+  pingInput.dispatchEvent(new Event('input'));
+};
 
 init();

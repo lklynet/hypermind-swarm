@@ -694,6 +694,33 @@ body {
     gap: 0.5rem;
 }
 
+.reply-quote {
+    background-color: var(--hover-bg);
+    border-left: 3px solid var(--primary-color);
+    padding: 0.5rem 0.75rem;
+    margin: 0.5rem 0;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.reply-to-label {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-right: 0.25rem;
+}
+
+.reply-username {
+    color: var(--primary-color);
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.reply-text {
+    margin-top: 0.25rem;
+    color: var(--text-color);
+}
+
 .comment-item {
     display: flex;
     gap: 0.5rem;
@@ -719,6 +746,26 @@ body {
     font-weight: 700;
     font-size: 0.85rem;
     margin-right: 0.5rem;
+}
+
+.comment-reply-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 0.25rem;
+    margin-left: 0.5rem;
+    transition: all 0.2s;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.comment-reply-btn:hover {
+    color: var(--primary-color);
+    background-color: var(--hover-bg);
 }
 
 .comment-text {

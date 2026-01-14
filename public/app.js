@@ -652,17 +652,22 @@ function renderComment(c) {
     c.author
   )}; cursor: pointer;" onclick="showProfile('${c.author}')"></div>
             <div class="comment-content">
-                <div>
-                    <span class="comment-author" style="cursor: pointer;" onclick="showProfile('${
-                      c.author
-                    }')">${escapeHtml(c.username || "Anonymous")}${
-    isFollowing
-      ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.75rem;" title="Following"></i>'
-      : ""
-  }</span>
-                    <span style="font-size: 0.8rem; color: var(--text-muted);">${timeSince(
-                      new Date(c.timestamp)
-                    )}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span class="comment-author" style="cursor: pointer;" onclick="showProfile('${
+                          c.author
+                        }')">${escapeHtml(c.username || "Anonymous")}${
+        isFollowing
+          ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.75rem;" title="Following"></i>'
+          : ""
+      }</span>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">${timeSince(
+                          new Date(c.timestamp)
+                        )}</span>
+                    </div>
+                    <button class="comment-reply-btn" onclick="replyToComment('${c.pingId || ''}', '${escapeHtml(c.username || "Anonymous")}')" title="Reply to this comment">
+                        <i class="fa-solid fa-reply"></i>
+                    </button>
                 </div>
                 <div class="comment-text">${renderMarkdown(c.content)}</div>
             </div>
@@ -930,6 +935,16 @@ function renderMarkdown(text) {
   // Escape HTML first
   let html = escapeHtml(text);
 
+  // Handle replies/blockquotes (lines starting with >)
+  // This matches ">username text" and formats it as a reply
+  html = html.replace(/^&gt;([^\s\n]+)(.*)/gm, (match, username, rest) => {
+    return `<div class="reply-quote">
+      <span class="reply-to-label">Replying to</span>
+      <span class="reply-username">@${username}</span>
+      <div class="reply-text">${rest.trim()}</div>
+    </div>`;
+  });
+
   // Bold: **text**
   html = html.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
 
@@ -1029,6 +1044,26 @@ window.insertMarkdown = (before, after) => {
   
   // Trigger input event to update char count
   pingInput.dispatchEvent(new Event('input'));
+};
+
+window.replyToComment = (pingId, username) => {
+  if (!pingId) return;
+  
+  const sections = document.querySelectorAll(`[id$="ping-${pingId}"] .comment-section`);
+  sections.forEach(section => {
+    section.style.display = "block";
+    const input = section.querySelector(".comment-input");
+    if (input) {
+      if (input.value.startsWith('>')) {
+        input.value = input.value.replace(/^>[^\s]+\s?/, `>${username} `);
+      } else {
+        input.value = `>${username} ` + input.value;
+      }
+      input.focus();
+      const pos = input.value.length;
+      input.setSelectionRange(pos, pos);
+    }
+  });
 };
 
 init();

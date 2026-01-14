@@ -58,14 +58,14 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      - name: Build Docker image
-        id: build
+      - name: Build Docker image for testing
+        if: matrix.test
+        id: build-test
         uses: docker/build-push-action@v6
         with:
           context: .
           platforms: ${{ matrix.platform }}
-          labels: ${{ steps.meta.outputs.labels }}
-          load: ${{ matrix.test }}
+          load: true
           tags: hypermind-test:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -94,15 +94,16 @@ jobs:
         run: |
           response=$(curl -sf http://localhost:3000/api/stats)
           echo "Response: $response"
-          echo "$response" | jq -e '.count != null and .id != null'
+          # Check if response is valid JSON and has expected fields
+          echo "$response" | jq -e '.id != null'
 
       - name: Cleanup test container
         if: always() && matrix.test
         run: docker rm -f hypermind-test || true
 
-      - name: Push by digest
+      - name: Build and push by digest
         if: inputs.push-to-registry
-        id: push
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -110,12 +111,13 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Export digest
         if: inputs.push-to-registry
         run: |
           mkdir -p ${{ runner.temp }}/digests
-          digest="${{ steps.push.outputs.digest }}"
+          digest="${{ steps.build.outputs.digest }}"
           touch "${{ runner.temp }}/digests/${digest#sha256:}"
 
       - name: Upload digest

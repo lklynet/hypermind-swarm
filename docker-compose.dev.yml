@@ -1,8 +1,8 @@
 services:
   hypermind:
     build: .
-    image: hypermind
-    container_name: hypermind
+    image: hypermind-swarm
+    container_name: hypermind-swarm
     network_mode: host
     restart: unless-stopped
     environment:

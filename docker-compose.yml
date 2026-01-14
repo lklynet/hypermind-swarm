@@ -1,24 +1,8 @@
 services:
   hypermind:
-    image: ghcr.io/lklynet/hypermind:latest
-    container_name: hypermind
+    image: ghcr.io/lklynet/hypermind-swarm:latest
+    container_name: hypermind-swarm
     network_mode: host
     restart: unless-stopped
     environment:
       - PORT=3000
-
-      # --- Add-ons ---
-      # - ENABLE_CHAT=false        # Enable decentralized chat
-      # - ENABLE_MAP=false         # Enable peer map visualization
-      # - ENABLE_THEMES=true       # Enable theme switcher button
-
-      # --- Refinements ---
-      # - MAX_PEERS=50000          # Max peers to track in memory
-      # - MAX_CONNECTIONS=15       # Max active P2P connections
-      # - HEARTBEAT_INTERVAL=30000 # Heartbeat frequency (ms)
-      # - CONNECTION_ROTATION_INTERVAL=300000 # Connection rotation frequency (ms)
-      # - PEER_TIMEOUT=45000       # Time before peer is considered offline (ms)
-      # - MAX_MESSAGE_SIZE=2048    # Max message size (bytes)
-      # - MAX_RELAY_HOPS=2         # Max message relay hops
-      # - CHAT_RATE_LIMIT=5000     # Chat rate limit window (ms)
-      # - VISUAL_LIMIT=500         # Max particles on dashboard

@@ -630,28 +630,6 @@ body {
 }
 
 
-.connection-status {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    margin-top: 1rem;
-    padding-left: 0.5rem;
-}
-
-.status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: var(--color-red);
-}
-
-.status-dot.connected {
-    background-color: var(--color-green);
-}
-
-
 .comment-section {
     margin-top: 0.5rem;
     padding-top: 0.5rem;

@@ -1,12 +1,12 @@
+@use "../global/variables" as *;
+
 .toast {
-    background-color: var(--color-black);
+    background-color: var(--hover-bg);
     color: var(--text-color);
     padding: 0.75rem 1.5rem;
-    border-radius: 9999px;
+    border-radius: 12px;
     font-weight: 500;
     font-size: 0.95rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    border: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -17,17 +17,14 @@
     width: fit-content;
 
     &.error {
-        border-color: var(--color-red);
         color: var(--color-red);
     }
 
     &.success {
-        border-color: var(--color-green);
         color: var(--color-green);
     }
 
     &.info {
-        border-color: var(--primary-color);
         color: var(--primary-color);
     }
 
@@ -41,6 +38,12 @@
         gap: 0.75rem;
         z-index: 9999;
         pointer-events: none;
+
+        @media (min-width: $min-w-desktop) {
+            left: auto;
+            right: 2rem;
+            transform: none;
+        }
     }
 }
 

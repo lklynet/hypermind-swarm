@@ -1,28 +1,36 @@
-FROM node:24-alpine AS builder
+FROM node:24-slim AS builder
 
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     python3 \
     make \
     g++ \
-    libsodium-dev
+    libsodium-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install -g node-gyp
-RUN npm_config_build_from_source=true npm ci
+
+RUN npm ci
 
 COPY . .
 
 RUN npm run build:css
 
-FROM node:24-alpine
+FROM node:24-slim
 
-RUN apk add --no-cache libsodium
+RUN apt-get update && apt-get install -y \
+    libsodium23 \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY --from=builder /app /app
+
+RUN npm rebuild
 
 EXPOSE 3000
 

@@ -6,6 +6,7 @@ const { setupProfileRoutes } = require("./routes/profile-routes");
 const { setupSwarmRoutes } = require("./routes/swarm-routes");
 const { setupStaticRoutes } = require("./routes/static-routes");
 const { setupGifRoutes } = require("./routes/gif-routes");
+const { setupHealthRoutes } = require("./routes/health-routes");
 
 const setupRoutes = (
   app,
@@ -31,6 +32,7 @@ const setupRoutes = (
   };
 
   setupStaticRoutes(app, deps);
+  setupHealthRoutes(app, deps);
   setupSSERoutes(app, deps);
   setupProfileRoutes(app, deps);
   setupSwarmRoutes(app, deps);

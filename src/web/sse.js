@@ -1,15 +1,23 @@
-const { BROADCAST_THROTTLE } = require("../config/constants");
+const {
+  BROADCAST_THROTTLE,
+  MAX_SSE_CLIENTS,
+  SSE_HEARTBEAT_INTERVAL,
+} = require("../config/constants");
 
 class SSEManager {
   constructor() {
     this.clients = new Set();
     this.lastBroadcast = 0;
 
-    setInterval(() => this.heartbeat(), 15000);
+    setInterval(() => this.heartbeat(), SSE_HEARTBEAT_INTERVAL);
   }
 
   addClient(res) {
+    if (this.clients.size >= MAX_SSE_CLIENTS) {
+      return false;
+    }
     this.clients.add(res);
+    return true;
   }
 
   removeClient(res) {

@@ -4,7 +4,18 @@ const {
   createPublicKey,
 } = require("../core/security");
 const crypto = require("crypto");
-const { MAX_RELAY_HOPS } = require("../config/constants");
+const {
+  MAX_RELAY_HOPS,
+  MAX_CONTENT_LENGTH,
+  MAX_USERNAME_LENGTH,
+  MAX_SEQUENCE_NUMBER,
+  MAX_TTL,
+  RATE_LIMIT_CLEANUP_INTERVAL,
+  RATE_LIMIT_WINDOW_MS,
+  PING_RATE_LIMIT,
+  COMMENT_RATE_LIMIT,
+  DEFAULT_MESSAGE_TTL,
+} = require("../config/constants");
 const { BloomFilterManager } = require("../state/bloom");
 
 class MessageHandler {
@@ -29,6 +40,14 @@ class MessageHandler {
     this.bloomFilter = new BloomFilterManager();
     this.bloomFilter.start();
     this.rateLimits = new Map();
+    this.rateLimitCleanup = setInterval(() => {
+      const now = Date.now();
+      for (const [author, data] of this.rateLimits.entries()) {
+        if (now - data.windowStart > RATE_LIMIT_WINDOW_MS * 6) {
+          this.rateLimits.delete(author);
+        }
+      }
+    }, RATE_LIMIT_CLEANUP_INTERVAL);
     this.getSwarmFilter = () => null;
   }
 
@@ -169,16 +188,16 @@ class MessageHandler {
 
   handlePing(msg, sourceSocket) {
     const { author, id, sig, timestamp } = msg;
-    const ttl = typeof msg.ttl === "number" ? msg.ttl : 10;
+    const ttl = typeof msg.ttl === "number" ? msg.ttl : DEFAULT_MESSAGE_TTL;
 
     const now = Date.now();
     let rateData = this.rateLimits.get(author);
 
-    if (!rateData || now - rateData.windowStart > 10000) {
+    if (!rateData || now - rateData.windowStart > RATE_LIMIT_WINDOW_MS) {
       rateData = { count: 0, windowStart: now };
     }
 
-    if (rateData.count >= 5) {
+    if (rateData.count >= PING_RATE_LIMIT) {
       return;
     }
 
@@ -276,10 +295,10 @@ class MessageHandler {
 
     const now = Date.now();
     let rateData = this.rateLimits.get(author);
-    if (!rateData || now - rateData.windowStart > 10000) {
+    if (!rateData || now - rateData.windowStart > RATE_LIMIT_WINDOW_MS) {
       rateData = { count: 0, windowStart: now };
     }
-    if (rateData.count >= 10) return;
+    if (rateData.count >= COMMENT_RATE_LIMIT) return;
 
     const idBase = author + pingId + content + timestamp;
     const computedId = crypto.createHash("sha256").update(idBase).digest("hex");
@@ -345,7 +364,12 @@ const validateMessage = (msg) => {
       fields.every((f) => allowedFields.includes(f)) &&
       msg.id &&
       typeof msg.seq === "number" &&
+      msg.seq >= 0 &&
+      msg.seq <= MAX_SEQUENCE_NUMBER &&
       typeof msg.hops === "number" &&
+      msg.hops >= 0 &&
+      msg.hops <= MAX_RELAY_HOPS &&
+      (!msg.username || msg.username.length <= MAX_USERNAME_LENGTH) &&
       msg.nonce &&
       msg.sig
     );
@@ -358,6 +382,8 @@ const validateMessage = (msg) => {
       fields.every((f) => allowedFields.includes(f)) &&
       msg.id &&
       typeof msg.hops === "number" &&
+      msg.hops >= 0 &&
+      msg.hops <= MAX_RELAY_HOPS &&
       msg.sig
     );
   }
@@ -382,9 +408,19 @@ const validateMessage = (msg) => {
       msg.id &&
       msg.author &&
       msg.content &&
+      typeof msg.content === "string" &&
+      msg.content.length <= MAX_CONTENT_LENGTH &&
+      (!msg.username || msg.username.length <= MAX_USERNAME_LENGTH) &&
       msg.timestamp &&
+      typeof msg.timestamp === "number" &&
+      msg.timestamp > 0 &&
       msg.sig &&
-      typeof msg.ttl === "number"
+      typeof msg.ttl === "number" &&
+      msg.ttl >= 0 &&
+      msg.ttl <= MAX_TTL &&
+      typeof msg.hops === "number" &&
+      msg.hops >= 0 &&
+      msg.hops <= MAX_RELAY_HOPS
     );
   }
 
@@ -405,7 +441,9 @@ const validateMessage = (msg) => {
       validateMessage(msg.originalPing) &&
       msg.amplifier &&
       msg.sig &&
-      typeof msg.ttl === "number"
+      typeof msg.ttl === "number" &&
+      msg.ttl >= 0 &&
+      msg.ttl <= MAX_TTL
     );
   }
 
@@ -428,9 +466,16 @@ const validateMessage = (msg) => {
       msg.pingId &&
       msg.author &&
       msg.content &&
+      typeof msg.content === "string" &&
+      msg.content.length <= MAX_CONTENT_LENGTH &&
+      (!msg.username || msg.username.length <= MAX_USERNAME_LENGTH) &&
       msg.timestamp &&
+      typeof msg.timestamp === "number" &&
+      msg.timestamp > 0 &&
       msg.sig &&
-      typeof msg.ttl === "number"
+      typeof msg.ttl === "number" &&
+      msg.ttl >= 0 &&
+      msg.ttl <= MAX_TTL
     );
   }
 

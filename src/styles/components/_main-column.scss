@@ -1,3 +1,5 @@
+@use '../global/variables' as *;
+
 .main-column {
     display: flex;
     flex-direction: column;
@@ -145,7 +147,7 @@
     max-height: calc(100vh - 202px);
     padding-bottom: 5rem;
 
-    @media (min-width: 1000px) {
+    @media (min-width: $min-w-desktop) {
         padding-bottom: 1rem;
     }
 

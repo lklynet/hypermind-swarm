@@ -5,7 +5,13 @@ const crypto = require("crypto");
 const { signMessage } = require("../core/security");
 const { generateAvatar } = require("../utils/avatar");
 const { generateScreenname } = require("../utils/name-generator");
-const { CHAT_RATE_LIMIT, VISUAL_LIMIT } = require("../config/constants");
+const {
+  CHAT_RATE_LIMIT,
+  VISUAL_LIMIT,
+  DEFAULT_MESSAGE_TTL,
+  MAX_CONTENT_LENGTH,
+  PING_RATE_LIMIT,
+} = require("../config/constants");
 const { getSwarmId } = require("../utils/swarm-utils");
 
 const HTML_TEMPLATE = fs.readFileSync(
@@ -43,6 +49,13 @@ const setupRoutes = (
 
   app.get("/events", (req, res) => {
     console.log("New SSE connection request");
+
+    const clientAdded = sseManager.addClient(res);
+    if (!clientAdded) {
+      res.status(503).json({ error: "Server at capacity" });
+      return;
+    }
+
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
@@ -55,8 +68,6 @@ const setupRoutes = (
 
     res.write("retry: 3000\n");
     res.write(": ok\n\n");
-
-    sseManager.addClient(res);
 
     const data = JSON.stringify({
       type: "INIT",
@@ -171,14 +182,14 @@ const setupRoutes = (
     const now = Date.now();
     pingHistory = pingHistory.filter((time) => now - time < CHAT_RATE_LIMIT);
 
-    if (pingHistory.length >= 5) {
+    if (pingHistory.length >= PING_RATE_LIMIT) {
       return res.status(429).json({ error: "Rate limit exceeded" });
     }
 
     pingHistory.push(now);
 
     const { content, topic } = req.body;
-    if (!content || typeof content !== "string" || content.length > 280) {
+    if (!content || typeof content !== "string" || content.length > MAX_CONTENT_LENGTH) {
       return res.status(400).json({ error: "Invalid content" });
     }
 
@@ -204,7 +215,7 @@ const setupRoutes = (
       timestamp,
       sig,
       hops: 0,
-      ttl: 10,
+      ttl: DEFAULT_MESSAGE_TTL,
       swarmId,
       topic: normalizedTopic,
     };
@@ -264,7 +275,7 @@ const setupRoutes = (
       originalPing: originalPingData,
       amplifier: identity.id,
       sig,
-      ttl: 10,
+      ttl: DEFAULT_MESSAGE_TTL,
     };
 
     pingStore.like(id, identity.id);

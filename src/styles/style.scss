@@ -1,10 +1,10 @@
 @use './global/variables';
 @use './global/base';
 @use './global/layout';
-@use 'sidebar-left';
-@use 'main-column';
-@use 'ping';
-@use 'sidebar-right';
-@use 'profile';
-@use 'comments';
-@use 'toast';
+@use './components/sidebar-left';
+@use './components/main-column';
+@use './components/ping';
+@use './components/sidebar-right';
+@use './components/profile';
+@use './components/comments';
+@use './components/toast';

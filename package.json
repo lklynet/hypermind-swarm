@@ -8,6 +8,7 @@
     "watch:css": "sass src/styles/style.scss public/style.css --watch --style=compressed --no-source-map",
     "start": "npm run build:css && node server.js",
     "dev": "npm run watch:css & node server.js",
+    "second-instance": "STORAGE_PATH=./storage2 PORT=3002 npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

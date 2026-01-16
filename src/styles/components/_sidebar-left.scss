@@ -1,3 +1,5 @@
+@use '../global/variables' as *;
+
 .sidebar {
     &-left {
         position: fixed;
@@ -13,7 +15,13 @@
         scrollbar-width: none;
         -ms-overflow-style: none;
 
-        @media (min-width: 1000px) {
+        .top-section-wrapper {
+            @media (min-width: $min-w-desktop) {
+                width: 100%;
+            }
+        }
+
+        @media (min-width: $min-w-desktop) {
             align-items: flex-start;
             position: sticky;
             border-top: 0;
@@ -37,7 +45,7 @@
     width: 32px;
     height: 32px;
 
-    @media (min-width: 1000px) {
+    @media (min-width: $min-w-desktop) {
         width: 32px;
         height: 32px;
     }
@@ -50,7 +58,7 @@
         cursor: pointer;
         width: 100%;
 
-        @media (min-width: 1000px) {
+        @media (min-width: $min-w-desktop) {
             justify-content: flex-start;
             gap: 1rem;
             padding: 0.5rem;
@@ -61,7 +69,7 @@
         div {
             display: none;
 
-            @media (min-width: 1000px) {
+            @media (min-width: $min-w-desktop) {
                 display: block;
             }
         }
@@ -73,7 +81,7 @@
         font-weight: 700;
         color: var(--text-color);
 
-        @media (min-width: 1000px) {
+        @media (min-width: $min-w-desktop) {
             display: block;
         }
     }
@@ -83,7 +91,7 @@
     &-menu {
         display: none;
 
-        @media (min-width: 1000px) {
+        @media (min-width: $min-w-desktop) {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
@@ -121,7 +129,7 @@
     &-label {
         display: none;
 
-        @media (min-width: 1000px) {
+        @media (min-width: $min-w-desktop) {
             display: inline;
         }
     }
@@ -130,7 +138,7 @@
 .ping-btn-large {
     display: none;
 
-    @media (min-width: 1000px) {
+    @media (min-width: $min-w-desktop) {
         display: block;
         background-color: var(--primary-color);
         color: var(--color-bg);
@@ -159,7 +167,7 @@
     width: 100%;
     display: none;
 
-    @media (min-width: 1000px) {
+    @media (min-width: $min-w-desktop) {
         display: flex;
         flex-direction: column;
         gap: 1.5rem;
@@ -177,7 +185,7 @@
         padding: 0;
         width: 100%;
 
-        @media (min-width: 1000px) {
+        @media (min-width: $min-w-desktop) {
             display: flex;
             flex-direction: column;
             align-items: stretch;
@@ -189,7 +197,7 @@
         &:not(:first-child) {
             display: none;
 
-            @media (min-width: 1000px) {
+            @media (min-width: $min-w-desktop) {
                 display: flex;
             }
         }
@@ -198,7 +206,7 @@
     &-header {
         display: none;
 
-        @media (min-width: 1000px) {
+        @media (min-width: $min-w-desktop) {
             display: block;
             font-size: 0.75rem;
             font-weight: 700;
@@ -218,7 +226,7 @@
         margin: 0;
         padding: 0;
 
-        @media (min-width: 1000px) {
+        @media (min-width: $min-w-desktop) {
             display: grid;
             grid-template-columns: 1fr;
             gap: 0.5rem;
@@ -236,7 +244,7 @@
         font-family: 'Google Sans Code', monospace;
         font-size: 0.85rem;
 
-        @media (min-width: 1000px) {
+        @media (min-width: $min-w-desktop) {
             justify-content: space-between;
             align-items: center;
             margin: 0;
@@ -246,7 +254,7 @@
         &:not(:first-child) {
             display: none;
 
-            @media (min-width: 1000px) {
+            @media (min-width: $min-w-desktop) {
                 display: flex;
             }
         }
@@ -255,7 +263,7 @@
     &-label {
         display: none;
 
-        @media (min-width: 1000px) {
+        @media (min-width: $min-w-desktop) {
             display: inline;
             color: var(--text-muted);
         }
@@ -264,7 +272,7 @@
     &-value {
         display: none;
 
-        @media (min-width: 1000px) {
+        @media (min-width: $min-w-desktop) {
             display: inline;
             color: var(--text-color);
             font-weight: 500;
@@ -281,7 +289,7 @@
     margin: 0;
     padding: 0;
 
-    @media (min-width: 1000px) {
+    @media (min-width: $min-w-desktop) {
         position: relative;
         justify-content: flex-start;
     }
@@ -296,7 +304,7 @@
     border-radius: 50%;
     box-shadow: none;
 
-    @media (min-width: 1000px) {
+    @media (min-width: $min-w-desktop) {
         width: 8px;
         height: 8px;
         min-width: 8px;
@@ -307,7 +315,7 @@
     &.connecting {
         background-color: var(--color-gold);
 
-        @media (min-width: 1000px) {
+        @media (min-width: $min-w-desktop) {
             box-shadow: 0 0 8px var(--color-gold);
             animation: pulse 2s infinite;
         }
@@ -316,7 +324,7 @@
     &.connected {
         background-color: var(--color-green);
 
-        @media (min-width: 1000px) {
+        @media (min-width: $min-w-desktop) {
             box-shadow: 0 0 8px var(--color-green);
         }
     }
@@ -324,7 +332,7 @@
     &.error {
         background-color: var(--color-red);
 
-        @media (min-width: 1000px) {
+        @media (min-width: $min-w-desktop) {
             box-shadow: 0 0 8px var(--color-red);
         }
     }
@@ -333,7 +341,7 @@
 #status-text {
     display: none;
 
-    @media (min-width: 1000px) {
+    @media (min-width: $min-w-desktop) {
         display: inline;
     }
 }
@@ -364,7 +372,7 @@
         cursor: pointer;
         transition: background-color 0.2s;
 
-        @media (min-width: 1000px) {
+        @media (min-width: $min-w-desktop) {
             justify-content: flex-start;
             padding: 0.75rem;
             width: 95%;
@@ -386,7 +394,7 @@
         background-color: var(--color-olive);
         flex-shrink: 0;
 
-        @media (min-width: 1000px) {
+        @media (min-width: $min-w-desktop) {
             width: 40px;
             height: 40px;
             min-width: 40px;
@@ -399,7 +407,7 @@
     &-info {
         display: none;
 
-        @media (min-width: 1000px) {
+        @media (min-width: $min-w-desktop) {
             display: flex;
             flex-direction: column;
             overflow: hidden;

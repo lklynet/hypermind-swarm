@@ -227,7 +227,6 @@ async function init() {
   const composeAvatar = document.getElementById("compose-avatar");
   if (composeAvatar && myId) {
     composeAvatar.style.backgroundImage = `url(/api/avatar/${myId})`;
-    composeAvatar.style.backgroundSize = "cover";
     composeAvatar.style.backgroundColor = getColorFromId(myId);
   }
 }
@@ -244,7 +243,6 @@ function updateMyProfileWidget(data) {
   const composeAvatar = document.getElementById("compose-avatar");
   if (composeAvatar) {
     composeAvatar.style.backgroundImage = `url(/api/avatar/${data.id})`;
-    composeAvatar.style.backgroundSize = "cover";
     composeAvatar.style.backgroundColor = getColorFromId(data.id + "pfp");
   }
 }
@@ -468,7 +466,7 @@ function addPingToContainer(ping, container, prepend = false) {
   }
 
   el.innerHTML = `
-    <div class="ping-avatar" style="background-image: url('${avatarUrl}'); background-size: cover; background-color: ${getColorFromId(
+    <div class="avatar ping-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getColorFromId(
     ping.author
   )};" onclick="showProfile('${ping.author}')"></div>
     <div class="ping-content">
@@ -671,7 +669,7 @@ function renderComment(c) {
   const isFollowing = following.includes(c.author);
   return `
         <div class="comment-item">
-            <div class="comment-avatar" style="background-image: url('${avatarUrl}'); background-size: cover; background-color: ${getColorFromId(
+            <div class="avatar comment-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getColorFromId(
     c.author
   )}; cursor: pointer;" onclick="showProfile('${c.author}')"></div>
             <div class="comment-content">
@@ -727,7 +725,7 @@ window.showProfile = async (id) => {
     )};"></div>
         <div class="profile-details">
             <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                <div class="profile-avatar-large" style="background-image: url('${avatarUrl}'); background-size: cover; background-color: ${getColorFromId(
+                <div class="avatar profile-avatar-large" style="background-image: url('${avatarUrl}'); background-color: ${getColorFromId(
       data.id + "pfp"
     )};"></div>
                 ${!isMe

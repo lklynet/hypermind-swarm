@@ -1,10 +1,11 @@
 const { hasSwarmSubscription } = require("../utils/swarm-utils");
+const { RELAY_PEER_COUNT } = require("../config/constants");
 
 const relayMessage = (msg, sourceSocket, swarm, diagnostics, peerManager) => {
   const data = JSON.stringify(msg) + "\n";
   const swarmId = msg.swarmId || 0;
 
-  const TARGET_GOSSIP_COUNT = 10;
+  const TARGET_GOSSIP_COUNT = RELAY_PEER_COUNT;
   const allSockets = Array.from(swarm.connections);
 
   const eligible = allSockets.filter((s) => {

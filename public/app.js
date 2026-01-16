@@ -10,6 +10,9 @@ import { renderFollowedAccounts, updateMyProfileWidget } from "./js/features/pro
 
 import "./js/features/comments.js";
 
+import "./js/commands/help.js";
+import "./js/commands/tenor.js";
+
 async function init() {
   try {
     const data = await fetchWhoami();

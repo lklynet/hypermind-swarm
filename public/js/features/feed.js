@@ -6,6 +6,7 @@ import { getColorFromId } from "../utils/colors.js";
 import { renderMarkdown, insertMarkdownAtCursor } from "../utils/markdown.js";
 import { showToast } from "../utils/toast.js";
 import { renderComment } from "./comments.js";
+import { handleCommandInput } from "../commands/handler.js";
 
 export function switchTab(tab) {
     state.currentTab = tab;
@@ -157,6 +158,8 @@ export async function sendPing() {
     const content = DOM.pingInput.value.trim();
     if (!content) return;
 
+    if (await handleCommandInput(DOM.pingInput)) return;
+
     try {
         await postPing(content, state.currentTopic);
         DOM.pingInput.value = "";
@@ -196,6 +199,13 @@ export function setupFeedListeners() {
                 DOM.charCount.style.color = "var(--color-gold)";
             } else {
                 DOM.charCount.style.color = "var(--primary-color)";
+            }
+        });
+
+        DOM.pingInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendPing();
             }
         });
     }

@@ -1,13 +1,13 @@
 const Corestore = require("corestore");
-const Hypercore = require("hypercore");
 const b4a = require("b4a");
-const path = require("path");
 
 class PersistenceManager {
   constructor(storagePath = "./storage") {
     this.store = new Corestore(storagePath);
     this.primaryCore = null;
     this.peerCores = new Map();
+    this.knownPeerKeys = new Set();
+    this.trackingCore = null;
     this.onMessage = null;
   }
 
@@ -24,6 +24,31 @@ class PersistenceManager {
       "Primary Hypercore ready. Key:",
       b4a.toString(this.primaryCore.key, "hex")
     );
+
+    this.trackingCore = this.store.get({
+      name: "tracked-peers",
+      valueEncoding: "json",
+    });
+    await this.trackingCore.ready();
+    await this._loadTrackedPeers();
+  }
+
+  async _loadTrackedPeers() {
+    try {
+      const length = this.trackingCore.length;
+      console.log(`Loading ${length} tracked peers from storage...`);
+      for (let i = 0; i < length; i++) {
+        const peerKey = await this.trackingCore.get(i);
+        if (peerKey && !this.knownPeerKeys.has(peerKey)) {
+          this.knownPeerKeys.add(peerKey);
+          await this.getPeerCore(peerKey).catch((err) =>
+            console.error(`Failed to load peer ${peerKey}:`, err)
+          );
+        }
+      }
+    } catch (err) {
+      console.error("Error loading tracked peers:", err);
+    }
   }
 
   _watchCore(core) {
@@ -78,6 +103,14 @@ class PersistenceManager {
       typeof publicKey === "string"
         ? publicKey
         : b4a.toString(publicKey, "hex");
+
+    if (!this.knownPeerKeys.has(keyStr)) {
+      this.knownPeerKeys.add(keyStr);
+      if (this.trackingCore) {
+        this.trackingCore.append(keyStr).catch(console.error);
+      }
+    }
+
     if (this.peerCores.has(keyStr)) return this.peerCores.get(keyStr);
 
     const core = this.store.get({

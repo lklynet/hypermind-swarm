@@ -5,6 +5,7 @@ const { setupPingRoutes } = require("./routes/ping-routes");
 const { setupProfileRoutes } = require("./routes/profile-routes");
 const { setupSwarmRoutes } = require("./routes/swarm-routes");
 const { setupStaticRoutes } = require("./routes/static-routes");
+const { setupGifRoutes } = require("./routes/gif-routes");
 
 const setupRoutes = (
   app,
@@ -34,6 +35,7 @@ const setupRoutes = (
   setupProfileRoutes(app, deps);
   setupSwarmRoutes(app, deps);
   setupPingRoutes(app, deps);
+  setupGifRoutes(app);
 };
 
 module.exports = { setupRoutes };

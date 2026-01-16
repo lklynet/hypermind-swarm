@@ -1,10 +1,9 @@
-FROM node:24-slim AS builder
+FROM node:24-alpine AS builder
 
-RUN apt-get update && apt-get install -y \
+RUN apk add --no-cache \
     python3 \
     make \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
+    g++
 
 WORKDIR /app
 
@@ -15,7 +14,7 @@ COPY . .
 
 RUN npm run build:css
 
-FROM node:22-slim
+FROM node:24-alpine
 
 WORKDIR /app
 

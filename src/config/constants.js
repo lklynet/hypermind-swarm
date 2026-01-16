@@ -3,8 +3,8 @@ const crypto = require("crypto");
 const TOPIC_NAME = process.env.TOPIC_NAME || "hypermind-swarm-v1";
 const TOPIC = crypto.createHash("sha256").update(TOPIC_NAME).digest();
 
-const MY_POW_PREFIX = process.env.POW_PREFIX || "000000";
-const VERIFICATION_POW_PREFIX = process.env.VERIFICATION_POW_PREFIX || "000000";
+const MY_POW_PREFIX = process.env.POW_PREFIX || "00000";
+const VERIFICATION_POW_PREFIX = process.env.VERIFICATION_POW_PREFIX || "00000";
 
 const MAX_PEERS = parseInt(process.env.MAX_PEERS) || 100000;
 const MAX_MESSAGE_SIZE = parseInt(process.env.MAX_MESSAGE_SIZE) || 2048;
@@ -42,6 +42,8 @@ const CHAT_RATE_LIMIT = parseInt(process.env.CHAT_RATE_LIMIT) || 5000;
 const VISUAL_LIMIT = parseInt(process.env.VISUAL_LIMIT) || 500;
 const DEVICE_PERSISTENCE = process.env.DEVICE_PERSISTENCE === "true";
 
+const TENOR_API_KEY = process.env.TENOR_API_KEY || "AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ";
+
 module.exports = {
   TOPIC_NAME,
   TOPIC,
@@ -75,4 +77,5 @@ module.exports = {
   CHAT_RATE_LIMIT,
   VISUAL_LIMIT,
   DEVICE_PERSISTENCE,
+  TENOR_API_KEY
 };

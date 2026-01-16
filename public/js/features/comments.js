@@ -5,6 +5,7 @@ import { timeSince } from "../utils/formatters.js";
 import { getColorFromId } from "../utils/colors.js";
 import { renderMarkdown, insertMarkdownAtCursor } from "../utils/markdown.js";
 import { showToast } from "../utils/toast.js";
+import { handleCommandInput } from "../commands/handler.js";
 
 export function toggleComment(id) {
     const sections = document.querySelectorAll(`[id$="ping-${id}"] .comment-section`);
@@ -27,15 +28,19 @@ export function handleCommentKey(e, id) {
 export async function submitComment(id) {
     const inputs = document.querySelectorAll(`[id$="ping-${id}"] .comment-input`);
     let content = "";
+    let activeInput = null;
 
     for (const input of inputs) {
         if (input.value.trim()) {
             content = input.value.trim();
+            activeInput = input;
             break;
         }
     }
 
     if (!content) return;
+
+    if (await handleCommandInput(activeInput)) return;
 
     try {
         await postComment(id, content);

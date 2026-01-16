@@ -1,3 +1,5 @@
+@use "../global/variables" as *;
+
 .avatar {
     background-size: 180% 180%;
     background-position: center;
@@ -6,6 +8,20 @@
 .profile {
     &-view {
         display: none;
+
+        .feed-container {            
+            padding-bottom: 21rem;
+
+            @media (min-width: $min-w-desktop) {
+                padding-bottom: 13rem;
+            }
+
+            .ping {
+                &:last-child {
+                    border-bottom: 0;
+                }
+            }
+        }
     }
 
     &-header-large {

@@ -1,5 +1,3 @@
-const { DIAGNOSTICS_INTERVAL } = require("../config/constants");
-
 class DiagnosticsManager {
   constructor() {
     this.startTime = Date.now();
@@ -17,13 +15,14 @@ class DiagnosticsManager {
       pingsRelayed: 0,
       amplifyRelayed: 0,
       pingsSent: 0,
+      invalidMessages: 0,
+      bufferOverflows: 0,
+      rateLimitExceeded: 0,
     };
-
-    this.interval = null;
   }
 
   increment(key, amount = 1) {
-    if (this.stats.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(this.stats, key)) {
       this.stats[key] += amount;
     }
   }
@@ -46,8 +45,8 @@ class DiagnosticsManager {
     Object.keys(this.stats).forEach((k) => (this.stats[k] = 0));
   }
 
-  stopLogging() {
-    // No-op, interval removed
+  cleanup() {
+    this.reset();
   }
 }
 

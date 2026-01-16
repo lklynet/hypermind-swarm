@@ -49,7 +49,6 @@ class PersistenceManager {
 
     core.on("append", readMore);
 
-    // For remote cores, we need to update to find the latest length
     if (!core.writable) {
       core.update().then(() => {
         if (core.length > 0) {
@@ -66,9 +65,7 @@ class PersistenceManager {
     }
   }
 
-  async _readExisting(core) {
-    // This is now handled by _watchCore's initial readMore() and update()
-  }
+  async _readExisting(core) { }
 
   async append(msg) {
     if (!this.primaryCore)
@@ -117,6 +114,13 @@ class PersistenceManager {
     }
 
     return messages;
+  }
+
+  async cleanup() {
+    this.peerCores.clear();
+    if (this.store) {
+      await this.store.close();
+    }
   }
 }
 

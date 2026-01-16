@@ -22,7 +22,6 @@ const main = async () => {
   const pingStore = new PingStore();
   const sseManager = new SSEManager();
 
-  // Wire up persistence to pingStore BEFORE init
   persistenceManager.onMessage = (msg) => {
     if (msg.type === "PING") {
       const isNew = pingStore.add(msg);
@@ -53,6 +52,9 @@ const main = async () => {
   await persistenceManager.init();
 
   peerManager.addOrUpdatePeer(identity.id, peerManager.getSeq());
+
+  let swarmManager;
+  let diagnosticsInterval;
 
   const broadcastUpdate = (reset = false) => {
     sseManager.broadcastUpdate({
@@ -94,7 +96,7 @@ const main = async () => {
     persistenceManager
   );
 
-  const swarmManager = new SwarmManager(
+  swarmManager = new SwarmManager(
     identity,
     peerManager,
     diagnostics,
@@ -112,15 +114,13 @@ const main = async () => {
     persistenceManager
   );
 
-  // Wire up swarm filter getter
   messageHandler.setGetSwarmFilter(() => swarmManager.swarmFilter);
 
   await swarmManager.start();
 
-  // Initial broadcast
   broadcastUpdate();
 
-  setInterval(() => {
+  diagnosticsInterval = setInterval(() => {
     broadcastUpdate(true);
   }, DIAGNOSTICS_INTERVAL);
 
@@ -135,9 +135,23 @@ const main = async () => {
   );
   startServer(app, identity);
 
-  const handleShutdown = () => {
-    diagnostics.stopLogging();
-    swarmManager.shutdown();
+  const handleShutdown = async () => {
+    console.log("Shutting down gracefully...");
+
+    if (diagnosticsInterval) {
+      clearInterval(diagnosticsInterval);
+    }
+
+    messageHandler.cleanup();
+    sseManager.cleanup();
+    diagnostics.cleanup();
+    peerManager.cleanup();
+    pingStore.cleanup();
+    await swarmManager.cleanup();
+    await persistenceManager.cleanup();
+
+    console.log("Cleanup complete");
+    process.exit(0);
   };
 
   process.on("SIGINT", handleShutdown);

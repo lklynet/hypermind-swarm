@@ -1,0 +1,109 @@
+import { DOM, state } from "../core/state.js";
+import { postComment } from "../core/api.js";
+import { escapeHtml } from "../utils/html.js";
+import { timeSince } from "../utils/formatters.js";
+import { getColorFromId } from "../utils/colors.js";
+import { renderMarkdown, insertMarkdownAtCursor } from "../utils/markdown.js";
+import { showToast } from "../utils/toast.js";
+
+export function toggleComment(id) {
+    const sections = document.querySelectorAll(`[id$="ping-${id}"] .comment-section`);
+    sections.forEach((section) => {
+        const isHidden = section.style.display === "none";
+        section.style.display = isHidden ? "block" : "none";
+        if (isHidden) {
+            const input = section.querySelector(".comment-input");
+            if (input) input.focus();
+        }
+    });
+}
+
+export function handleCommentKey(e, id) {
+    if (e.key === "Enter") {
+        submitComment(id);
+    }
+}
+
+export async function submitComment(id) {
+    const inputs = document.querySelectorAll(`[id$="ping-${id}"] .comment-input`);
+    let content = "";
+
+    for (const input of inputs) {
+        if (input.value.trim()) {
+            content = input.value.trim();
+            break;
+        }
+    }
+
+    if (!content) return;
+
+    try {
+        await postComment(id, content);
+        inputs.forEach((input) => (input.value = ""));
+        showToast("Reply sent!", "success");
+    } catch (e) {
+        console.error(e);
+        showToast(e.message || "Failed to send reply", "error");
+    }
+}
+
+export function renderComment(c) {
+    const avatarUrl = `/api/avatar/${c.author}`;
+    const isFollowing = state.following.includes(c.author);
+
+    return `
+    <div class="comment-item">
+      <div class="avatar comment-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getColorFromId(c.author)}; cursor: pointer;" onclick="window.showProfile('${c.author}')"></div>
+      <div class="comment-content">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span class="comment-author" style="cursor: pointer;" onclick="window.showProfile('${c.author}')">${escapeHtml(c.username || "Anonymous")}${isFollowing ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.75rem;" title="Following"></i>' : ""}</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">${timeSince(new Date(c.timestamp))}</span>
+          </div>
+          <button class="comment-reply-btn" onclick="window.replyToComment('${c.pingId || ""}', '${escapeHtml(c.username || "Anonymous")}')" title="Reply to this comment">
+            <i class="fa-solid fa-reply"></i>
+          </button>
+        </div>
+        <div class="comment-text">${renderMarkdown(c.content)}</div>
+      </div>
+    </div>
+  `;
+}
+
+export function insertCommentMarkdown(pingId, before, after) {
+    const inputs = document.querySelectorAll(`[id$="ping-${pingId}"] .comment-input`);
+    let input = null;
+    for (const i of inputs) {
+        if (i.offsetParent !== null) {
+            input = i;
+            break;
+        }
+    }
+    if (input) insertMarkdownAtCursor(input, before, after);
+}
+
+export function replyToComment(pingId, username) {
+    if (!pingId) return;
+
+    const sections = document.querySelectorAll(`[id$="ping-${pingId}"] .comment-section`);
+    sections.forEach((section) => {
+        section.style.display = "block";
+        const input = section.querySelector(".comment-input");
+        if (input) {
+            if (input.value.startsWith(">")) {
+                input.value = input.value.replace(/^>[^\s]+\s?/, `>${username} `);
+            } else {
+                input.value = `>${username} ` + input.value;
+            }
+            input.focus();
+            const pos = input.value.length;
+            input.setSelectionRange(pos, pos);
+        }
+    });
+}
+
+window.toggleComment = toggleComment;
+window.handleCommentKey = handleCommentKey;
+window.submitComment = submitComment;
+window.insertCommentMarkdown = insertCommentMarkdown;
+window.replyToComment = replyToComment;

@@ -96,6 +96,11 @@ class PeerManager {
     }
     return peers;
   }
+
+  cleanup() {
+    this.seenPeers.clear();
+    this.mySeq = 0;
+  }
 }
 
 module.exports = { PeerManager };

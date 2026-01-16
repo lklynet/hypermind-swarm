@@ -36,6 +36,10 @@ class LRUCache {
     *entries() {
         yield* this.cache.entries();
     }
+
+    clear() {
+        this.cache.clear();
+    }
 }
 
 module.exports = { LRUCache };

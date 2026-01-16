@@ -89,6 +89,23 @@ class PingStore {
     }
     return null;
   }
+
+  getPingsSince(timestamp) {
+    const pings = [];
+    for (const [id, ping] of this.cache.entries()) {
+      if (ping.timestamp > timestamp || ping.receivedAt > timestamp) {
+        pings.push({
+          ...ping,
+          amplifiedBy: Array.from(ping.amplifiedBy || []),
+        });
+      }
+    }
+    return pings.sort((a, b) => a.timestamp - b.timestamp);
+  }
+
+  cleanup() {
+    this.cache.clear();
+  }
 }
 
 module.exports = { PingStore };

@@ -115,7 +115,7 @@ class SwarmManager {
 
           socket.messageTimestamps.push(now);
           this.messageHandler.handleMessage(msg, socket);
-        } catch (e) {}
+        } catch (e) { }
       }
     });
 
@@ -130,7 +130,7 @@ class SwarmManager {
       this.broadcastFn();
     });
 
-    socket.on("error", () => {});
+    socket.on("error", () => { });
   }
 
   startHeartbeat() {
@@ -210,15 +210,20 @@ class SwarmManager {
 
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
     }
 
     if (this.rotationInterval) {
       clearInterval(this.rotationInterval);
+      this.rotationInterval = null;
     }
 
-    setTimeout(() => {
-      process.exit(0);
-    }, 500);
+    this.swarmFilter = null;
+  }
+
+  cleanup() {
+    this.shutdown();
+    return this.swarm.destroy();
   }
 
   getSwarm() {

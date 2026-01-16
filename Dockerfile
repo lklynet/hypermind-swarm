@@ -3,7 +3,8 @@ FROM node:24-alpine AS builder
 RUN apk add --no-cache \
     python3 \
     make \
-    g++
+    g++ \
+    libsodium-dev
 
 WORKDIR /app
 
@@ -15,6 +16,8 @@ COPY . .
 RUN npm run build:css
 
 FROM node:24-alpine
+
+RUN apk add --no-cache libsodium
 
 WORKDIR /app
 

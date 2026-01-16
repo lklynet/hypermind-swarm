@@ -12,7 +12,7 @@ import { setupMobileNavigation } from "./js/features/mobile-nav.js";
 import "./js/features/comments.js";
 
 import "./js/commands/help.js";
-import "./js/commands/tenor.js";
+import "./js/commands/giphy.js";
 
 async function init() {
   try {

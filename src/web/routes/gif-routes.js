@@ -1,44 +1,35 @@
 const https = require("https");
-const { TENOR_API_KEY } = require("../../config/constants");
+const { GIPHY_API_KEY } = require("../../config/constants");
 
-/**
- * @fccview here, if you decide you want to contribute to the gif command
- * Feel free to add other provider endpoints here and adjust the logic
- * accordingly, my idea was to rotate a bunch of tenor proxies but i can't
- * seem to find any reliable ones anymore, the internet is going to shit.
- */
-const API_ENDPOINTS = [
-    "https://tenor.googleapis.com/v2",
-];
-
-function getApiEndpoint() {
-    return API_ENDPOINTS[Math.floor(Math.random() * API_ENDPOINTS.length)];
-}
+const API_ENDPOINT = "https://api.giphy.com/v1/gifs";
 
 function setupGifRoutes(app) {
     app.get("/api/gif/search", (req, res) => {
+        if (!GIPHY_API_KEY) {
+            console.error("Error: GIPHY_API_KEY is undefined in config/constants");
+            return res.status(500).json({ error: "Server Configuration Error: Missing GIPHY API Key" });
+        }
+
         const query = req.query.q;
         const limit = req.query.limit || 20;
+        const offset = req.query.offset || 0;
 
         if (!query) {
-            return res.status(400).json({ error: "Query parameter 'q' is required" });
+            return res.status(400).json({ error: "Query required" });
         }
 
-        const baseUrl = getApiEndpoint();
         const params = new URLSearchParams({
+            api_key: GIPHY_API_KEY,
             q: query,
             limit: limit,
-            media_filter: "gif",
-            client_key: "hypermind_swarm"
+            offset: offset,
+            rating: "g",
+            lang: "en"
         });
 
-        if (TENOR_API_KEY && TENOR_API_KEY !== "undefined") {
-            params.append("key", TENOR_API_KEY);
-        }
+        const url = `${API_ENDPOINT}/search?${params.toString()}`;
 
-        const url = `${baseUrl}/search?${params.toString()}`;
-
-        https.get(url, (apiRes) => {
+        const request = https.get(url, (apiRes) => {
             let data = "";
 
             apiRes.on("data", (chunk) => {
@@ -46,23 +37,29 @@ function setupGifRoutes(app) {
             });
 
             apiRes.on("end", () => {
+                let json;
                 try {
-                    const safeUrl = url.replace(TENOR_API_KEY, "KEY");
-                    console.log("Searching Tenor:", safeUrl);
-                    console.log("Tenor response status:", apiRes.statusCode);
-                    const json = JSON.parse(data);
-                    if (json.error) {
-                        console.error("Tenor API Error:", json.error);
-                    }
-                    res.json(json);
+                    json = JSON.parse(data);
                 } catch (e) {
-                    console.error("Failed to parse JSON:", e, data);
-                    res.status(500).json({ error: "Failed to parse Tenor response" });
+                    return res.status(500).json({ error: "JSON Parse Error", raw: data });
                 }
+
+                if (apiRes.statusCode !== 200) {
+                    console.error("GIPHY API Error:", json);
+                    return res.status(apiRes.statusCode).json({
+                        error: "GIPHY Upstream Error",
+                        status: apiRes.statusCode,
+                        details: json
+                    });
+                }
+
+                res.json(json);
             });
-        }).on("error", (e) => {
-            console.error("Tenor API request failed:", e);
-            res.status(500).json({ error: "Failed to fetch GIFs" });
+        });
+
+        request.on("error", (e) => {
+            console.error("Network Error:", e);
+            res.status(500).json({ error: "Network Request Failed", message: e.message });
         });
     });
 }

@@ -135,25 +135,21 @@
 }
 
 .ping-btn-large {
-    display: none;
+    display: block;
+    background-color: var(--primary-color);
+    color: var(--color-bg);
+    border: none;
+    border-radius: 9999px;
+    padding: 1rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-top: 2rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    width: 100%;
 
-    @media (min-width: $min-w-desktop) {
-        display: block;
-        background-color: var(--primary-color);
-        color: var(--color-bg);
-        border: none;
-        border-radius: 9999px;
-        padding: 1rem;
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-top: 2rem;
-        cursor: pointer;
-        transition: opacity 0.2s;
-        width: 100%;
-
-        &:hover {
-            opacity: 0.9;
-        }
+    &:hover {
+        opacity: 0.9;
     }
 }
 

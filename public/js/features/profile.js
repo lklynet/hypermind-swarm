@@ -3,11 +3,14 @@ import { fetchProfile } from "../core/api.js";
 import { escapeHtml } from "../utils/html.js";
 import { getColorFromId, getFractalFromId } from "../utils/banner-generator.js";
 import { addPingToContainer, updateFeedVisibility } from "./feed.js";
+import { updateUrl } from "../utils/url.js";
 
-export async function showProfile(id) {
+export async function showProfile(id, push = true) {
     state.currentProfileId = id;
     DOM.mainView.style.display = "none";
     DOM.profileView.style.display = "block";
+
+    if (push) updateUrl({ u: id });
 
     DOM.profileInfo.innerHTML = "Loading...";
     DOM.profileFeed.innerHTML = "";
@@ -57,10 +60,11 @@ export async function showProfile(id) {
     }
 }
 
-export function showFeed() {
+export function showFeed(push = true) {
     state.currentProfileId = "";
     DOM.profileView.style.display = "none";
     DOM.mainView.style.display = "block";
+    if (push) updateUrl({ u: null });
 }
 
 export function showMyProfile() {

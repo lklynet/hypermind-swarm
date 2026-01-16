@@ -7,9 +7,11 @@ import { renderMarkdown, insertMarkdownAtCursor } from "../utils/markdown.js";
 import { showToast } from "../utils/toast.js";
 import { renderComment } from "./comments.js";
 import { handleCommandInput } from "../commands/handler.js";
+import { updateUrl } from "../utils/url.js";
 
-export function switchTab(tab) {
+export function switchTab(tab, push = true) {
     state.currentTab = tab;
+    if (push) updateUrl({ t: tab });
 
     document.querySelectorAll(".tab").forEach((el) => el.classList.remove("active"));
     document.getElementById(`tab-${tab}`).classList.add("active");

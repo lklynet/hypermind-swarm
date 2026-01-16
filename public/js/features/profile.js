@@ -166,7 +166,6 @@ export function updateMyProfileWidget(data) {
     if (DOM.myIdDisplay) DOM.myIdDisplay.textContent = "@" + data.id.slice(-8);
     if (DOM.myAvatarSmall) {
         DOM.myAvatarSmall.style.backgroundImage = `url(/api/avatar/${data.id})`;
-        DOM.myAvatarSmall.style.backgroundSize = "cover";
         DOM.myAvatarSmall.style.backgroundColor = getColorFromId(data.id + "pfp");
     }
 

@@ -1,5 +1,3 @@
-import { state } from '../core/state.js';
-
 function setupMobileNavigation() {
     const leftToggle = document.getElementById('toggle-left-sidebar');
     const rightToggle = document.getElementById('toggle-right-sidebar');

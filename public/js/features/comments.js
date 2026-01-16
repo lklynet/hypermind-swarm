@@ -95,16 +95,46 @@ export function replyToComment(pingId, username) {
         section.style.display = "block";
         const input = section.querySelector(".comment-input");
         if (input) {
-            if (input.value.startsWith(">")) {
-                input.value = input.value.replace(/^>[^\s]+\s?/, `>${username} `);
+            if (input.value.startsWith("@")) {
+                input.value = input.value.replace(/^@[^\s]+\s?/, `@${username} `);
             } else {
-                input.value = `>${username} ` + input.value;
+                input.value = `@${username} ` + input.value;
             }
             input.focus();
             const pos = input.value.length;
             input.setSelectionRange(pos, pos);
         }
     });
+}
+
+export function renderCommentSection(pingId, comments = [], isDetailView = false) {
+    const displayStyle = isDetailView ? "block" : "none";
+    const commentsHeader = isDetailView && comments.length > 0
+        ? `<div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 1rem;">Comments</div>`
+        : "";
+
+    return `
+        <div class="comment-section" style="display: ${displayStyle};">
+            <div class="comment-input-wrapper">
+                <input type="text" class="comment-input" placeholder="Write a comment..." onkeydown="window.handleCommentKey(event, '${pingId}')">
+            </div>
+            <div class="compose-actions" style="margin-bottom: 0.5rem;">
+                <div class="markdown-toolbar">
+                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '**', '**')" title="Bold"><i class="fa-solid fa-bold" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '*', '*')" title="Italic"><i class="fa-solid fa-italic" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '__', '__')" title="Underline"><i class="fa-solid fa-underline" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '~~', '~~')" title="Strikethrough"><i class="fa-solid fa-strikethrough" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '[', '](url)')" title="Link"><i class="fa-solid fa-link" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '![alt](', ')')" title="Image"><i class="fa-solid fa-image" style="font-size: 0.8rem;"></i></button>
+                </div>
+                <button onclick="window.submitComment('${pingId}')" style="margin-left: auto; background: var(--primary-color); color: var(--color-bg); border: none; border-radius: 9999px; padding: 0.25rem 1rem; font-weight: 700; cursor: pointer;">Reply</button>
+            </div>
+            ${commentsHeader}
+            <div class="comments-list">
+                ${comments.map((c) => renderComment({ ...c, pingId })).join("")}
+            </div>
+        </div>
+    `;
 }
 
 window.toggleComment = toggleComment;

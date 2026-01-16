@@ -27,8 +27,8 @@ export function renderMarkdown(text) {
     );
 
     html = html.replace(
-        /@([a-fA-F0-9]{8})/g,
-        '<span style="color: var(--primary-color); cursor: pointer;" onclick="event.stopPropagation(); window.showProfileByHandle(\'$1\')">@$1</span>'
+        /@(\w+)/g,
+        '<span style="color: var(--primary-color); font-weight: 600;">@$1</span>'
     );
 
     html = html.replace(

@@ -3,7 +3,7 @@ import { fetchPing } from "../core/api.js";
 import { escapeHtml } from "../utils/html.js";
 import { getColorFromId } from "../utils/banner-generator.js";
 import { renderMarkdown } from "../utils/markdown.js";
-import { renderComment } from "./comments.js";
+import { renderCommentSection } from "./comments.js";
 import { updateUrl } from "../utils/url.js";
 import { showFeed } from "./profile.js";
 
@@ -66,28 +66,7 @@ export async function showPing(id, push = true) {
                             <i class="fa-solid fa-share"></i>
                         </button>
                     </div>
-                    <div class="comment-section" style="display: block;">
-                        <div class="comment-input-wrapper">
-                            <input type="text" class="comment-input" placeholder="Write a comment..." onkeydown="window.handleCommentKey(event, '${ping.id}')">
-                        </div>
-                        <div class="compose-actions" style="margin-bottom: 0.5rem;">
-                            <div class="markdown-toolbar">
-                                <button type="button" onclick="window.insertCommentMarkdown('${ping.id}', '**', '**')" title="Bold"><i class="fa-solid fa-bold" style="font-size: 0.8rem;"></i></button>
-                                <button type="button" onclick="window.insertCommentMarkdown('${ping.id}', '*', '*')" title="Italic"><i class="fa-solid fa-italic" style="font-size: 0.8rem;"></i></button>
-                                <button type="button" onclick="window.insertCommentMarkdown('${ping.id}', '__', '__')" title="Underline"><i class="fa-solid fa-underline" style="font-size: 0.8rem;"></i></button>
-                                <button type="button" onclick="window.insertCommentMarkdown('${ping.id}', '~~', '~~')" title="Strikethrough"><i class="fa-solid fa-strikethrough" style="font-size: 0.8rem;"></i></button>
-                                <button type="button" onclick="window.insertCommentMarkdown('${ping.id}', '[', '](url)')" title="Link"><i class="fa-solid fa-link" style="font-size: 0.8rem;"></i></button>
-                                <button type="button" onclick="window.insertCommentMarkdown('${ping.id}', '![alt](', ')')" title="Image"><i class="fa-solid fa-image" style="font-size: 0.8rem;"></i></button>
-                            </div>
-                            <button onclick="window.submitComment('${ping.id}')" style="margin-left: auto; background: var(--primary-color); color: var(--color-bg); border: none; border-radius: 9999px; padding: 0.25rem 1rem; font-weight: 700; cursor: pointer;">Reply</button>
-                        </div>
-                        ${ping.comments && ping.comments.length > 0 ? `
-                            <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 1rem;">Comments</div>
-                        ` : ""}
-                        <div class="comments-list">
-                            ${(ping.comments || []).map((c) => renderComment({...c, pingId: ping.id})).join("")}
-                        </div>
-                    </div>
+                    ${renderCommentSection(ping.id, ping.comments || [], true)}
                 </div>
             </div>
         `;

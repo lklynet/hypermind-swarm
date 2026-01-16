@@ -67,6 +67,9 @@ async function init() {
   setSSECallbacks({
     onInit: (data) => {
       state.myId = data.id;
+      if (data.username) {
+        state.usernameCache.set(data.id, data.username);
+      }
       updateMyProfileWidget(data);
       updateStats(data);
     },

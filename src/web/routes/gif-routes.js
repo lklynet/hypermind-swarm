@@ -25,7 +25,18 @@ function setupGifRoutes(app) {
         }
 
         const baseUrl = getApiEndpoint();
-        const url = `${baseUrl}/search?q=${encodeURIComponent(query)}&key=${TENOR_API_KEY}&client_key=hypermind_swarm&limit=${limit}&media_filter=gif`;
+        const params = new URLSearchParams({
+            q: query,
+            limit: limit,
+            media_filter: "gif",
+            client_key: "hypermind_swarm"
+        });
+
+        if (TENOR_API_KEY && TENOR_API_KEY !== "undefined") {
+            params.append("key", TENOR_API_KEY);
+        }
+
+        const url = `${baseUrl}/search?${params.toString()}`;
 
         https.get(url, (apiRes) => {
             let data = "";
@@ -36,6 +47,8 @@ function setupGifRoutes(app) {
 
             apiRes.on("end", () => {
                 try {
+                    const safeUrl = url.replace(TENOR_API_KEY, "KEY");
+                    console.log("Searching Tenor:", safeUrl);
                     console.log("Tenor response status:", apiRes.statusCode);
                     const json = JSON.parse(data);
                     if (json.error) {

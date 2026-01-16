@@ -45,7 +45,7 @@ export async function showPing(id, push = true) {
         });
 
         pingDetailContainer.innerHTML = `
-            <div class="ping">
+            <div class="ping" id="detail-ping-${ping.id}">
                 <div class="ping-content">
                     <div class="ping-header">
                         <div class="avatar ping-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getColorFromId(ping.author)};" onclick="window.showProfile('${ping.author}')"></div>

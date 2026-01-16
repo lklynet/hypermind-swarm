@@ -11,6 +11,7 @@ import { setupMobileNavigation } from "./js/features/mobile-nav.js";
 import { getUrlParams } from "./js/utils/url.js";
 import { showPing, setupPingDetailListeners } from "./js/features/ping-detail.js";
 import { notificationManager, setupNotificationListeners } from "./js/features/notifications.js";
+import { renderComment } from "./js/features/comments.js";
 
 import "./js/features/comments.js";
 
@@ -76,6 +77,21 @@ async function init() {
       addPingToFeed(data, true);
       if (state.currentProfileId === data.author) {
         addPingToContainer(data, DOM.profileFeed, true);
+      }
+
+      const pingView = document.getElementById("ping-view");
+      if (pingView && pingView.style.display === "block") {
+        const detailPing = document.querySelector(`#detail-ping-${data.id}`);
+        if (detailPing) {
+          const commentCountEl = detailPing.querySelector(".comment-count");
+          if (commentCountEl) {
+            commentCountEl.textContent = data.comments ? data.comments.length : 0;
+          }
+          const commentsList = detailPing.querySelector(".comments-list");
+          if (commentsList && data.comments) {
+            commentsList.innerHTML = data.comments.map((c) => renderComment(c)).join("");
+          }
+        }
       }
 
       if (data.comments && data.comments.length > 0) {

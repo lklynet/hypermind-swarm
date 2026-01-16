@@ -9,7 +9,8 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+RUN npm install -g node-gyp
+RUN npm_config_build_from_source=true npm ci
 
 COPY . .
 

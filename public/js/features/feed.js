@@ -11,7 +11,7 @@ import { updateUrl } from "../utils/url.js";
 
 export function switchTab(tab, push = true) {
     state.currentTab = tab;
-    if (push) updateUrl({ t: tab });
+    if (push) updateUrl({ t: tab, u: null, p: null });
 
     document.querySelectorAll(".tab").forEach((el) => el.classList.remove("active"));
     document.getElementById(`tab-${tab}`).classList.add("active");
@@ -94,6 +94,12 @@ function createPingElement(ping, domId, isProfile) {
     el.id = domId;
     el.dataset.swarmId = swarmId;
     el.dataset.author = ping.author;
+    el.onclick = (e) => {
+        if (e.target.closest('button') || e.target.closest('.ping-author') || e.target.closest('.ping-avatar') || e.target.closest('a') || e.target.closest('.comment-input') || e.target.closest('.markdown-toolbar')) {
+            return;
+        }
+        window.showPing(ping.id);
+    };
 
     if (!isProfile) {
         if (state.currentSwarmId !== 0 && swarmId !== state.currentSwarmId) {
@@ -129,6 +135,9 @@ function createPingElement(ping, domId, isProfile) {
         </button>
         <button class="action-btn comment" onclick="window.toggleComment('${ping.id}')">
           <i class="fa-regular fa-comment"></i> <span class="comment-count">${ping.comments ? ping.comments.length : 0}</span>
+        </button>
+        <button class="action-btn share" onclick="window.sharePing('${ping.id}')">
+          <i class="fa-solid fa-share"></i>
         </button>
       </div>
       <div class="comment-section" style="display: none;">
@@ -190,6 +199,17 @@ export async function amplifyPing(id) {
     }
 }
 
+export async function sharePing(id) {
+    try {
+        const pingUrl = `${window.location.origin}/?p=${id}`;
+        await navigator.clipboard.writeText(pingUrl);
+        showToast("Ping copied", "success");
+    } catch (e) {
+        console.error(e);
+        showToast("Failed to copy ping", "error");
+    }
+}
+
 export function setupFeedListeners() {
     if (DOM.pingBtn) {
         DOM.pingBtn.onclick = sendPing;
@@ -240,5 +260,6 @@ export function toggleMobileCompose() {
 
 window.toggleMobileCompose = toggleMobileCompose;
 window.amplifyPing = amplifyPing;
+window.sharePing = sharePing;
 window.switchTab = switchTab;
 window.insertMarkdown = insertMarkdown;

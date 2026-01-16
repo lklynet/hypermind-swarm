@@ -53,6 +53,18 @@ function setupProfileRoutes(app, deps) {
         res.json(profile);
     });
 
+    app.get("/api/ping/:id", (req, res) => {
+        const { id } = req.params;
+        const ping = pingStore.get(id);
+        if (!ping) {
+            return res.status(404).json({ error: "Ping not found" });
+        }
+        res.json({
+            ...ping,
+            amplifiedBy: Array.from(ping.amplifiedBy || []),
+        });
+    });
+
     app.get("/api/catchup", (req, res) => {
         const since = parseInt(req.query.since) || 0;
         const pings = pingStore.getPingsSince(since);

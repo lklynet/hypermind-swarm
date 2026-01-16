@@ -18,6 +18,10 @@
 
 <body>
   <div class="mobile-top-bar">
+    <button class="notification-bell mobile-bell" id="notification-bell-mobile" aria-label="Notifications">
+      <i class="fa-regular fa-bell"></i>
+      <span class="notification-badge" id="notification-badge-mobile"></span>
+    </button>
     <div class="mobile-logo" onclick="showFeed()">
       <img src="/hypermind.svg" alt="Hypermind Logo" class="logo" />
     </div>
@@ -190,9 +194,26 @@
         </div>
         <div id="profile-feed" class="feed-container"></div>
       </div>
+
+      <div id="ping-view" class="ping-view">
+        <div class="ping-page-header">
+          <button class="back-btn" id="ping-back-btn">
+            <i class="fa-solid fa-arrow-left"></i> Back
+          </button>
+        </div>
+        <div id="ping-detail-container" class="ping-detail-container"></div>
+      </div>
     </main>
 
     <aside class="sidebar-right">
+      <div class="right-panel">
+        <button class="notification-btn" id="notification-btn-desktop">
+          <i class="fa-regular fa-bell"></i>
+          <span>Notifications</span>
+          <span class="notification-badge" id="notification-badge-desktop"></span>
+        </button>
+      </div>
+
       <div class="right-panel">
         <h3 class="panel-title">Swarms</h3>
         <div class="swarm-input-container">

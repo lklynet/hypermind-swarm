@@ -58,16 +58,17 @@ class PersistenceManager {
       while (lastRead < core.length - 1) {
         const seq = ++lastRead;
         try {
-          const msg = await core.get(seq, { wait: true });
+          const msg = await core.get(seq, { wait: true, timeout: 5000 });
           if (this.onMessage) this.onMessage(msg);
         } catch (err) {
           console.error(
             `Error reading from core ${b4a
               .toString(core.key, "hex")
-              .slice(0, 8)}:`,
-            err
+              .slice(0, 8)} seq ${seq}:`,
+            err.message
           );
-          break;
+          lastRead--;
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
     };

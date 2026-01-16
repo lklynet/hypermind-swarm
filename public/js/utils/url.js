@@ -17,6 +17,7 @@ export function getUrlParams() {
     const url = new URL(window.location);
     return {
         userId: url.searchParams.get('u'),
+        pingId: url.searchParams.get('p'),
         tab: url.searchParams.get('t')
     };
 }

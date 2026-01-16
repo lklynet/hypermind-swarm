@@ -9,6 +9,8 @@ import { fetchTrending } from "./js/features/trending.js";
 import { renderFollowedAccounts, updateMyProfileWidget, showProfile, showFeed } from "./js/features/profile.js";
 import { setupMobileNavigation } from "./js/features/mobile-nav.js";
 import { getUrlParams } from "./js/utils/url.js";
+import { showPing, setupPingDetailListeners } from "./js/features/ping-detail.js";
+import { notificationManager, setupNotificationListeners } from "./js/features/notifications.js";
 
 import "./js/features/comments.js";
 
@@ -16,8 +18,10 @@ import "./js/commands/help.js";
 import "./js/commands/giphy.js";
 
 function syncStateFromUrl() {
-  const { userId, tab } = getUrlParams();
-  if (userId) {
+  const { userId, pingId, tab } = getUrlParams();
+  if (pingId) {
+    showPing(pingId, false);
+  } else if (userId) {
     showProfile(userId, false);
   } else {
     showFeed(false);
@@ -73,6 +77,12 @@ async function init() {
       if (state.currentProfileId === data.author) {
         addPingToContainer(data, DOM.profileFeed, true);
       }
+
+      if (data.comments && data.comments.length > 0) {
+        data.comments.forEach(comment => {
+          notificationManager.addCommentNotification(data, comment);
+        });
+      }
     },
   });
 
@@ -86,6 +96,8 @@ async function init() {
   setupFeedListeners();
   setupSwarmListeners();
   setupMobileNavigation();
+  setupPingDetailListeners();
+  setupNotificationListeners();
 }
 
 init();

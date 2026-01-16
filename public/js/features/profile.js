@@ -10,7 +10,7 @@ export async function showProfile(id, push = true) {
     DOM.mainView.style.display = "none";
     DOM.profileView.style.display = "block";
 
-    if (push) updateUrl({ u: id });
+    if (push) updateUrl({ u: id, p: null, t: null });
 
     DOM.profileInfo.innerHTML = "Loading...";
     DOM.profileFeed.innerHTML = "";
@@ -63,8 +63,10 @@ export async function showProfile(id, push = true) {
 export function showFeed(push = true) {
     state.currentProfileId = "";
     DOM.profileView.style.display = "none";
+    const pingView = document.getElementById("ping-view");
+    if (pingView) pingView.style.display = "none";
     DOM.mainView.style.display = "block";
-    if (push) updateUrl({ u: null });
+    if (push) updateUrl({ u: null, p: null });
 }
 
 export function showMyProfile() {

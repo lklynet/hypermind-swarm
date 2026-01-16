@@ -16,6 +16,12 @@ export async function fetchProfile(id) {
     throw new Error("Failed to fetch profile");
 }
 
+export async function fetchPing(id) {
+    const res = await fetch(`/api/ping/${id}`);
+    if (res.ok) return res.json();
+    throw new Error("Failed to fetch ping");
+}
+
 export async function fetchTrending() {
     const res = await fetch("/api/trending");
     if (res.ok) return res.json();

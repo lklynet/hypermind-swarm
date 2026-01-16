@@ -85,7 +85,7 @@ export async function showPing(id, push = true) {
                             <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 1rem;">Comments</div>
                         ` : ""}
                         <div class="comments-list">
-                            ${(ping.comments || []).map((c) => renderComment(c)).join("")}
+                            ${(ping.comments || []).map((c) => renderComment({...c, pingId: ping.id})).join("")}
                         </div>
                     </div>
                 </div>

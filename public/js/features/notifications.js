@@ -29,7 +29,6 @@ class NotificationManager {
     }
 
     addCommentNotification(ping, comment) {
-        if (ping.author !== state.myId) return;
         if (comment.author === state.myId) return;
         if (comment.timestamp < this.startTime) return;
 
@@ -38,9 +37,14 @@ class NotificationManager {
         );
         if (existingIndex !== -1) return;
 
+        const isMyPing = ping.author === state.myId;
+        const mentionsMe = this._checkMention(comment.content);
+
+        if (!isMyPing && !mentionsMe) return;
+
         const notification = {
             id: `notif-${comment.id}`,
-            type: "comment",
+            type: mentionsMe ? "mention" : "comment",
             pingId: ping.id,
             commentId: comment.id,
             author: comment.author,
@@ -53,6 +57,15 @@ class NotificationManager {
         this.notifications.unshift(notification);
         this.save();
         this.updateBadge();
+    }
+
+    _checkMention(content) {
+        if (!state.myId) return false;
+        const myUsername = state.usernameCache.get(state.myId);
+        if (!myUsername) return false;
+
+        const mentionPattern = new RegExp(`^>${myUsername}\\b`, 'i');
+        return mentionPattern.test(content.trim());
     }
 
     markAsRead(notificationId) {
@@ -116,6 +129,9 @@ export function showNotifications() {
             <ul style="list-style: none; padding: 0; margin: 0;">
                 ${notifications.map(n => {
                     const timeAgo = getTimeAgo(n.timestamp);
+                    const notifText = n.type === "mention"
+                        ? `<strong>${n.username || 'Anonymous'}</strong> mentioned you in a comment`
+                        : `<strong>${n.username || 'Anonymous'}</strong> commented on your ping`;
                     return `
                         <li style="padding: 0.75rem; border-bottom: 1px solid var(--border-color); cursor: pointer; ${!n.read ? 'background-color: rgba(252, 163, 17, 0.1);' : ''}"
                             data-id="${n.id}"
@@ -124,7 +140,7 @@ export function showNotifications() {
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
                                 <div style="flex: 1;">
                                     <div style="font-size: 0.95rem; line-height: 1.4; margin-bottom: 0.25rem;">
-                                        <strong>${n.username || 'Anonymous'}</strong> commented on your ping
+                                        ${notifText}
                                     </div>
                                     <div style="font-size: 0.85rem; color: var(--text-muted);">${timeAgo}</div>
                                 </div>

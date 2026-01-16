@@ -89,7 +89,7 @@ async function init() {
           }
           const commentsList = detailPing.querySelector(".comments-list");
           if (commentsList && data.comments) {
-            commentsList.innerHTML = data.comments.map((c) => renderComment(c)).join("");
+            commentsList.innerHTML = data.comments.map((c) => renderComment({...c, pingId: data.id})).join("");
           }
         }
       }

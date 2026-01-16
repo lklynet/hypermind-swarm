@@ -21,7 +21,9 @@ export function startSSE() {
     };
 
     evtSource.onerror = (err) => {
-        console.error("EventSource connection lost or failed.", err);
+        if (evtSource.readyState === EventSource.CLOSED) {
+            console.error("EventSource connection closed permanently.", err);
+        }
     };
 
     evtSource.onmessage = (e) => {

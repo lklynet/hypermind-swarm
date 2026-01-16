@@ -3,15 +3,8 @@
 .main-column {
     display: flex;
     flex-direction: column;
-    width: 100vw;
-    border-top: 1px solid var(--border-color);
-
-    @media (min-width: 700px) {
-        border-top: none;
-        border-right: 1px solid var(--border-color);
-        width: auto;
-        min-height: 100vh;
-    }
+    width: 100%;
+    border-top: none;
 }
 
 .header-tabs {
@@ -22,6 +15,10 @@
     position: sticky;
     top: 0;
     z-index: 10;
+
+    @media (min-width: $min-w-desktop) {
+        top: 0;
+    }
 }
 
 .tab {
@@ -62,6 +59,14 @@
         border-bottom: 1px solid var(--border-color);
         display: flex;
         gap: 1rem;
+
+        @media (max-width: ($min-w-desktop - 1)) {
+            display: none;
+
+            &.active {
+                display: flex;
+            }
+        }
     }
 
     &-avatar {
@@ -82,6 +87,48 @@
         align-items: center;
         margin-top: 0.5rem;
         padding-top: 0.5rem;
+    }
+}
+
+.mobile-post-trigger {
+    display: none;
+    padding: 0.75rem 1rem;
+    margin: 1rem;
+    background-color: var(--hover-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+        border-color: var(--primary-color);
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    @media (max-width: ($min-w-desktop - 1)) {
+        display: flex;
+
+        &.hidden {
+            display: none;
+        }
+    }
+
+    .trigger-placeholder {
+        color: var(--text-muted);
+        font-size: 1rem;
+        flex: 1;
+    }
+
+    .compose-avatar {
+        width: 32px;
+        height: 32px;
     }
 }
 
@@ -145,7 +192,8 @@
     flex: 1;
     overflow-y: auto;
     max-height: calc(100vh - 202px);
-    padding-bottom: 5rem;
+    padding-bottom: 1rem;
+    padding-bottom: 130px;
 
     @media (min-width: $min-w-desktop) {
         padding-bottom: 1rem;

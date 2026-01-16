@@ -1,6 +1,7 @@
 @use './global/variables';
 @use './global/base';
 @use './global/layout';
+@use './components/mobile-nav';
 @use './components/sidebar-left';
 @use './components/main-column';
 @use './components/ping';

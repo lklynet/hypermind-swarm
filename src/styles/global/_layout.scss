@@ -2,16 +2,15 @@
 
 .app-container {
     display: grid;
-    grid-template-columns: 80px 1fr;
+    grid-template-columns: 1fr;
     min-height: 100vh;
     max-width: 1300px;
-    margin: 0 auto;
-
-    @media (min-width: 700px) {
-        grid-template-columns: 80px 1fr 290px;
-    }
+    margin: 60px auto;
+    padding-bottom: 60px;
 
     @media (min-width: $min-w-desktop) {
         grid-template-columns: 275px 1fr 350px;
+        margin: 0 auto;
+        padding-bottom: 0;
     }
 }

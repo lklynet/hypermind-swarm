@@ -3,17 +3,25 @@
 .sidebar {
     &-left {
         position: fixed;
+        left: -100%;
+        top: 0;
         bottom: 0;
-        width: 100%;
-        max-width: 100vw;
+        width: 80%;
+        max-width: 300px;
         display: flex;
-        align-items: center;
-        justify-content: space-between;
+        flex-direction: column;
         padding: 1rem;
         background-color: var(--color-bg);
-        border-top: 1px solid var(--border-color);
+        border-right: 1px solid var(--border-color);
+        transition: left 0.3s ease-in-out;
+        z-index: 101;
+        overflow-y: auto;
         scrollbar-width: none;
         -ms-overflow-style: none;
+
+        &.active {
+            left: 0;
+        }
 
         .top-section-wrapper {
             @media (min-width: $min-w-desktop) {
@@ -23,6 +31,7 @@
 
         @media (min-width: $min-w-desktop) {
             align-items: flex-start;
+            justify-content: space-between;
             position: sticky;
             border-top: 0;
             border-right: 1px solid var(--border-color);
@@ -32,7 +41,8 @@
             padding: 1rem 0 0 0;
             overflow-y: auto;
             flex-direction: column;
-            align-items: center;
+            width: 100%;
+            max-width: none;
         }
 
         &::-webkit-scrollbar {
@@ -52,11 +62,13 @@
 
     &-container {
         display: flex;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: center;
-        padding: 0;
+        padding: 0.5rem;
+        margin-bottom: 1.5rem;
         cursor: pointer;
         width: 100%;
+        gap: 1rem;
 
         @media (min-width: $min-w-desktop) {
             justify-content: flex-start;
@@ -64,14 +76,6 @@
             padding: 0.5rem;
             margin-bottom: 2rem;
             margin-bottom: 1.5rem;
-        }
-
-        div {
-            display: none;
-
-            @media (min-width: $min-w-desktop) {
-                display: block;
-            }
         }
     }
 
@@ -89,10 +93,13 @@
 
 .nav {
     &-menu {
-        display: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: 1;
+        width: 100%;
 
         @media (min-width: $min-w-desktop) {
-            display: flex;
             flex-direction: column;
             gap: 0.5rem;
             flex: 1;
@@ -125,14 +132,6 @@
             text-align: center;
         }
     }
-
-    &-label {
-        display: none;
-
-        @media (min-width: $min-w-desktop) {
-            display: inline;
-        }
-    }
 }
 
 .ping-btn-large {
@@ -160,84 +159,53 @@
 
 .diagnostics-panel {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 0;
-    padding: 0;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    padding: 0 0.5rem;
     width: 100%;
-    display: none;
-
-    @media (min-width: $min-w-desktop) {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-        margin-top: 1rem;
-        padding: 0 0.5rem;
-    }
 }
 
 .diag {
     &-section {
         display: flex;
-        justify-content: center;
-        align-items: center;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
         margin: 0;
         padding: 0;
         width: 100%;
 
         @media (min-width: $min-w-desktop) {
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            gap: 0.75rem;
-            margin: 0;
-            padding: 0;
-        }
-
-        &:not(:first-child) {
-            display: none;
-
-            @media (min-width: $min-w-desktop) {
+            &:not(:first-child) {
                 display: flex;
             }
         }
     }
 
     &-header {
-        display: none;
-
-        @media (min-width: $min-w-desktop) {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--primary-color);
-            opacity: 0.8;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 0.25rem;
-        }
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--primary-color);
+        opacity: 0.8;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.25rem;
     }
 
     &-grid {
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
         margin: 0;
         padding: 0;
-
-        @media (min-width: $min-w-desktop) {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 0.5rem;
-            margin: 0;
-            padding: 0;
-        }
     }
 
     &-item {
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
         margin: 0;
         padding: 0;
@@ -245,54 +213,32 @@
         font-size: 0.85rem;
 
         @media (min-width: $min-w-desktop) {
-            justify-content: space-between;
-            align-items: center;
-            margin: 0;
-            padding: 0;
-        }
-
-        &:not(:first-child) {
-            display: none;
-
-            @media (min-width: $min-w-desktop) {
+            &:not(:first-child) {
                 display: flex;
             }
         }
     }
 
     &-label {
-        display: none;
-
-        @media (min-width: $min-w-desktop) {
-            display: inline;
-            color: var(--text-muted);
-        }
+        display: inline;
+        color: var(--text-muted);
     }
 
     &-value {
-        display: none;
-
-        @media (min-width: $min-w-desktop) {
-            display: inline;
-            color: var(--text-color);
-            font-weight: 500;
-        }
+        display: inline;
+        color: var(--text-color);
+        font-weight: 500;
     }
 }
 
 .connection-status {
-    position: fixed;
+    position: relative;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 0.5rem;
     margin: 0;
     padding: 0;
-
-    @media (min-width: $min-w-desktop) {
-        position: relative;
-        justify-content: flex-start;
-    }
 }
 
 .status-dot {
@@ -339,11 +285,7 @@
 }
 
 #status-text {
-    display: none;
-
-    @media (min-width: $min-w-desktop) {
-        display: inline;
-    }
+    display: inline;
 }
 
 @keyframes pulse {
@@ -363,14 +305,16 @@
 .user {
     &-profile-widget {
         display: flex;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: center;
         margin-top: auto;
-        padding: 0;
+        padding: 0.75rem;
         gap: 0.75rem;
-        border-radius: 9999px;
+        border-radius: 12px;
         cursor: pointer;
         transition: background-color 0.2s;
+        width: 95%;
+        margin: auto auto 0 auto;
 
         @media (min-width: $min-w-desktop) {
             justify-content: flex-start;
@@ -405,13 +349,9 @@
 
 .profile {
     &-info {
-        display: none;
-
-        @media (min-width: $min-w-desktop) {
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
     }
 
     &-name {

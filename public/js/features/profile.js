@@ -1,7 +1,7 @@
 import { DOM, state, saveToLocalStorage } from "../core/state.js";
 import { fetchProfile } from "../core/api.js";
 import { escapeHtml } from "../utils/html.js";
-import { getColorFromId } from "../utils/colors.js";
+import { getColorFromId, getFractalFromId } from "../utils/banner-generator.js";
 import { addPingToContainer, updateFeedVisibility } from "./feed.js";
 
 export async function showProfile(id) {
@@ -24,7 +24,7 @@ export async function showProfile(id) {
         const isMe = data.id === state.myId;
 
         DOM.profileInfo.innerHTML = `
-      <div class="profile-cover" style="background-color: ${getColorFromId(data.id + "banner")};"></div>
+      <div class="profile-cover" style="background-image: url('${getFractalFromId(data.id + "banner")}'); background-size: cover;"></div>
       <div class="profile-details">
         <div style="display: flex; justify-content: space-between; align-items: flex-end;">
           <div class="avatar profile-avatar-large" style="background-image: url('${avatarUrl}'); background-color: ${getColorFromId(data.id + "pfp")};"></div>
@@ -171,9 +171,16 @@ export function updateMyProfileWidget(data) {
     }
 
     const composeAvatar = document.getElementById("compose-avatar");
+    const mobileTriggerAvatar = document.getElementById("mobile-trigger-avatar");
+
     if (composeAvatar) {
         composeAvatar.style.backgroundImage = `url(/api/avatar/${data.id})`;
         composeAvatar.style.backgroundColor = getColorFromId(data.id + "pfp");
+    }
+
+    if (mobileTriggerAvatar) {
+        mobileTriggerAvatar.style.backgroundImage = `url(/api/avatar/${data.id})`;
+        mobileTriggerAvatar.style.backgroundColor = getColorFromId(data.id + "pfp");
     }
 }
 

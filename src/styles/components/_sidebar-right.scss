@@ -1,17 +1,36 @@
 @use '../global/variables' as *;
 
 .sidebar-right {
-    display: none;
+    position: fixed;
+    right: -100%;
+    top: 0;
+    bottom: 0;
+    width: 80%;
+    max-width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem;
+    background-color: var(--color-bg);
+    border-left: 1px solid var(--border-color);
+    transition: right 0.3s ease-in-out;
+    z-index: 101;
+    overflow-y: auto;
 
-    @media (min-width: 700px) {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-        padding: 1rem 2rem 1rem 1rem;
+    &.active {
+        right: 0;
+    }
+
+    @media (min-width: $min-w-desktop) {
         position: sticky;
+        right: auto;
         top: 0;
+        padding: 1rem 2rem 1rem 1rem;
         align-self: start;
         height: fit-content;
+        max-width: none;
+        width: 100%;
+        border-left: none;
     }
 }
 
@@ -20,6 +39,21 @@
     border-radius: 0.1rem;
     padding: 1rem 0.5rem;
     border-radius: 12px;
+
+    .trending-item {
+        padding: 0 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        >span:last-child {
+            background: var(--color-bg);
+            color: var(--primary-color);
+            padding: 0.25rem 0.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+    }
 }
 
 .panel-title {

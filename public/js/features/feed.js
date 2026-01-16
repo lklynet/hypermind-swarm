@@ -2,7 +2,7 @@ import { DOM, state } from "../core/state.js";
 import { postPing, postAmplify } from "../core/api.js";
 import { escapeHtml } from "../utils/html.js";
 import { timeSince } from "../utils/formatters.js";
-import { getColorFromId } from "../utils/colors.js";
+import { getColorFromId } from "../utils/banner-generator.js";
 import { renderMarkdown, insertMarkdownAtCursor } from "../utils/markdown.js";
 import { showToast } from "../utils/toast.js";
 import { renderComment } from "./comments.js";
@@ -165,6 +165,12 @@ export async function sendPing() {
         DOM.pingInput.value = "";
         DOM.charCount.style.display = "none";
         showToast("Ping sent!", "success");
+        if (window.innerWidth < 1000) {
+            const composeArea = document.getElementById("compose-area");
+            const trigger = document.getElementById("mobile-post-trigger");
+            if (composeArea) composeArea.classList.remove("active");
+            if (trigger) trigger.classList.remove("hidden");
+        }
     } catch (e) {
         console.error(e);
         showToast(e.message || "Failed to send ping", "error");
@@ -217,6 +223,20 @@ export function insertMarkdown(before, after) {
     }
 }
 
+export function toggleMobileCompose() {
+    const composeArea = document.getElementById("compose-area");
+    const trigger = document.getElementById("mobile-post-trigger");
+    if (composeArea && trigger) {
+        composeArea.classList.add("active");
+        trigger.classList.add("hidden");
+        setTimeout(() => {
+            const input = document.getElementById("ping-input");
+            if (input) input.focus();
+        }, 50);
+    }
+}
+
+window.toggleMobileCompose = toggleMobileCompose;
 window.amplifyPing = amplifyPing;
 window.switchTab = switchTab;
 window.insertMarkdown = insertMarkdown;

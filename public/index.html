@@ -17,6 +17,15 @@
 </head>
 
 <body>
+  <div class="mobile-top-bar">
+    <div class="mobile-logo" onclick="showFeed()">
+      <img src="/hypermind.svg" alt="Hypermind Logo" class="logo" />
+    </div>
+    <div class="mobile-profile" id="mobile-profile-widget" onclick="showMyProfile()">
+      <div class="avatar user-avatar" id="mobile-avatar"></div>
+    </div>
+  </div>
+
   <div class="app-container">
     <aside class="sidebar-left">
       <div class="top-section-wrapper">
@@ -133,8 +142,12 @@
             Following
           </div>
         </div>
+        <div class="mobile-post-trigger" id="mobile-post-trigger" onclick="window.toggleMobileCompose()">
+          <div class="avatar compose-avatar" id="mobile-trigger-avatar"></div>
+          <div class="trigger-placeholder">What is happening?!</div>
+        </div>
 
-        <div class="compose-area">
+        <div class="compose-area" id="compose-area">
           <div class="avatar compose-avatar" id="compose-avatar"></div>
           <div class="compose-input-wrapper">
             <textarea id="ping-input" placeholder="What is happening?!" maxlength="280"></textarea>
@@ -203,6 +216,17 @@
       </div>
     </aside>
   </div>
+
+  <div class="mobile-bottom-bar">
+    <button class="mobile-nav-btn mobile-nav-left" id="toggle-left-sidebar" aria-label="Toggle left sidebar">
+      <i class="fa-solid fa-chart-simple"></i>
+    </button>
+    <button class="mobile-nav-btn mobile-nav-right" id="toggle-right-sidebar" aria-label="Toggle right sidebar">
+      <i class="fa-solid fa-users"></i>
+    </button>
+  </div>
+
+  <div class="sidebar-overlay"></div>
 
   <div id="toast-container" class="toast-container"></div>
   <script type="module" src="/app.js"></script>

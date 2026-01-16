@@ -2,7 +2,7 @@ import { DOM, state } from "../core/state.js";
 import { postComment } from "../core/api.js";
 import { escapeHtml } from "../utils/html.js";
 import { timeSince } from "../utils/formatters.js";
-import { getColorFromId } from "../utils/colors.js";
+import { getColorFromId } from "../utils/banner-generator.js";
 import { renderMarkdown, insertMarkdownAtCursor } from "../utils/markdown.js";
 import { showToast } from "../utils/toast.js";
 import { handleCommandInput } from "../commands/handler.js";

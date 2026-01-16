@@ -7,6 +7,7 @@ import { addPingToFeed, addPingToContainer, setupFeedListeners } from "./js/feat
 import { renderSwarmTags, initSwarms, setupSwarmListeners } from "./js/features/swarm.js";
 import { fetchTrending } from "./js/features/trending.js";
 import { renderFollowedAccounts, updateMyProfileWidget } from "./js/features/profile.js";
+import { setupMobileNavigation } from "./js/features/mobile-nav.js";
 
 import "./js/features/comments.js";
 
@@ -68,6 +69,7 @@ async function init() {
   setupTabVisibility();
   setupFeedListeners();
   setupSwarmListeners();
+  setupMobileNavigation();
 }
 
 init();

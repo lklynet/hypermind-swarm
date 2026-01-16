@@ -14,7 +14,8 @@ const { DIAGNOSTICS_INTERVAL } = require("./src/config/constants");
 
 const main = async () => {
   const identity = generateIdentity();
-  const persistenceManager = new PersistenceManager();
+  const storagePath = process.env.STORAGE_PATH || "./storage";
+  const persistenceManager = new PersistenceManager(storagePath);
 
   const peerManager = new PeerManager(identity.id);
   const diagnostics = new DiagnosticsManager();
@@ -55,6 +56,7 @@ const main = async () => {
 
   const broadcastUpdate = (reset = false) => {
     sseManager.broadcastUpdate({
+      type: "UPDATE",
       count: peerManager.size,
       totalUnique: peerManager.totalUniquePeers,
       direct: swarmManager.getSwarm().connections.size,

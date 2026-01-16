@@ -1,0 +1,34 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: "Google Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    overflow: auto;
+}
+
+html {
+    overflow: hidden;
+}
+
+::-webkit-scrollbar {
+    width: 4px;
+
+    &-track {
+        background: transparent;
+    }
+
+    &-thumb {
+        background: var(--color-olive);
+        border-radius: 4px;
+
+        &:hover {
+            background: var(--color-gold);
+        }
+    }
+}

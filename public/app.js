@@ -85,8 +85,8 @@ function updateStats(data) {
     setText(
       "diag-relayed",
       (d.heartbeatsRelayed || 0) +
-        (d.pingsRelayed || 0) +
-        (d.amplifyRelayed || 0)
+      (d.pingsRelayed || 0) +
+      (d.amplifyRelayed || 0)
     );
     setText("diag-pings-sent", d.pingsSent || 0);
 
@@ -354,19 +354,8 @@ function renderSwarmTags() {
 
   joinedSwarms.forEach((topic) => {
     const container = document.createElement("div");
-    container.className = `swarm-item ${
-      topic === currentTopic ? "active" : ""
-    }`;
-    container.style.display = "flex";
-    container.style.justifyContent = "space-between";
-    container.style.alignItems = "center";
-    container.style.padding = "0.5rem";
-    container.style.cursor = "pointer";
-    container.style.borderRadius = "4px";
-    if (topic === currentTopic) {
-      container.style.backgroundColor = "var(--hover-bg)";
-      container.style.color = "var(--primary-color)";
-    }
+    container.className = `swarm-item ${topic === currentTopic ? "active" : ""
+      }`;
 
     container.onclick = () => selectSwarm(topic);
 
@@ -484,45 +473,37 @@ function addPingToContainer(ping, container, prepend = false) {
   )};" onclick="showProfile('${ping.author}')"></div>
     <div class="ping-content">
         <div class="ping-header">
-            <span class="ping-author" onclick="showProfile('${
-              ping.author
-            }')" style="cursor: pointer;">${escapeHtml(authorName)}${
-    isFollowing
+            <span class="ping-author" onclick="showProfile('${ping.author
+    }')" style="cursor: pointer;">${escapeHtml(authorName)}${isFollowing
       ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.85rem;" title="Following"></i>'
       : ""
-  }</span>
+    }</span>
             <span class="ping-handle">@${ping.author.slice(-8)}</span>
             <span class="ping-time">· ${timeSince(
-              new Date(ping.timestamp)
-            )}</span>
-            ${
-              topicPill
-                ? `<span style="margin-left: auto; font-size: 0.8rem;">${topicPill}</span>`
-                : ""
-            }
+      new Date(ping.timestamp)
+    )}</span>
+            ${topicPill
+      ? `<span style="margin-left: auto; font-size: 0.8rem;">${topicPill}</span>`
+      : ""
+    }
         </div>
         <div class="ping-text">${renderMarkdown(ping.content)}</div>
         <div class="ping-actions">
-            <button class="action-btn amplify" onclick="amplifyPing('${
-              ping.id
-            }')">
-                <i class="fa-solid fa-bullhorn"></i> <span class="amplify-count">${
-                  ping.likes || 0
-                }</span>
+            <button class="action-btn amplify" onclick="amplifyPing('${ping.id
+    }')">
+                <i class="fa-solid fa-bullhorn"></i> <span class="amplify-count">${ping.likes || 0
+    }</span>
             </button>
-            <button class="action-btn comment" onclick="toggleComment('${
-              ping.id
-            }')">
-                <i class="fa-regular fa-comment"></i> <span class="comment-count">${
-                  ping.comments ? ping.comments.length : 0
-                }</span>
+            <button class="action-btn comment" onclick="toggleComment('${ping.id
+    }')">
+                <i class="fa-regular fa-comment"></i> <span class="comment-count">${ping.comments ? ping.comments.length : 0
+    }</span>
             </button>
         </div>
         <div class="comment-section" style="display: none;">
             <div class="comment-input-wrapper">
-                <input type="text" class="comment-input" placeholder="Write a comment..." onkeydown="handleCommentKey(event, '${
-                  ping.id
-                }')">
+                <input type="text" class="comment-input" placeholder="Write a comment..." onkeydown="handleCommentKey(event, '${ping.id
+    }')">
             </div>
             <div class="compose-actions" style="margin-bottom: 0.5rem;">
                 <div class="markdown-toolbar">
@@ -696,16 +677,14 @@ function renderComment(c) {
             <div class="comment-content">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <span class="comment-author" style="cursor: pointer;" onclick="showProfile('${
-                          c.author
-                        }')">${escapeHtml(c.username || "Anonymous")}${
-        isFollowing
-          ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.75rem;" title="Following"></i>'
-          : ""
-      }</span>
+                        <span class="comment-author" style="cursor: pointer;" onclick="showProfile('${c.author
+    }')">${escapeHtml(c.username || "Anonymous")}${isFollowing
+      ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.75rem;" title="Following"></i>'
+      : ""
+    }</span>
                         <span style="font-size: 0.8rem; color: var(--text-muted);">${timeSince(
-                          new Date(c.timestamp)
-                        )}</span>
+      new Date(c.timestamp)
+    )}</span>
                     </div>
                     <button class="comment-reply-btn" onclick="replyToComment('${c.pingId || ''}', '${escapeHtml(c.username || "Anonymous")}')" title="Reply to this comment">
                         <i class="fa-solid fa-reply"></i>
@@ -744,37 +723,33 @@ window.showProfile = async (id) => {
 
     profileInfo.innerHTML = `
         <div class="profile-cover" style="background-color: ${getColorFromId(
-          data.id + "banner"
-        )};"></div>
+      data.id + "banner"
+    )};"></div>
         <div class="profile-details">
             <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                 <div class="profile-avatar-large" style="background-image: url('${avatarUrl}'); background-size: cover; background-color: ${getColorFromId(
       data.id + "pfp"
     )};"></div>
-                ${
-                  !isMe
-                    ? `
-                    <button class="ping-btn-large" style="width: auto; padding: 0.5rem 1.5rem; margin: 0;" onclick="toggleFollow('${
-                      data.id
-                    }')">
+                ${!isMe
+        ? `
+                    <button class="ping-btn-large" style="width: auto; padding: 0.5rem 1.5rem; margin: 0;" onclick="toggleFollow('${data.id
+        }')">
                         ${isFollowing ? "Unfollow" : "Follow"}
                     </button>
                 `
-                    : ""
-                }
+        : ""
+      }
             </div>
             <div>
-                <div class="profile-name-large">${escapeHtml(data.username)}${
-      isFollowing
+                <div class="profile-name-large">${escapeHtml(data.username)}${isFollowing
         ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 1.2rem;" title="Following"></i>'
         : ""
-    }</div>
+      }</div>
                 <div class="profile-handle-large">@${data.id.slice(-8)}</div>
             </div>
             <div class="profile-stats">
-                <span><span class="stat-value">${
-                  data.pings.length
-                }</span> Pings</span>
+                <span><span class="stat-value">${data.pings.length
+      }</span> Pings</span>
             </div>
         </div>
     `;
@@ -906,8 +881,8 @@ async function renderFollowedAccounts() {
       id + "pfp"
     )};">
       <span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(
-        name
-      )}</span>
+      name
+    )}</span>
     `;
     container.appendChild(el);
   }
@@ -1054,7 +1029,7 @@ window.insertCommentMarkdown = (pingId, before, after) => {
       break;
     }
   }
-  
+
   if (!input) return;
 
   const start = input.selectionStart;
@@ -1062,9 +1037,9 @@ window.insertCommentMarkdown = (pingId, before, after) => {
   const text = input.value;
   const selected = text.substring(start, end);
   const replacement = before + selected + after;
-  
+
   input.value = text.substring(0, start) + replacement + text.substring(end);
-  
+
   input.focus();
   const newPos = start + before.length + selected.length + after.length;
   input.setSelectionRange(newPos, newPos);
@@ -1076,21 +1051,21 @@ window.insertMarkdown = (before, after) => {
   const text = pingInput.value;
   const selected = text.substring(start, end);
   const replacement = before + selected + after;
-  
+
   pingInput.value = text.substring(0, start) + replacement + text.substring(end);
-  
+
   // Set focus back and set cursor position
   pingInput.focus();
   const newPos = start + before.length + selected.length + after.length;
   pingInput.setSelectionRange(newPos, newPos);
-  
+
   // Trigger input event to update char count
   pingInput.dispatchEvent(new Event('input'));
 };
 
 window.replyToComment = (pingId, username) => {
   if (!pingId) return;
-  
+
   const sections = document.querySelectorAll(`[id$="ping-${pingId}"] .comment-section`);
   sections.forEach(section => {
     section.style.display = "block";

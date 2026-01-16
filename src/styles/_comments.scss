@@ -1,0 +1,126 @@
+.comment {
+    &-section {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+    }
+
+    &-input-wrapper {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+
+        input {
+            flex: 1;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 9999px;
+            padding: 0.5rem 1rem;
+            color: var(--text-color);
+            outline: none;
+
+            &:focus {
+                border-color: var(--primary-color);
+            }
+        }
+
+        button {
+            background: var(--primary-color);
+            color: var(--color-bg);
+            border: none;
+            border-radius: 9999px;
+            padding: 0 1rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+    }
+
+    &-item {
+        display: flex;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    &-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: var(--color-olive);
+        flex-shrink: 0;
+    }
+
+    &-content {
+        background-color: var(--hover-bg);
+        padding: 0.5rem 0.75rem;
+        border-radius: 12px;
+        flex: 1;
+    }
+
+    &-author {
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-right: 0.5rem;
+    }
+
+    &-reply-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 0.75rem;
+        padding: 0.25rem;
+        margin-left: 0.5rem;
+        transition: all 0.2s;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+            color: var(--primary-color);
+            background-color: var(--hover-bg);
+        }
+    }
+
+    &-text {
+        color: var(--text-color);
+
+        a:hover {
+            text-decoration: underline !important;
+        }
+    }
+
+    &s-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+.reply {
+    &-quote {
+        background-color: var(--hover-bg);
+        border-left: 3px solid var(--primary-color);
+        padding: 0.5rem 0.75rem;
+        margin: 0.5rem 0;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+
+    &-to-label {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        margin-right: 0.25rem;
+    }
+
+    &-username {
+        color: var(--primary-color);
+        font-weight: 700;
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+
+    &-text {
+        margin-top: 0.25rem;
+        color: var(--text-color);
+    }
+}

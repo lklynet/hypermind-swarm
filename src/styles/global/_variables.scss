@@ -1,0 +1,20 @@
+// Color Variables
+:root {
+    --color-bg: #191716;
+    --color-fg: #daba8b;
+    --color-black: #0f0e0d;
+    --color-red: #8c4f4a;
+    --color-olive: #57553c;
+    --color-gold: #a17e3e;
+    --color-blue: #65788f;
+    --color-purple: #85678f;
+    --color-green: #718062;
+    --color-beige: #c8b491;
+    --bg-color: var(--color-bg);
+    --text-color: var(--color-fg);
+    --text-muted: rgba(218, 186, 139, 0.6);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --primary-color: var(--color-gold);
+    --secondary-color: var(--color-blue);
+    --hover-bg: rgba(255, 255, 255, 0.05);
+}

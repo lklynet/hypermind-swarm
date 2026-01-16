@@ -4,7 +4,10 @@
   "description": "A decentralized P2P Twitter-like swarm",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "build:css": "sass src/styles/style.scss public/style.css --style=compressed --no-source-map",
+    "watch:css": "sass src/styles/style.scss public/style.css --watch --style=compressed --no-source-map",
+    "start": "npm run build:css && node server.js",
+    "dev": "npm run watch:css & node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -35,5 +38,8 @@
     "hypercore": "^11.22.1",
     "hyperswarm": "^4.16.0",
     "sodium-native": "^5.0.10"
+  },
+  "devDependencies": {
+    "sass": "^1.97.2"
   }
 }

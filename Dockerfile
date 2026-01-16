@@ -13,6 +13,8 @@ RUN npm ci
 
 COPY . .
 
+RUN npm run build:css
+
 FROM node:22-slim
 
 WORKDIR /app

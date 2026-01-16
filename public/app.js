@@ -13,7 +13,7 @@ import { getUrlParams } from "./js/utils/url.js";
 import "./js/features/comments.js";
 
 import "./js/commands/help.js";
-import "./js/commands/tenor.js";
+import "./js/commands/giphy.js";
 
 function syncStateFromUrl() {
   const { userId, tab } = getUrlParams();

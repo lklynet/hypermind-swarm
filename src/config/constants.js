@@ -42,7 +42,7 @@ const CHAT_RATE_LIMIT = parseInt(process.env.CHAT_RATE_LIMIT) || 5000;
 const VISUAL_LIMIT = parseInt(process.env.VISUAL_LIMIT) || 500;
 const DEVICE_PERSISTENCE = process.env.DEVICE_PERSISTENCE === "true";
 
-const TENOR_API_KEY = process.env.TENOR_API_KEY || undefined;
+const GIPHY_API_KEY = process.env.GIPHY_API_KEY || undefined
 
 module.exports = {
   TOPIC_NAME,
@@ -77,5 +77,5 @@ module.exports = {
   CHAT_RATE_LIMIT,
   VISUAL_LIMIT,
   DEVICE_PERSISTENCE,
-  TENOR_API_KEY
+  GIPHY_API_KEY
 };

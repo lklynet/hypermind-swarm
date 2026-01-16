@@ -47,6 +47,10 @@
         white-space: pre-wrap;
         word-wrap: break-word;
 
+        img {
+            display: block;
+        }
+
         a:hover {
             text-decoration: underline !important;
         }

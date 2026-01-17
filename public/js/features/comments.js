@@ -21,29 +21,47 @@ export function toggleComment(id) {
 
 export function handleCommentKey(e, id) {
     if (e.key === "Enter") {
-        submitComment(id);
+        submitComment(id, e.target);
     }
 }
 
-export async function submitComment(id) {
+export async function submitComment(id, triggeredByEl = null) {
     const inputs = document.querySelectorAll(`[id$="ping-${id}"] .comment-input`);
-    let content = "";
     let activeInput = null;
 
+    if (triggeredByEl) {
+        activeInput = triggeredByEl.closest(".comment-section")?.querySelector(".comment-input");
+    }
+    if (!activeInput) {
+        // Fallback: try to find a visible one that has content
     for (const input of inputs) {
-        if (input.value.trim()) {
-            content = input.value.trim();
+            if (input.offsetParent !== null && input.value.trim()) {
             activeInput = input;
             break;
         }
     }
+    }
 
+    if (!activeInput) {
+        // Last resort: find any input with content (legacy behavior)
+        for (const input of inputs) {
+            if (input.value.trim()) {
+                activeInput = input;
+            break;
+        }
+    }
+}
+
+    if (!activeInput) return;
+
+    const content = activeInput.value.trim();
     if (!content) return;
 
     if (await handleCommandInput(activeInput)) return;
 
     try {
         await postComment(id, content);
+        // Clear all inputs for this ping to keep views in sync
         inputs.forEach((input) => (input.value = ""));
         showToast("Reply sent!", "success");
     } catch (e) {
@@ -55,7 +73,6 @@ export async function submitComment(id) {
 export function renderComment(c) {
     const avatarUrl = `/api/avatar/${c.author}`;
     const isFollowing = state.following.includes(c.author);
-
     return `
     <div class="comment-item">
       <div class="avatar comment-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getColorFromId(c.author)}; cursor: pointer;" onclick="window.showProfile('${c.author}')"></div>
@@ -70,20 +87,28 @@ export function renderComment(c) {
           </button>
         </div>
         <div class="comment-text">${renderMarkdown(c.content)}</div>
-      </div>
-    </div>
-  `;
+            </div>
+        </div>
+    `;
 }
 
-export function insertCommentMarkdown(pingId, before, after) {
-    const inputs = document.querySelectorAll(`[id$="ping-${pingId}"] .comment-input`);
+export function insertCommentMarkdown(pingId, before, after, triggeredByEl = null) {
     let input = null;
-    for (const i of inputs) {
-        if (i.offsetParent !== null) {
-            input = i;
-            break;
+
+    if (triggeredByEl) {
+        input = triggeredByEl.closest(".comment-section")?.querySelector(".comment-input");
+    }
+
+    if (!input) {
+        const inputs = document.querySelectorAll(`[id$="ping-${pingId}"] .comment-input`);
+        for (const i of inputs) {
+            if (i.offsetParent !== null) {
+                input = i;
+                break;
+            }
         }
     }
+
     if (input) insertMarkdownAtCursor(input, before, after);
 }
 
@@ -120,14 +145,14 @@ export function renderCommentSection(pingId, comments = [], isDetailView = false
             </div>
             <div class="compose-actions" style="margin-bottom: 0.5rem;">
                 <div class="markdown-toolbar">
-                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '**', '**')" title="Bold"><i class="fa-solid fa-bold" style="font-size: 0.8rem;"></i></button>
-                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '*', '*')" title="Italic"><i class="fa-solid fa-italic" style="font-size: 0.8rem;"></i></button>
-                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '__', '__')" title="Underline"><i class="fa-solid fa-underline" style="font-size: 0.8rem;"></i></button>
-                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '~~', '~~')" title="Strikethrough"><i class="fa-solid fa-strikethrough" style="font-size: 0.8rem;"></i></button>
-                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '[', '](url)')" title="Link"><i class="fa-solid fa-link" style="font-size: 0.8rem;"></i></button>
-                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '![alt](', ')')" title="Image"><i class="fa-solid fa-image" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '**', '**', this)" title="Bold"><i class="fa-solid fa-bold" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '*', '*', this)" title="Italic"><i class="fa-solid fa-italic" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '__', '__', this)" title="Underline"><i class="fa-solid fa-underline" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '~~', '~~', this)" title="Strikethrough"><i class="fa-solid fa-strikethrough" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '[', '](url)', this)" title="Link"><i class="fa-solid fa-link" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '![alt](', ')', this)" title="Image"><i class="fa-solid fa-image" style="font-size: 0.8rem;"></i></button>
                 </div>
-                <button onclick="window.submitComment('${pingId}')" style="margin-left: auto; background: var(--primary-color); color: var(--color-bg); border: none; border-radius: 9999px; padding: 0.25rem 1rem; font-weight: 700; cursor: pointer;">Reply</button>
+                <button onclick="window.submitComment('${pingId}', this)" style="margin-left: auto; background: var(--primary-color); color: var(--color-bg); border: none; border-radius: 9999px; padding: 0.25rem 1rem; font-weight: 700; cursor: pointer;">Reply</button>
             </div>
             ${commentsHeader}
             <div class="comments-list">
@@ -142,3 +167,4 @@ window.handleCommentKey = handleCommentKey;
 window.submitComment = submitComment;
 window.insertCommentMarkdown = insertCommentMarkdown;
 window.replyToComment = replyToComment;
+

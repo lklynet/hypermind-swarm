@@ -4,3 +4,4 @@ data
 .env
 storage
 storage2
+public/style.css

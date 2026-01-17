@@ -26,12 +26,8 @@ jobs:
             test: true
           - platform: linux/arm64
             arch: arm64
-            runner: ubuntu-24.04-arm
+            runner: ubuntu-latest
             test: true
-          - platform: linux/arm/v7
-            arch: armv7
-            runner: ubuntu-24.04-arm
-            test: false
 
     steps:
       - name: Checkout repository
@@ -78,7 +74,7 @@ jobs:
         if: matrix.test
         run: |
           for i in {1..30}; do
-            if curl -sf http://localhost:3000/api/stats; then
+            if curl -sf http://localhost:3000/api/health; then
               echo "Server is ready"
               exit 0
             fi
@@ -92,10 +88,10 @@ jobs:
       - name: Verify API response
         if: matrix.test
         run: |
-          response=$(curl -sf http://localhost:3000/api/stats)
+          response=$(curl -sf http://localhost:3000/api/health)
           echo "Response: $response"
           # Check if response is valid JSON and has expected fields
-          echo "$response" | jq -e '.id != null'
+          echo "$response" | jq -e '.status != null'
 
       - name: Cleanup test container
         if: always() && matrix.test

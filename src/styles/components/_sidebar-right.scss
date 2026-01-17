@@ -1,0 +1,152 @@
+@use '../global/variables' as *;
+
+.sidebar-right {
+    position: fixed;
+    right: -100%;
+    top: 0;
+    bottom: 0;
+    width: 80%;
+    max-width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem;
+    background-color: var(--color-bg);
+    border-left: 1px solid var(--border-color);
+    transition: right 0.3s ease-in-out;
+    z-index: 101;
+    overflow-y: auto;
+
+    &.active {
+        right: 0;
+    }
+
+    @media (min-width: $min-w-desktop) {
+        position: sticky;
+        right: auto;
+        top: 0;
+        padding: 1rem 2rem 1rem 1rem;
+        align-self: start;
+        height: fit-content;
+        max-width: none;
+        width: 100%;
+        border-left: none;
+    }
+}
+
+.right-panel {
+    background-color: var(--hover-bg);
+    border-radius: 0.1rem;
+    padding: 1rem 0.5rem;
+    border-radius: 12px;
+
+    .trending-item {
+        padding: 0.2rem 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        >span:last-child {
+            background: var(--color-bg);
+            color: var(--primary-color);
+            padding: 0.25rem 0.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+    }
+}
+
+.panel-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    padding: 0 0.5rem;
+    margin-top: 0;
+}
+
+.trend {
+    &-item {
+        padding: 0.75rem 0.5rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        border-radius: 8px;
+
+        &:hover {
+            background-color: var(--hover-bg);
+        }
+    }
+
+    &-meta {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        display: flex;
+        justify-content: space-between;
+    }
+
+    &-name {
+        font-weight: 700;
+        margin: 0.25rem 0;
+        display: block;
+    }
+}
+
+.swarm {
+    &-input-container {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    &-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0.5rem;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: background-color 0.2s;
+
+        &:hover {
+            background-color: var(--hover-bg);
+        }
+
+        &.active {
+            background-color: var(--hover-bg);
+            color: var(--text-color);
+        }
+    }
+
+    &-remove-btn {
+        cursor: pointer;
+        padding: 0 0.5rem;
+        opacity: 0;
+        transition: opacity 0.2s;
+        font-size: 1.2rem;
+        line-height: 1;
+
+        &:hover {
+            color: var(--color-red);
+        }
+    }
+
+    &-item:hover &-remove-btn {
+        opacity: 1;
+    }
+}
+
+#swarm-input {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 25px;
+    padding: 0.5rem;
+    color: var(--text-color);
+}
+
+#join-swarm-btn {
+    background: var(--primary-color);
+    border: none;
+    border-radius: 25px;
+    color: var(--color-bg);
+    padding: 0 1rem;
+    cursor: pointer;
+}

@@ -1,22 +1,48 @@
 const crypto = require("crypto");
+
 const TOPIC_NAME = process.env.TOPIC_NAME || "hypermind-swarm-v1";
 const TOPIC = crypto.createHash("sha256").update(TOPIC_NAME).digest();
-const MY_POW_PREFIX = "00000";
-const VERIFICATION_POW_PREFIX = "0000";
+
+const MY_POW_PREFIX = process.env.POW_PREFIX || "00000";
+const VERIFICATION_POW_PREFIX = process.env.VERIFICATION_POW_PREFIX || "00000";
+
 const MAX_PEERS = parseInt(process.env.MAX_PEERS) || 100000;
 const MAX_MESSAGE_SIZE = parseInt(process.env.MAX_MESSAGE_SIZE) || 2048;
 const MAX_RELAY_HOPS = parseInt(process.env.MAX_RELAY_HOPS) || 10;
 const MAX_CONNECTIONS = parseInt(process.env.MAX_CONNECTIONS) || 50;
+
+const MAX_SOCKET_BUFFER_SIZE = parseInt(process.env.MAX_SOCKET_BUFFER_SIZE) || 16384;
+const MAX_MESSAGES_PER_SECOND = parseInt(process.env.MAX_MESSAGES_PER_SECOND) || 10;
+const MAX_SSE_CLIENTS = parseInt(process.env.MAX_SSE_CLIENTS) || 1000;
+
+const MAX_CONTENT_LENGTH = parseInt(process.env.MAX_CONTENT_LENGTH) || 2000;
+const MAX_USERNAME_LENGTH = parseInt(process.env.MAX_USERNAME_LENGTH) || 50;
+const MAX_SEQUENCE_NUMBER = 2147483647;
+const MAX_TTL = 20;
+
 const HEARTBEAT_INTERVAL = parseInt(process.env.HEARTBEAT_INTERVAL) || 30000;
-const CONNECTION_ROTATION_INTERVAL =
-  parseInt(process.env.CONNECTION_ROTATION_INTERVAL) || 300000;
+const CONNECTION_ROTATION_INTERVAL = parseInt(process.env.CONNECTION_ROTATION_INTERVAL) || 300000;
 const PEER_TIMEOUT = parseInt(process.env.PEER_TIMEOUT) || 45000;
+const SSE_HEARTBEAT_INTERVAL = parseInt(process.env.SSE_HEARTBEAT_INTERVAL) || 15000;
+
+const PING_RATE_LIMIT = parseInt(process.env.PING_RATE_LIMIT) || 5;
+const COMMENT_RATE_LIMIT = parseInt(process.env.COMMENT_RATE_LIMIT) || 10;
+const RATE_LIMIT_WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 10000;
+const RATE_LIMIT_CLEANUP_INTERVAL = 30000;
+
+const DEFAULT_MESSAGE_TTL = parseInt(process.env.DEFAULT_MESSAGE_TTL) || 10;
+const RELAY_PEER_COUNT = parseInt(process.env.RELAY_PEER_COUNT) || 10;
+
+const LRU_CACHE_CAPACITY = parseInt(process.env.LRU_CACHE_CAPACITY) || 2000;
+
 const BROADCAST_THROTTLE = 1000;
 const DIAGNOSTICS_INTERVAL = 10000;
 const PORT = process.env.PORT || 3000;
 const CHAT_RATE_LIMIT = parseInt(process.env.CHAT_RATE_LIMIT) || 5000;
 const VISUAL_LIMIT = parseInt(process.env.VISUAL_LIMIT) || 500;
 const DEVICE_PERSISTENCE = process.env.DEVICE_PERSISTENCE === "true";
+
+const GIPHY_API_KEY = process.env.GIPHY_API_KEY || undefined
 
 module.exports = {
   TOPIC_NAME,
@@ -27,13 +53,29 @@ module.exports = {
   MAX_MESSAGE_SIZE,
   MAX_RELAY_HOPS,
   MAX_CONNECTIONS,
+  MAX_SOCKET_BUFFER_SIZE,
+  MAX_MESSAGES_PER_SECOND,
+  MAX_SSE_CLIENTS,
+  MAX_CONTENT_LENGTH,
+  MAX_USERNAME_LENGTH,
+  MAX_SEQUENCE_NUMBER,
+  MAX_TTL,
   HEARTBEAT_INTERVAL,
   CONNECTION_ROTATION_INTERVAL,
   PEER_TIMEOUT,
+  SSE_HEARTBEAT_INTERVAL,
+  PING_RATE_LIMIT,
+  COMMENT_RATE_LIMIT,
+  RATE_LIMIT_WINDOW_MS,
+  RATE_LIMIT_CLEANUP_INTERVAL,
+  DEFAULT_MESSAGE_TTL,
+  RELAY_PEER_COUNT,
+  LRU_CACHE_CAPACITY,
   BROADCAST_THROTTLE,
   DIAGNOSTICS_INTERVAL,
   PORT,
   CHAT_RATE_LIMIT,
   VISUAL_LIMIT,
   DEVICE_PERSISTENCE,
+  GIPHY_API_KEY
 };

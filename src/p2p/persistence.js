@@ -1,13 +1,13 @@
 const Corestore = require("corestore");
-const Hypercore = require("hypercore");
 const b4a = require("b4a");
-const path = require("path");
 
 class PersistenceManager {
   constructor(storagePath = "./storage") {
     this.store = new Corestore(storagePath);
     this.primaryCore = null;
     this.peerCores = new Map();
+    this.knownPeerKeys = new Set();
+    this.trackingCore = null;
     this.onMessage = null;
   }
 
@@ -24,6 +24,31 @@ class PersistenceManager {
       "Primary Hypercore ready. Key:",
       b4a.toString(this.primaryCore.key, "hex")
     );
+
+    this.trackingCore = this.store.get({
+      name: "tracked-peers",
+      valueEncoding: "json",
+    });
+    await this.trackingCore.ready();
+    await this._loadTrackedPeers();
+  }
+
+  async _loadTrackedPeers() {
+    try {
+      const length = this.trackingCore.length;
+      console.log(`Loading ${length} tracked peers from storage...`);
+      for (let i = 0; i < length; i++) {
+        const peerKey = await this.trackingCore.get(i);
+        if (peerKey && !this.knownPeerKeys.has(peerKey)) {
+          this.knownPeerKeys.add(peerKey);
+          await this.getPeerCore(peerKey).catch((err) =>
+            console.error(`Failed to load peer ${peerKey}:`, err)
+          );
+        }
+      }
+    } catch (err) {
+      console.error("Error loading tracked peers:", err);
+    }
   }
 
   _watchCore(core) {
@@ -33,23 +58,23 @@ class PersistenceManager {
       while (lastRead < core.length - 1) {
         const seq = ++lastRead;
         try {
-          const msg = await core.get(seq, { wait: true });
+          const msg = await core.get(seq, { wait: true, timeout: 5000 });
           if (this.onMessage) this.onMessage(msg);
         } catch (err) {
           console.error(
             `Error reading from core ${b4a
               .toString(core.key, "hex")
-              .slice(0, 8)}:`,
-            err
+              .slice(0, 8)} seq ${seq}:`,
+            err.message
           );
-          break;
+          lastRead--;
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
     };
 
     core.on("append", readMore);
 
-    // For remote cores, we need to update to find the latest length
     if (!core.writable) {
       core.update().then(() => {
         if (core.length > 0) {
@@ -66,9 +91,7 @@ class PersistenceManager {
     }
   }
 
-  async _readExisting(core) {
-    // This is now handled by _watchCore's initial readMore() and update()
-  }
+  async _readExisting(core) { }
 
   async append(msg) {
     if (!this.primaryCore)
@@ -81,6 +104,14 @@ class PersistenceManager {
       typeof publicKey === "string"
         ? publicKey
         : b4a.toString(publicKey, "hex");
+
+    if (!this.knownPeerKeys.has(keyStr)) {
+      this.knownPeerKeys.add(keyStr);
+      if (this.trackingCore) {
+        this.trackingCore.append(keyStr).catch(console.error);
+      }
+    }
+
     if (this.peerCores.has(keyStr)) return this.peerCores.get(keyStr);
 
     const core = this.store.get({
@@ -117,6 +148,13 @@ class PersistenceManager {
     }
 
     return messages;
+  }
+
+  async cleanup() {
+    this.peerCores.clear();
+    if (this.store) {
+      await this.store.close();
+    }
   }
 }
 

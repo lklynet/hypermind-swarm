@@ -1,0 +1,74 @@
+@use "../global/variables" as *;
+
+.avatar {
+    background-size: 180% 180%;
+    background-position: center;
+}
+
+.profile {
+    &-view {
+        display: none;
+
+        .feed-container {            
+            padding-bottom: 21rem;
+
+            @media (min-width: $min-w-desktop) {
+                padding-bottom: 13rem;
+            }
+
+            .ping {
+                &:last-child {
+                    border-bottom: 0;
+                }
+            }
+        }
+    }
+
+    &-header-large {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    &-cover {
+        height: 150px;
+        background-color: var(--color-olive);
+        margin: -1rem -1rem 0 -1rem;
+    }
+
+    &-details {
+        margin-top: -3rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    &-avatar-large {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 4px solid var(--bg-color);
+        background-color: var(--color-olive);
+        flex-shrink: 0;
+    }
+
+    &-name-large {
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+
+    &-handle-large {
+        color: var(--text-muted);
+    }
+
+    &-stats {
+        display: flex;
+        gap: 1.5rem;
+        margin-top: 1rem;
+        color: var(--text-muted);
+    }
+}
+
+.stat-value {
+    color: var(--text-color);
+    font-weight: 700;
+}

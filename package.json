@@ -4,7 +4,11 @@
   "description": "A decentralized P2P Twitter-like swarm",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "build:css": "sass src/styles/style.scss public/style.css --style=compressed --no-source-map",
+    "watch:css": "sass src/styles/style.scss public/style.css --watch --style=compressed --no-source-map",
+    "start": "npm run build:css && node server.js",
+    "dev": "npm run watch:css & node server.js",
+    "second-instance": "STORAGE_PATH=./storage2 PORT=3002 npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -32,8 +36,10 @@
     "corestore": "^7.7.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "hypercore": "^11.22.1",
     "hyperswarm": "^4.16.0",
     "sodium-native": "^5.0.10"
+  },
+  "devDependencies": {
+    "sass": "^1.97.2"
   }
 }

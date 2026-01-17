@@ -5,6 +5,8 @@ const {
   HEARTBEAT_INTERVAL,
   MAX_CONNECTIONS,
   CONNECTION_ROTATION_INTERVAL,
+  MAX_SOCKET_BUFFER_SIZE,
+  MAX_MESSAGES_PER_SECOND,
 } = require("../config/constants");
 const {
   getSwarmId,
@@ -82,21 +84,38 @@ class SwarmManager {
     this.broadcastFn();
 
     socket.buffer = "";
+    socket.messageTimestamps = [];
 
     socket.on("data", (data) => {
       this.diagnostics.increment("bytesReceived", data.length);
       socket.buffer += data.toString();
 
-      const lines = socket.buffer.split("\n");
+      if (socket.buffer.length > MAX_SOCKET_BUFFER_SIZE) {
+        this.diagnostics.increment("bufferOverflows");
+        socket.destroy();
+        return;
+      }
 
+      const lines = socket.buffer.split("\n");
       socket.buffer = lines.pop();
 
       for (const msgStr of lines) {
         if (!msgStr.trim()) continue;
         try {
           const msg = JSON.parse(msgStr);
+
+          const now = Date.now();
+          socket.messageTimestamps = socket.messageTimestamps.filter(t => now - t < 1000);
+
+          if (socket.messageTimestamps.length >= MAX_MESSAGES_PER_SECOND) {
+            this.diagnostics.increment("rateLimitExceeded");
+            socket.destroy();
+            return;
+          }
+
+          socket.messageTimestamps.push(now);
           this.messageHandler.handleMessage(msg, socket);
-        } catch (e) {}
+        } catch (e) { }
       }
     });
 
@@ -104,10 +123,14 @@ class SwarmManager {
       if (socket.peerId && this.peerManager.hasPeer(socket.peerId)) {
         this.peerManager.removePeer(socket.peerId);
       }
+      delete socket.buffer;
+      delete socket.peerId;
+      delete socket.connectedAt;
+      delete socket.messageTimestamps;
       this.broadcastFn();
     });
 
-    socket.on("error", () => {});
+    socket.on("error", () => { });
   }
 
   startHeartbeat() {
@@ -187,15 +210,20 @@ class SwarmManager {
 
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
     }
 
     if (this.rotationInterval) {
       clearInterval(this.rotationInterval);
+      this.rotationInterval = null;
     }
 
-    setTimeout(() => {
-      process.exit(0);
-    }, 500);
+    this.swarmFilter = null;
+  }
+
+  cleanup() {
+    this.shutdown();
+    return this.swarm.destroy();
   }
 
   getSwarm() {

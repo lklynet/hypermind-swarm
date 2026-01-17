@@ -3,3 +3,5 @@ data
 .DS_Store
 .env
 storage
+storage2
+public/style.css

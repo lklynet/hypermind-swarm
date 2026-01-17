@@ -1,0 +1,59 @@
+.ping-view {
+    display: none;
+}
+
+.failed-to-load-ping {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.ping-page-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+
+    .back-btn {
+        margin-bottom: 0;
+    }
+}
+
+.ping-detail-container {
+    overflow-y: auto;
+    max-height: calc(100vh - 100px);
+    padding-bottom: 130px;
+
+    .ping-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    @media (min-width: 1000px) {
+        padding-bottom: 1rem;
+    }
+
+    .ping {
+        cursor: default;
+        border-bottom: none;
+
+        &:hover {
+            background-color: transparent;
+        }
+    }
+
+    .ping-text {
+        font-size: 1.5rem;
+    }
+
+    .ping-time {
+        display: block;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .comment-section {
+        display: block;
+    }
+}

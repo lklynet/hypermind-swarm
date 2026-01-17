@@ -1,0 +1,72 @@
+@use "../global/variables" as *;
+
+.toast {
+    background-color: var(--hover-bg);
+    color: var(--text-color);
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: toast-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+        toast-out 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) 2.7s forwards;
+    pointer-events: auto;
+    max-width: 400px;
+    width: fit-content;
+
+    &.error {
+        color: var(--color-red);
+    }
+
+    &.success {
+        color: var(--color-green);
+    }
+
+    &.info {
+        color: var(--primary-color);
+    }
+
+    &-container {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        z-index: 9999;
+        pointer-events: none;
+
+        @media (min-width: $min-w-desktop) {
+            left: auto;
+            right: 2rem;
+            transform: none;
+        }
+    }
+}
+
+@keyframes toast-in {
+    from {
+        opacity: 0;
+        transform: translateY(1rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes toast-out {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(1rem);
+    }
+}

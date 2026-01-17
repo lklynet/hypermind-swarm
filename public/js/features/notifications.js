@@ -28,6 +28,12 @@ class NotificationManager {
         localStorage.setItem("notifications", JSON.stringify(this.notifications));
     }
 
+    _addNotification(notification) {
+        this.notifications.unshift(notification);
+        this.save();
+        this.updateBadge();
+    }
+
     addCommentNotification(ping, comment) {
         if (comment.author === state.myId) return;
         if (comment.timestamp < this.startTime) return;
@@ -43,7 +49,7 @@ class NotificationManager {
         if (!isMyPing && !mentionsMe) return;
 
         const notification = {
-            id: `notif-${comment.id}`,
+            id: `notif-comment-${comment.id}`,
             type: mentionsMe ? "mention" : "comment",
             pingId: ping.id,
             commentId: comment.id,
@@ -54,9 +60,33 @@ class NotificationManager {
             read: false
         };
 
-        this.notifications.unshift(notification);
-        this.save();
-        this.updateBadge();
+        this._addNotification(notification);
+    }
+
+    addPingNotification(ping) {
+        if (ping.author === state.myId) return;
+        if (ping.timestamp < this.startTime) return;
+
+        const existingIndex = this.notifications.findIndex(
+            n => n.pingId === ping.id && !n.commentId
+        );
+        if (existingIndex !== -1) return;
+
+        const mentionsMe = this._checkMention(ping.content);
+        if (!mentionsMe) return;
+
+        const notification = {
+            id: `notif-ping-${ping.id}`,
+            type: "mention",
+            pingId: ping.id,
+            author: ping.author,
+            username: ping.username,
+            content: ping.content,
+            timestamp: ping.timestamp,
+            read: false
+        };
+
+        this._addNotification(notification);
     }
 
     _checkMention(content) {
@@ -64,8 +94,8 @@ class NotificationManager {
         const myUsername = state.usernameCache.get(state.myId);
         if (!myUsername) return false;
 
-        const mentionPattern = new RegExp(`^>${myUsername}\\b`, 'i');
-        return mentionPattern.test(content.trim());
+        const mentionPattern = new RegExp(`@${myUsername}\\b`, 'i');
+        return mentionPattern.test(content);
     }
 
     markAsRead(notificationId) {
@@ -128,11 +158,17 @@ export function showNotifications() {
             </div>
             <ul style="list-style: none; padding: 0; margin: 0;">
                 ${notifications.map(n => {
-                    const timeAgo = getTimeAgo(n.timestamp);
-                    const notifText = n.type === "mention"
-                        ? `<strong>${n.username || 'Anonymous'}</strong> mentioned you in a comment`
-                        : `<strong>${n.username || 'Anonymous'}</strong> commented on your ping`;
-                    return `
+            const timeAgo = getTimeAgo(n.timestamp);
+            let notifText;
+            if (n.type === "mention") {
+                // Check if it's a comment mention or ping mention
+                notifText = n.commentId
+                    ? `<strong>${n.username || 'Anonymous'}</strong> mentioned you in a comment`
+                    : `<strong>${n.username || 'Anonymous'}</strong> mentioned you in a ping`;
+            } else {
+                notifText = `<strong>${n.username || 'Anonymous'}</strong> commented on your ping`;
+            }
+            return `
                         <li style="padding: 0.75rem; border-bottom: 1px solid var(--border-color); cursor: pointer; ${!n.read ? 'background-color: rgba(252, 163, 17, 0.1);' : ''}"
                             data-id="${n.id}"
                             data-ping-id="${n.pingId}"
@@ -148,7 +184,7 @@ export function showNotifications() {
                             </div>
                         </li>
                     `;
-                }).join('')}
+        }).join('')}
             </ul>
         `;
     }
@@ -156,7 +192,7 @@ export function showNotifications() {
     showModal({
         title: "Notifications",
         content: content,
-        onClose: () => {}
+        onClose: () => { }
     });
 
     const markAllBtn = document.getElementById("mark-all-read-btn");

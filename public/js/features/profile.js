@@ -8,6 +8,8 @@ import { updateUrl } from "../utils/url.js";
 export async function showProfile(id, push = true) {
     state.currentProfileId = id;
     DOM.mainView.style.display = "none";
+    const pingView = document.getElementById("ping-view");
+    if (pingView) pingView.style.display = "none";
     DOM.profileView.style.display = "block";
 
     if (push) updateUrl({ u: id, p: null, t: null });

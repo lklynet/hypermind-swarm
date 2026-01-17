@@ -92,10 +92,12 @@ async function init() {
           }
           const commentsList = detailPing.querySelector(".comments-list");
           if (commentsList && data.comments) {
-            commentsList.innerHTML = data.comments.map((c) => renderComment({...c, pingId: data.id})).join("");
+            commentsList.innerHTML = data.comments.map((c) => renderComment({ ...c, pingId: data.id })).join("");
           }
         }
       }
+
+      notificationManager.addPingNotification(data);
 
       if (data.comments && data.comments.length > 0) {
         data.comments.forEach(comment => {

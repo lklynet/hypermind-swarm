@@ -45,10 +45,13 @@ export function insertMarkdownAtCursor(input, before, after) {
     const text = input.value;
     const selected = text.substring(start, end);
     const replacement = before + selected + after;
+    const hasSelection = start !== end;
 
     input.value = text.substring(0, start) + replacement + text.substring(end);
     input.focus();
-    const newPos = start + before.length + selected.length + after.length;
+    const newPos = hasSelection
+        ? start + before.length + selected.length + after.length
+        : start + before.length;
     input.setSelectionRange(newPos, newPos);
 
     input.dispatchEvent(new Event("input"));

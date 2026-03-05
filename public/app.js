@@ -1,5 +1,5 @@
 import { state, DOM } from "./js/core/state.js";
-import { fetchWhoami, fetchPings } from "./js/core/api.js";
+import { fetchWhoami, fetchPings, fetchAuthStatus, loginAuth, logoutAuth } from "./js/core/api.js";
 import { startSSE, setSSECallbacks, setupTabVisibility } from "./js/core/sse.js";
 
 import { updateStats } from "./js/features/stats.js";
@@ -18,6 +18,17 @@ import "./js/features/comments.js";
 import "./js/commands/help.js";
 import "./js/commands/giphy.js";
 
+const authScreen = document.getElementById("auth-screen");
+const authForm = document.getElementById("auth-form");
+const authUsernameInput = document.getElementById("auth-username");
+const authPasswordInput = document.getElementById("auth-password");
+const authError = document.getElementById("auth-error");
+const logoutBtn = document.getElementById("logout-btn");
+const profileMenuBtn = document.getElementById("profile-menu-btn");
+const profileMenu = document.getElementById("profile-menu");
+const appContainer = document.querySelector(".app-container");
+let appStarted = false;
+
 function syncStateFromUrl() {
   const { userId, pingId, tab } = getUrlParams();
   if (pingId) {
@@ -32,7 +43,36 @@ function syncStateFromUrl() {
   }
 }
 
-async function init() {
+function setLogoutVisibility(visible) {
+  if (!profileMenuBtn || !profileMenu) return;
+  profileMenuBtn.style.display = visible ? "flex" : "none";
+  if (!visible) {
+    profileMenu.classList.remove("open");
+  }
+}
+
+function setProfileMenuOpen(open) {
+  if (!profileMenu) return;
+  profileMenu.classList.toggle("open", open);
+}
+
+function showAuthScreen(message = "") {
+  if (authScreen) authScreen.style.display = "flex";
+  if (appContainer) appContainer.style.display = "none";
+  if (authError) authError.textContent = message;
+  if (authUsernameInput) authUsernameInput.focus();
+}
+
+function hideAuthScreen() {
+  if (authScreen) authScreen.style.display = "none";
+  if (appContainer) appContainer.style.display = "";
+  if (authError) authError.textContent = "";
+  if (authPasswordInput) authPasswordInput.value = "";
+}
+
+async function startApp() {
+  if (appStarted) return;
+  appStarted = true;
   try {
     const data = await fetchWhoami();
     state.myId = data.id;
@@ -121,4 +161,69 @@ async function init() {
   setupNotificationListeners();
 }
 
-init();
+async function initAuth() {
+  if (profileMenuBtn && profileMenu) {
+    profileMenuBtn.onclick = (event) => {
+      event.stopPropagation();
+      setProfileMenuOpen(!profileMenu.classList.contains("open"));
+    };
+    profileMenu.onclick = (event) => {
+      event.stopPropagation();
+    };
+    document.addEventListener("click", () => {
+      setProfileMenuOpen(false);
+    });
+  }
+
+  if (logoutBtn) {
+    logoutBtn.onclick = async () => {
+      setProfileMenuOpen(false);
+      try {
+        await logoutAuth();
+      } catch (e) {
+        console.error("Logout failed", e);
+      }
+      window.location.reload();
+    };
+  }
+
+  window.addEventListener("auth-required", () => {
+    setLogoutVisibility(false);
+    showAuthScreen("Session expired. Sign in again.");
+  });
+
+  if (authForm) {
+    authForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const username = authUsernameInput?.value || "";
+      const password = authPasswordInput?.value || "";
+      try {
+        await loginAuth(username, password);
+        hideAuthScreen();
+        setLogoutVisibility(true);
+        await startApp();
+      } catch (e) {
+        if (authError) authError.textContent = e.message || "Login failed";
+      }
+    });
+  }
+
+  try {
+    const status = await fetchAuthStatus();
+    if (status.enabled && !status.authenticated) {
+      setLogoutVisibility(false);
+      showAuthScreen();
+      return;
+    }
+    hideAuthScreen();
+    setLogoutVisibility(Boolean(status.enabled));
+    await startApp();
+  } catch (e) {
+    console.error("Auth init failed", e);
+    hideAuthScreen();
+    setLogoutVisibility(false);
+    await startApp();
+  }
+}
+
+initAuth();

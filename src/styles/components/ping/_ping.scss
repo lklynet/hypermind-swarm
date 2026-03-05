@@ -33,12 +33,39 @@
     &-author {
         font-weight: 700;
         color: var(--text-color);
+        cursor: pointer;
+        transition: color 0.2s;
+
+        &:hover {
+            color: var(--primary-color);
+        }
     }
 
     &-handle,
     &-time {
         color: var(--text-muted);
         font-size: 0.9rem;
+    }
+
+    &-handle {
+        cursor: pointer;
+        transition: color 0.2s;
+
+        &:hover {
+            color: var(--primary-color);
+        }
+    }
+
+    &-topic {
+        color: var(--primary-color);
+        cursor: pointer;
+        transition: opacity 0.2s, transform 0.2s;
+        display: inline-block;
+
+        &:hover {
+            opacity: 0.85;
+            transform: translateY(-1px);
+        }
     }
 
     &-text {

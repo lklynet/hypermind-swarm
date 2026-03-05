@@ -6,8 +6,21 @@ import { getColorFromId } from "../utils/banner-generator.js";
 import { renderMarkdown, insertMarkdownAtCursor } from "../utils/markdown.js";
 import { showToast } from "../utils/toast.js";
 import { renderComment, renderCommentSection } from "./comments.js";
-import { handleCommandInput } from "../commands/handler.js";
+import { handleCommandInput, getActionHighlightSpec } from "../commands/handler.js";
 import { updateUrl } from "../utils/url.js";
+
+const measureCanvas = document.createElement("canvas");
+const measureContext = measureCanvas.getContext("2d");
+
+function getPrefixCutoffPx(input, prefixLength) {
+    if (!measureContext || !input) return 0;
+    const style = window.getComputedStyle(input);
+    measureContext.font = style.font || `${style.fontSize} ${style.fontFamily}`;
+    const prefixText = input.value.slice(0, prefixLength);
+    const textWidth = measureContext.measureText(prefixText).width;
+    const paddingLeft = parseFloat(style.paddingLeft) || 0;
+    return Math.ceil(paddingLeft + textWidth);
+}
 
 export function switchTab(tab, push = true) {
     state.currentTab = tab;
@@ -85,6 +98,20 @@ function updateExistingPing(el, ping) {
     }
 }
 
+function updatePingInputState() {
+    if (!DOM.pingInput) return;
+    const { mode, prefixLength } = getActionHighlightSpec(DOM.pingInput.value);
+
+    DOM.pingInput.classList.toggle("input-action-full", mode === "full");
+    DOM.pingInput.classList.toggle("input-action-prefix", mode === "prefix");
+    if (mode === "prefix") {
+        const cutoffPx = getPrefixCutoffPx(DOM.pingInput, prefixLength);
+        DOM.pingInput.style.setProperty("--action-cutoff-px", `${cutoffPx}px`);
+    } else {
+        DOM.pingInput.style.removeProperty("--action-cutoff-px");
+    }
+}
+
 function createPingElement(ping, domId, isProfile) {
     const swarmId = ping.swarmId || 0;
     const isMe = ping.author === state.myId;
@@ -95,7 +122,7 @@ function createPingElement(ping, domId, isProfile) {
     el.dataset.swarmId = swarmId;
     el.dataset.author = ping.author;
     el.onclick = (e) => {
-        if (e.target.closest('button') || e.target.closest('.ping-author') || e.target.closest('.ping-avatar') || e.target.closest('a') || e.target.closest('.comment-input') || e.target.closest('.markdown-toolbar')) {
+        if (e.target.closest('button') || e.target.closest('.ping-author') || e.target.closest('.ping-handle') || e.target.closest('.ping-topic') || e.target.closest('.ping-avatar') || e.target.closest('a') || e.target.closest('.comment-input') || e.target.closest('.markdown-toolbar')) {
             return;
         }
         window.showPing(ping.id);
@@ -116,7 +143,7 @@ function createPingElement(ping, domId, isProfile) {
 
     let topicPill = "";
     if (ping.topic) {
-        topicPill = `<span style="color: var(--primary-color); cursor: pointer;" onclick="event.stopPropagation(); window.joinSwarm('${escapeHtml(ping.topic)}')">#${escapeHtml(ping.topic)}</span>`;
+        topicPill = `<span class="ping-topic" onclick="event.stopPropagation(); window.joinSwarm('${escapeHtml(ping.topic)}')">#${escapeHtml(ping.topic)}</span>`;
     }
 
     el.innerHTML = `
@@ -124,7 +151,7 @@ function createPingElement(ping, domId, isProfile) {
     <div class="ping-content">
       <div class="ping-header">
         <span class="ping-author" onclick="window.showProfile('${ping.author}')" style="cursor: pointer;">${escapeHtml(authorName)}${isFollowing ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.85rem;" title="Following"></i>' : ""}</span>
-        <span class="ping-handle">@${ping.author.slice(-8)}</span>
+        <span class="ping-handle" onclick="event.stopPropagation(); window.showPing('${ping.id}')">@${ping.author.slice(-8)}</span>
         <span class="ping-time">· ${timeSince(new Date(ping.timestamp))}</span>
         ${topicPill ? `<span style="margin-left: auto; font-size: 0.8rem;">${topicPill}</span>` : ""}
       </div>
@@ -137,7 +164,7 @@ function createPingElement(ping, domId, isProfile) {
           <i class="fa-regular fa-comment"></i> <span class="comment-count">${ping.comments ? ping.comments.length : 0}</span>
         </button>
         <button class="action-btn share" onclick="window.sharePing('${ping.id}')">
-          <i class="fa-solid fa-share"></i>
+          <i class="fa-regular fa-copy"></i>
         </button>
       </div>
       ${renderCommentSection(ping.id, ping.comments || [])}
@@ -156,6 +183,8 @@ export async function sendPing() {
     try {
         await postPing(content, state.currentTopic);
         DOM.pingInput.value = "";
+        DOM.pingInput.classList.remove("input-action-full", "input-action-prefix");
+        DOM.pingInput.style.removeProperty("--action-cutoff-px");
         DOM.charCount.style.display = "none";
         showToast("Ping sent!", "success");
         if (window.innerWidth < 1000) {
@@ -202,6 +231,7 @@ export function setupFeedListeners() {
             const currentLength = DOM.pingInput.value.length;
             DOM.charCount.style.display = currentLength > 0 ? "inline" : "none";
             DOM.charCount.textContent = `${currentLength}/280`;
+            updatePingInputState();
 
             if (currentLength >= 280) {
                 DOM.charCount.style.color = "var(--color-red)";
@@ -218,6 +248,8 @@ export function setupFeedListeners() {
                 sendPing();
             }
         });
+
+        updatePingInputState();
     }
 }
 

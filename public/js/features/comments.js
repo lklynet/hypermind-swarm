@@ -5,7 +5,20 @@ import { timeSince } from "../utils/formatters.js";
 import { getColorFromId } from "../utils/banner-generator.js";
 import { renderMarkdown, insertMarkdownAtCursor } from "../utils/markdown.js";
 import { showToast } from "../utils/toast.js";
-import { handleCommandInput } from "../commands/handler.js";
+import { handleCommandInput, getActionHighlightSpec } from "../commands/handler.js";
+
+const measureCanvas = document.createElement("canvas");
+const measureContext = measureCanvas.getContext("2d");
+
+function getPrefixCutoffPx(input, prefixLength) {
+    if (!measureContext || !input) return 0;
+    const style = window.getComputedStyle(input);
+    measureContext.font = style.font || `${style.fontSize} ${style.fontFamily}`;
+    const prefixText = input.value.slice(0, prefixLength);
+    const textWidth = measureContext.measureText(prefixText).width;
+    const paddingLeft = parseFloat(style.paddingLeft) || 0;
+    return Math.ceil(paddingLeft + textWidth);
+}
 
 export function toggleComment(id) {
     const sections = document.querySelectorAll(`[id$="ping-${id}"] .comment-section`);
@@ -22,6 +35,21 @@ export function toggleComment(id) {
 export function handleCommentKey(e, id) {
     if (e.key === "Enter") {
         submitComment(id, e.target);
+    }
+}
+
+export function handleCommentInput(e) {
+    const input = e.target;
+    if (!input || !input.classList) return;
+    const { mode, prefixLength } = getActionHighlightSpec(input.value);
+
+    input.classList.toggle("input-action-full", mode === "full");
+    input.classList.toggle("input-action-prefix", mode === "prefix");
+    if (mode === "prefix") {
+        const cutoffPx = getPrefixCutoffPx(input, prefixLength);
+        input.style.setProperty("--action-cutoff-px", `${cutoffPx}px`);
+    } else {
+        input.style.removeProperty("--action-cutoff-px");
     }
 }
 
@@ -62,7 +90,11 @@ export async function submitComment(id, triggeredByEl = null) {
     try {
         await postComment(id, content);
         // Clear all inputs for this ping to keep views in sync
-        inputs.forEach((input) => (input.value = ""));
+        inputs.forEach((input) => {
+            input.value = "";
+            input.classList.remove("input-action-full", "input-action-prefix");
+            input.style.removeProperty("--action-cutoff-px");
+        });
         showToast("Reply sent!", "success");
     } catch (e) {
         console.error(e);
@@ -128,6 +160,7 @@ export function replyToComment(pingId, username) {
             input.focus();
             const pos = input.value.length;
             input.setSelectionRange(pos, pos);
+            handleCommentInput({ target: input });
         }
     });
 }
@@ -141,7 +174,7 @@ export function renderCommentSection(pingId, comments = [], isDetailView = false
     return `
         <div class="comment-section" style="display: ${displayStyle};">
             <div class="comment-input-wrapper">
-                <input type="text" class="comment-input" placeholder="Write a comment..." onkeydown="window.handleCommentKey(event, '${pingId}')">
+                <input type="text" class="comment-input" placeholder="Write a comment..." onkeydown="window.handleCommentKey(event, '${pingId}')" oninput="window.handleCommentInput(event)">
             </div>
             <div class="compose-actions" style="margin-bottom: 0.5rem;">
                 <div class="markdown-toolbar">
@@ -164,7 +197,7 @@ export function renderCommentSection(pingId, comments = [], isDetailView = false
 
 window.toggleComment = toggleComment;
 window.handleCommentKey = handleCommentKey;
+window.handleCommentInput = handleCommentInput;
 window.submitComment = submitComment;
 window.insertCommentMarkdown = insertCommentMarkdown;
 window.replyToComment = replyToComment;
-

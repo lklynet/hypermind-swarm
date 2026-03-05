@@ -43,8 +43,7 @@ class SwarmManager {
   async start() {
     this.swarm.on("connection", (socket) => this.handleConnection(socket));
 
-    const discovery = this.swarm.join(TOPIC);
-    await discovery.flushed();
+    this.swarm.join(TOPIC);
 
     this.startHeartbeat();
     this.startRotation();

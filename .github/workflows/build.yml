@@ -68,22 +68,28 @@ jobs:
 
       - name: Run container for testing
         if: matrix.test
-        run: docker run -d --name hypermind-test -p 3000:3000 hypermind-test:${{ github.sha }}
+        run: docker run -d --name hypermind-test -e PORT=3000 -p 3000:3000 hypermind-test:${{ github.sha }}
 
       - name: Wait for server to be ready
         if: matrix.test
         run: |
-          for i in {1..30}; do
+          for i in {1..90}; do
             if curl -sf http://localhost:3000/api/health; then
               echo "Server is ready"
               exit 0
             fi
-            echo "Waiting for server... ($i/30)"
-            sleep 1
+            echo "Waiting for server... ($i/90)"
+            sleep 2
           done
           echo "Server failed to start"
-          docker logs hypermind-test
           exit 1
+
+      - name: Print Docker container logs for debugging
+        if: failure() && matrix.test
+        run: |
+          docker ps -a || true
+          docker inspect hypermind-test || true
+          docker logs hypermind-test || true
 
       - name: Verify API response
         if: matrix.test

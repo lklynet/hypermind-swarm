@@ -7,6 +7,7 @@ const { setupSwarmRoutes } = require("./routes/swarm-routes");
 const { setupStaticRoutes } = require("./routes/static-routes");
 const { setupGifRoutes } = require("./routes/gif-routes");
 const { setupHealthRoutes } = require("./routes/health-routes");
+const { MAX_MESSAGE_SIZE } = require("../config/constants");
 
 const setupRoutes = (
   app,
@@ -18,7 +19,7 @@ const setupRoutes = (
   pingStore,
   persistenceManager
 ) => {
-  app.use(express.json());
+  app.use(express.json({ limit: `${Math.max(MAX_MESSAGE_SIZE * 4, 8192)}b` }));
   app.use(express.static(path.join(__dirname, "../../public")));
 
   const deps = {

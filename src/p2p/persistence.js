@@ -6,7 +6,9 @@ class PersistenceManager {
     this.store = new Corestore(storagePath);
     this.primaryCore = null;
     this.peerCores = new Map();
+    this.pendingPeerCores = new Map();
     this.knownPeerKeys = new Set();
+    this.coreWatchers = new Map();
     this.trackingCore = null;
     this.onMessage = null;
   }
@@ -52,28 +54,48 @@ class PersistenceManager {
   }
 
   _watchCore(core) {
-    let lastRead = -1;
+    const coreKey = b4a.toString(core.key, "hex");
+    if (this.coreWatchers.has(coreKey)) return;
+
+    const watcher = {
+      core,
+      lastRead: -1,
+      reading: false,
+      destroyed: false,
+      onAppend: null,
+    };
 
     const readMore = async () => {
-      while (lastRead < core.length - 1) {
-        const seq = ++lastRead;
-        try {
-          const msg = await core.get(seq, { wait: true, timeout: 5000 });
-          if (this.onMessage) this.onMessage(msg);
-        } catch (err) {
-          console.error(
-            `Error reading from core ${b4a
-              .toString(core.key, "hex")
-              .slice(0, 8)} seq ${seq}:`,
-            err.message
-          );
-          lastRead--;
-          await new Promise(resolve => setTimeout(resolve, 100));
+      if (watcher.reading || watcher.destroyed) return;
+      watcher.reading = true;
+      try {
+        while (!watcher.destroyed && watcher.lastRead < core.length - 1) {
+          const seq = ++watcher.lastRead;
+          try {
+            const msg = await core.get(seq, { wait: true, timeout: 5000 });
+            if (this.onMessage) this.onMessage(msg);
+          } catch (err) {
+            console.error(
+              `Error reading from core ${coreKey.slice(0, 8)} seq ${seq}:`,
+              err.message
+            );
+            watcher.lastRead--;
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+        }
+      } finally {
+        watcher.reading = false;
+        if (!watcher.destroyed && watcher.lastRead < core.length - 1) {
+          readMore().catch(() => {});
         }
       }
     };
 
-    core.on("append", readMore);
+    watcher.onAppend = () => {
+      readMore().catch(() => {});
+    };
+    core.on("append", watcher.onAppend);
+    this.coreWatchers.set(coreKey, watcher);
 
     if (!core.writable) {
       core.update().then(() => {
@@ -84,10 +106,10 @@ class PersistenceManager {
               .slice(0, 8)} updated. Length: ${core.length}`
           );
         }
-        readMore();
+        readMore().catch(() => {});
       });
     } else {
-      readMore();
+      readMore().catch(() => {});
     }
   }
 
@@ -113,17 +135,27 @@ class PersistenceManager {
     }
 
     if (this.peerCores.has(keyStr)) return this.peerCores.get(keyStr);
+    if (this.pendingPeerCores.has(keyStr)) {
+      return this.pendingPeerCores.get(keyStr);
+    }
 
-    const core = this.store.get({
-      key: b4a.from(keyStr, "hex"),
-      valueEncoding: "json",
-    });
-    await core.ready();
-    this.peerCores.set(keyStr, core);
+    const corePromise = (async () => {
+      const core = this.store.get({
+        key: b4a.from(keyStr, "hex"),
+        valueEncoding: "json",
+      });
+      await core.ready();
+      this.peerCores.set(keyStr, core);
+      this._watchCore(core);
+      return core;
+    })();
 
-    this._watchCore(core);
-
-    return core;
+    this.pendingPeerCores.set(keyStr, corePromise);
+    try {
+      return await corePromise;
+    } finally {
+      this.pendingPeerCores.delete(keyStr);
+    }
   }
 
   replicate(socket) {
@@ -151,6 +183,14 @@ class PersistenceManager {
   }
 
   async cleanup() {
+    for (const watcher of this.coreWatchers.values()) {
+      watcher.destroyed = true;
+      if (watcher.core && watcher.onAppend) {
+        watcher.core.removeListener("append", watcher.onAppend);
+      }
+    }
+    this.coreWatchers.clear();
+    this.pendingPeerCores.clear();
     this.peerCores.clear();
     if (this.store) {
       await this.store.close();

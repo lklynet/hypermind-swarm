@@ -55,6 +55,7 @@ const main = async () => {
 
   let swarmManager;
   let diagnosticsInterval;
+  let isShuttingDown = false;
 
   const broadcastUpdate = (reset = false) => {
     sseManager.broadcastUpdate({
@@ -136,22 +137,29 @@ const main = async () => {
   startServer(app, identity);
 
   const handleShutdown = async () => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
     console.log("Shutting down gracefully...");
 
-    if (diagnosticsInterval) {
-      clearInterval(diagnosticsInterval);
+    try {
+      if (diagnosticsInterval) {
+        clearInterval(diagnosticsInterval);
+      }
+
+      messageHandler.cleanup();
+      sseManager.cleanup();
+      diagnostics.cleanup();
+      peerManager.cleanup();
+      pingStore.cleanup();
+      await swarmManager.cleanup();
+      await persistenceManager.cleanup();
+
+      console.log("Cleanup complete");
+      process.exit(0);
+    } catch (err) {
+      console.error("Shutdown failed:", err);
+      process.exit(1);
     }
-
-    messageHandler.cleanup();
-    sseManager.cleanup();
-    diagnostics.cleanup();
-    peerManager.cleanup();
-    pingStore.cleanup();
-    await swarmManager.cleanup();
-    await persistenceManager.cleanup();
-
-    console.log("Cleanup complete");
-    process.exit(0);
   };
 
   process.on("SIGINT", handleShutdown);

@@ -10,13 +10,27 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Google+Sans+Code:ital,wght@0,300..800;1,300..800&family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap"
     rel="stylesheet" />
-  <link rel="stylesheet" href="/style.css?v=7" />
+  <link rel="stylesheet" href="/style.css?v=9" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
     crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 
 <body>
+  <div id="auth-screen" class="auth-screen" style="display: none;">
+    <div class="auth-card">
+      <img src="/hypermind.svg" alt="Hypermind Logo" class="auth-logo" />
+      <h1 class="auth-title">Hypermind-Swarm</h1>
+      <p class="auth-subtitle">Sign in to publish on this node</p>
+      <form id="auth-form" class="auth-form">
+        <input id="auth-username" type="text" autocomplete="username" placeholder="Username" required />
+        <input id="auth-password" type="password" autocomplete="current-password" placeholder="Password" required />
+        <button type="submit" id="auth-submit">Sign in</button>
+      </form>
+      <div id="auth-error" class="auth-error"></div>
+    </div>
+  </div>
+
   <div class="mobile-top-bar">
     <button class="notification-bell mobile-bell" id="notification-bell-mobile" aria-label="Notifications">
       <i class="fa-regular fa-bell"></i>
@@ -127,11 +141,19 @@
         </div>
       </div>
 
-      <div class="user-profile-widget" id="my-profile-widget" onclick="showMyProfile()">
-        <div class="avatar user-avatar" id="my-avatar-small"></div>
-        <div class="profile-info">
-          <span class="profile-name" id="my-name-display">Loading...</span>
-          <span class="profile-handle" id="my-id">...</span>
+      <div class="account-section">
+        <div class="user-profile-widget" id="my-profile-widget" onclick="showMyProfile()">
+          <div class="avatar user-avatar" id="my-avatar-small"></div>
+          <div class="profile-info">
+            <span class="profile-name" id="my-name-display">Loading...</span>
+            <span class="profile-handle" id="my-id">...</span>
+          </div>
+        </div>
+        <button id="profile-menu-btn" class="profile-menu-btn" style="display: none;" aria-label="Account menu">
+          <i class="fa-solid fa-ellipsis-vertical"></i>
+        </button>
+        <div id="profile-menu" class="profile-menu">
+          <button id="logout-btn" class="profile-menu-item">Logout</button>
         </div>
       </div>
     </aside>

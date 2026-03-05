@@ -100,6 +100,7 @@ docker run -d \
   --network host \
   --restart unless-stopped \
   -e PORT=3000 \
+  -e WEB_AUTH=admin:change-me \
   ghcr.io/lklynet/hypermind-swarm:latest
 ```
 
@@ -118,6 +119,7 @@ docker run -d \
 | `MAX_CONNECTIONS` | `50` | Max active P2P connections. |
 | `MAX_RELAY_HOPS` | `10` | How far a ping travels through the mesh. |
 | `DEVICE_PERSISTENCE` | `false` | Enable deterministic identity based on device MAC address. |
+| `WEB_AUTH` | `` | Optional dashboard auth in format `username:password`. |
 
 </details>
 

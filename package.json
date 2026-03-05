@@ -9,6 +9,8 @@
     "start": "npm run build:css && node server.js",
     "dev": "npm run watch:css & node server.js",
     "second-instance": "STORAGE_PATH=./storage2 PORT=3002 npm run dev",
+    "verify": "npm run build:css && node --check server.js && node --check src/web/routes.js",
+    "prepare": "husky",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -40,6 +42,7 @@
     "sodium-native": "^5.0.10"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
     "sass": "^1.97.2"
   }
 }

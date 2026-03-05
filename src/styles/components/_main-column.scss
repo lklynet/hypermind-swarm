@@ -148,6 +148,23 @@
         color: var(--text-muted);
     }
 
+    &.input-action-full {
+        color: var(--secondary-color);
+    }
+
+    &.input-action-prefix {
+        background: linear-gradient(to right,
+                var(--secondary-color) 0%,
+                var(--secondary-color) var(--action-cutoff-px, 0px),
+                var(--text-color) var(--action-cutoff-px, 0px),
+                var(--text-color) 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+        caret-color: var(--text-color);
+    }
+
     &:not(:placeholder-shown)~.compose-actions #ping-btn {
         opacity: 1;
         pointer-events: auto;

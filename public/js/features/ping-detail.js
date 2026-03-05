@@ -32,7 +32,7 @@ export async function showPing(id, push = true) {
 
         let topicPill = "";
         if (ping.topic) {
-            topicPill = `<span style="color: var(--primary-color); cursor: pointer;" onclick="event.stopPropagation(); window.joinSwarm('${escapeHtml(ping.topic)}')">#${escapeHtml(ping.topic)}</span>`;
+            topicPill = `<span class="ping-topic" onclick="event.stopPropagation(); window.joinSwarm('${escapeHtml(ping.topic)}')">#${escapeHtml(ping.topic)}</span>`;
         }
 
         const timestamp = new Date(ping.timestamp).toLocaleString('en-US', {
@@ -50,7 +50,7 @@ export async function showPing(id, push = true) {
                     <div class="ping-header">
                         <div class="avatar ping-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getColorFromId(ping.author)};" onclick="window.showProfile('${ping.author}')"></div>
                         <span class="ping-author" onclick="window.showProfile('${ping.author}')" style="cursor: pointer;">${escapeHtml(authorName)}${isFollowing ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.85rem;" title="Following"></i>' : ""}</span>
-                        <span class="ping-handle">@${ping.author.slice(-8)}</span>
+                        <span class="ping-handle" onclick="event.stopPropagation(); window.showPing('${ping.id}')">@${ping.author.slice(-8)}</span>
                     </div>
                     <div class="ping-text">${renderMarkdown(ping.content)}</div>
                     ${topicPill ? `<div style="margin-top: 0.5rem;">${topicPill}</div>` : ""}
@@ -63,7 +63,7 @@ export async function showPing(id, push = true) {
                             <i class="fa-regular fa-comment"></i> <span class="comment-count">${ping.comments ? ping.comments.length : 0}</span>
                         </button>
                         <button class="action-btn share" onclick="window.sharePing('${ping.id}')">
-                            <i class="fa-solid fa-share"></i>
+                            <i class="fa-regular fa-copy"></i>
                         </button>
                     </div>
                     ${renderCommentSection(ping.id, ping.comments || [], true)}

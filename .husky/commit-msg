@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+message="$(cat "$1")"
+case "$message" in
+  feat:*|fix:*|chore:*|docs:*|style:*|refactor:*|test:*|build:*|ci:*|perf:*|revert:*)
+    exit 0
+    ;;
+  *)
+    echo "Commit message must follow conventional commits (e.g. feat: add docker workflow)"
+    exit 1
+    ;;
+esac

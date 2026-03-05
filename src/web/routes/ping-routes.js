@@ -8,20 +8,51 @@ const {
 } = require("../../config/constants");
 const { getSwarmId } = require("../../utils/swarm-utils");
 
-let pingHistory = [];
+const pingRateLimits = new Map();
+
+function getClientKey(req) {
+    const forwarded = req.headers["x-forwarded-for"];
+    if (typeof forwarded === "string" && forwarded.length > 0) {
+        return forwarded.split(",")[0].trim();
+    }
+    return req.ip || req.socket.remoteAddress || "unknown";
+}
+
+function isPingRateLimited(req) {
+    const now = Date.now();
+    const clientKey = getClientKey(req);
+    let rateData = pingRateLimits.get(clientKey);
+
+    if (!rateData || now - rateData.windowStart >= CHAT_RATE_LIMIT) {
+        rateData = { count: 0, windowStart: now };
+    }
+
+    if (rateData.count >= PING_RATE_LIMIT) {
+        pingRateLimits.set(clientKey, rateData);
+        return true;
+    }
+
+    rateData.count++;
+    pingRateLimits.set(clientKey, rateData);
+
+    if (pingRateLimits.size > 5000) {
+        for (const [key, data] of pingRateLimits.entries()) {
+            if (now - data.windowStart >= CHAT_RATE_LIMIT) {
+                pingRateLimits.delete(key);
+            }
+        }
+    }
+
+    return false;
+}
 
 function setupPingRoutes(app, deps) {
     const { identity, pingStore, persistenceManager, swarm, sseManager } = deps;
 
     app.post("/api/ping", (req, res) => {
-        const now = Date.now();
-        pingHistory = pingHistory.filter((time) => now - time < CHAT_RATE_LIMIT);
-
-        if (pingHistory.length >= PING_RATE_LIMIT) {
+        if (isPingRateLimited(req)) {
             return res.status(429).json({ error: "Rate limit exceeded" });
         }
-
-        pingHistory.push(now);
 
         const { content, topic } = req.body;
         if (
@@ -137,8 +168,13 @@ function setupPingRoutes(app, deps) {
 
     app.post("/api/comment", (req, res) => {
         const { pingId, content } = req.body;
-        if (!pingId || !content) {
-            return res.status(400).json({ error: "Missing pingId or content" });
+        if (
+            !pingId ||
+            !content ||
+            typeof content !== "string" ||
+            content.length > MAX_CONTENT_LENGTH
+        ) {
+            return res.status(400).json({ error: "Invalid pingId or content" });
         }
 
         const ping = pingStore.get(pingId);

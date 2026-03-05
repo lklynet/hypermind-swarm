@@ -4,5 +4,11 @@ services:
     container_name: hypermind-swarm
     network_mode: host
     restart: unless-stopped
+    environment:
+      - PORT=${PORT:-3000}
+      - STORAGE_PATH=${STORAGE_PATH:-./storage}
+      - WEB_AUTH=${WEB_AUTH:-}
+      - DEVICE_PERSISTENCE=${DEVICE_PERSISTENCE:-false}
+      - GIPHY_API_KEY=${GIPHY_API_KEY:-}
     ports:
       - "3010:3000"

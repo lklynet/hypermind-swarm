@@ -1,5 +1,5 @@
 services:
-  hypermind:
+  hypermind-swarm:
     image: ghcr.io/lklynet/hypermind-swarm:latest
     container_name: hypermind-swarm
     network_mode: host

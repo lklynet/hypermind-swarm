@@ -10,5 +10,3 @@ services:
       - WEB_AUTH=${WEB_AUTH:-}
       - DEVICE_PERSISTENCE=${DEVICE_PERSISTENCE:-false}
       - GIPHY_API_KEY=${GIPHY_API_KEY:-}
-    ports:
-      - "3010:3000"

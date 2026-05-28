@@ -2,6 +2,7 @@
 <img src="public/hypermind.svg" width="150" alt="Hypermind Swarm Logo" />
 <h1>Hypermind-Swarm</h1>
 <p><strong>The internet is fun again.</strong></p>
+<p><a href="https://discord.gg/cpPYfgVURJ">Join the Discord</a></p>
 </div>
 
 ### Decentralized. Ephemeral. Unfiltered.

@@ -9,6 +9,7 @@ const { LeaveHandler } = require("./handlers/leave-handler");
 const { PingHandler } = require("./handlers/ping-handler");
 const { AmplifyHandler } = require("./handlers/amplify-handler");
 const { CommentHandler } = require("./handlers/comment-handler");
+const { QuoteHandler } = require("./handlers/quote-handler");
 
 class MessageHandler {
   constructor(
@@ -60,6 +61,7 @@ class MessageHandler {
     this.pingHandler = new PingHandler(deps);
     this.amplifyHandler = new AmplifyHandler(deps);
     this.commentHandler = new CommentHandler(deps);
+    this.quoteHandler = new QuoteHandler(deps);
   }
 
   setGetSwarmFilter(fn) {
@@ -84,6 +86,9 @@ class MessageHandler {
         break;
       case "AMPLIFY":
         this.amplifyHandler.handle(msg, sourceSocket);
+        break;
+      case "QUOTE":
+        this.quoteHandler.handle(msg, sourceSocket);
         break;
       case "COMMENT":
         this.commentHandler.handle(msg, sourceSocket);

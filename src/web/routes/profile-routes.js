@@ -59,10 +59,7 @@ function setupProfileRoutes(app, deps) {
         if (!ping) {
             return res.status(404).json({ error: "Ping not found" });
         }
-        res.json({
-            ...ping,
-            amplifiedBy: Array.from(ping.amplifiedBy || []),
-        });
+        res.json(pingStore.serializePing(ping));
     });
 
     app.get("/api/catchup", (req, res) => {

@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const { signMessage } = require("../../core/security");
+const { compactPingSnapshot } = require("../../state/pings");
 const {
     CHAT_RATE_LIMIT,
     DEFAULT_MESSAGE_TTL,
@@ -91,22 +92,15 @@ function setupPingRoutes(app, deps) {
         };
 
         if (pingStore.add(msg)) {
-            pingStore.like(msg.id, identity.id);
-
             if (persistenceManager) {
                 persistenceManager.append(msg).catch(() => { });
             }
 
             swarm.broadcast(msg);
 
-            const pingWithState = {
-                ...msg,
-                likes: 1,
-                amplifiedBy: [identity.id],
-            };
-            sseManager.broadcast(pingWithState);
+            sseManager.broadcast(pingStore.serializePing(pingStore.get(msg.id)));
 
-            res.json(msg);
+            res.json(pingStore.serializePing(pingStore.get(msg.id)));
         } else {
             res.status(400).json({ error: "Duplicate ping" });
         }
@@ -135,18 +129,24 @@ function setupPingRoutes(app, deps) {
             .update(amplifyIdBase)
             .digest("hex");
         const sig = signMessage(`amplify:${amplifyId}`, identity.privateKey);
-        const { likes, amplifiedBy, receivedAt, ...originalPingData } = ping;
+        const originalPingData = compactPingSnapshot(ping);
+        const timestamp = Date.now();
 
         const amplifyMsg = {
             type: "AMPLIFY",
             id: amplifyId,
             originalPing: originalPingData,
             amplifier: identity.id,
+            username: identity.username,
+            timestamp,
             sig,
             ttl: DEFAULT_MESSAGE_TTL,
         };
 
-        pingStore.like(id, identity.id);
+        pingStore.addAmplify(id, identity.id, {
+            username: identity.username,
+            timestamp,
+        });
 
         if (persistenceManager) {
             persistenceManager.append(amplifyMsg).catch(() => { });
@@ -156,14 +156,86 @@ function setupPingRoutes(app, deps) {
 
         const updatedPing = pingStore.get(id);
 
-        const serializablePing = {
-            ...updatedPing,
-            amplifiedBy: Array.from(updatedPing.amplifiedBy || []),
-        };
+        const serializablePing = pingStore.serializePing(updatedPing);
 
         sseManager.broadcast(serializablePing);
 
-        res.json({ success: true, likes: updatedPing.likes });
+        res.json({
+            success: true,
+            likes: updatedPing.likes,
+            noteCounts: updatedPing.noteCounts,
+        });
+    });
+
+    app.post("/api/quote", (req, res) => {
+        if (isPingRateLimited(req)) {
+            return res.status(429).json({ error: "Rate limit exceeded" });
+        }
+
+        const { pingId, content, topic } = req.body;
+        if (
+            !pingId ||
+            !content ||
+            typeof content !== "string" ||
+            content.length > MAX_CONTENT_LENGTH
+        ) {
+            return res.status(400).json({ error: "Invalid pingId or content" });
+        }
+
+        const originalPing = pingStore.get(pingId);
+        if (!originalPing) {
+            return res.status(404).json({ error: "Ping not found" });
+        }
+
+        const requestedTopic = typeof topic === "string"
+            ? topic.trim().toLowerCase()
+            : "";
+        const normalizedTopic = requestedTopic || originalPing.topic || "";
+        const swarmId = normalizedTopic
+            ? getSwarmId(normalizedTopic)
+            : originalPing.swarmId || 0;
+
+        const timestamp = Date.now();
+        const idBase = identity.id + pingId + content + timestamp;
+        const quoteId = crypto.createHash("sha256").update(idBase).digest("hex");
+        const sig = signMessage(`quote:${quoteId}`, identity.privateKey);
+
+        const quoteMsg = {
+            type: "QUOTE",
+            id: quoteId,
+            author: identity.id,
+            username: identity.username,
+            content,
+            timestamp,
+            sig,
+            hops: 0,
+            ttl: DEFAULT_MESSAGE_TTL,
+            swarmId,
+            topic: normalizedTopic,
+            quoteOf: pingId,
+            quotedPing: compactPingSnapshot(originalPing),
+        };
+
+        const wasKnown = pingStore.has(quoteId);
+        const noteAdded = pingStore.addQuote(pingId, quoteMsg);
+        if (wasKnown || !pingStore.has(quoteId)) {
+            return res.status(400).json({ error: "Duplicate quote" });
+        }
+
+        if (persistenceManager) {
+            persistenceManager.append(quoteMsg).catch(() => { });
+        }
+
+        swarm.broadcast(quoteMsg);
+
+        const serializableQuote = pingStore.serializePing(pingStore.get(quoteId));
+        sseManager.broadcast(serializableQuote);
+
+        if (noteAdded) {
+            sseManager.broadcast(pingStore.serializePing(pingStore.get(pingId)));
+        }
+
+        res.json(serializableQuote);
     });
 
     app.post("/api/comment", (req, res) => {
@@ -207,11 +279,7 @@ function setupPingRoutes(app, deps) {
             swarm.broadcast(commentMsg);
 
             const updatedPing = pingStore.get(pingId);
-            const serializablePing = {
-                ...updatedPing,
-                amplifiedBy: Array.from(updatedPing.amplifiedBy || []),
-            };
-            sseManager.broadcast(serializablePing);
+            sseManager.broadcast(pingStore.serializePing(updatedPing));
 
             res.json(commentMsg);
         } else {

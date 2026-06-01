@@ -1,0 +1,185 @@
+.notes-section {
+    padding-top: 0.25rem;
+}
+
+.ping-detail-tabs {
+    margin-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.ping-detail-tab-list {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.ping-detail-tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 0.85rem 0.5rem;
+    transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+
+    &:hover {
+        color: var(--primary-color);
+        background-color: var(--hover-bg);
+    }
+
+    &.active {
+        color: var(--text-color);
+        border-bottom-color: var(--primary-color);
+    }
+
+    span {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin-left: 0.25rem;
+    }
+}
+
+.ping-detail-panel {
+    display: none;
+    padding-top: 1rem;
+
+    &.active {
+        display: block;
+    }
+}
+
+.notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.activity-empty {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    padding: 0.25rem 0;
+}
+
+.note-item {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+}
+
+.note-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.note-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.note-line {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.45;
+}
+
+.note-author {
+    color: var(--text-color);
+    font-weight: 700;
+    cursor: pointer;
+    margin-right: 0.25rem;
+
+    &:hover {
+        color: var(--primary-color);
+    }
+}
+
+.note-body {
+    color: var(--text-muted);
+}
+
+.note-text {
+    color: var(--text-color);
+    overflow-wrap: anywhere;
+}
+
+.note-time {
+    color: var(--text-muted);
+}
+
+.note-link {
+    margin-top: 0.25rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--primary-color);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.quote-compose {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    textarea {
+        width: 100%;
+        min-height: 120px;
+        resize: vertical;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: transparent;
+        color: var(--text-color);
+        outline: none;
+        padding: 0.75rem;
+        font: inherit;
+        line-height: 1.45;
+
+        &:focus {
+            border-color: var(--primary-color);
+        }
+    }
+}
+
+.quote-compose-preview {
+    .quoted-ping-card {
+        margin-top: 0;
+    }
+}
+
+.quote-compose-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+
+    span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+
+        &.near-limit {
+            color: var(--color-gold);
+        }
+    }
+
+    button {
+        border: none;
+        border-radius: 9999px;
+        background: var(--primary-color);
+        color: var(--color-bg);
+        cursor: pointer;
+        font-weight: 700;
+        padding: 0.45rem 1.2rem;
+
+        &:disabled {
+            cursor: wait;
+            opacity: 0.7;
+        }
+    }
+}

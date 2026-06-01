@@ -51,7 +51,7 @@ class CommentHandler {
             if (this.pingCallback) {
                 const updatedPing = this.pingStore.get(pingId);
                 if (updatedPing) {
-                    this.pingCallback(updatedPing);
+                    this.pingCallback(this.pingStore.serializePing(updatedPing));
                 }
             }
         }

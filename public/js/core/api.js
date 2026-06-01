@@ -94,6 +94,17 @@ export async function postAmplify(id) {
     throw new Error(err.error || "Failed to amplify");
 }
 
+export async function postQuote(pingId, content, topic) {
+    const res = await apiRequest("/api/quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pingId, content, topic }),
+    });
+    if (res.ok) return res.json();
+    const err = await res.json();
+    throw new Error(err.error || "Failed to quote ping");
+}
+
 export async function postComment(pingId, content) {
     const res = await apiRequest("/api/comment", {
         method: "POST",

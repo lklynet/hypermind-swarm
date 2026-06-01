@@ -26,25 +26,43 @@ const main = async () => {
     if (msg.type === "PING") {
       const isNew = pingStore.add(msg);
       if (isNew) {
-        sseManager.broadcast(msg);
+        sseManager.broadcast(pingStore.serializePing(pingStore.get(msg.id)));
       }
     } else if (msg.type === "AMPLIFY") {
-      pingStore.like(msg.originalPing.id, msg.amplifier);
+      if (msg.originalPing && !pingStore.has(msg.originalPing.id)) {
+        pingStore.add(msg.originalPing);
+      }
+      pingStore.addAmplify(msg.originalPing.id, msg.amplifier, {
+        username: msg.username,
+        timestamp: msg.timestamp,
+      });
       const updatedPing = pingStore.get(msg.originalPing.id);
       if (updatedPing) {
-        sseManager.broadcast({
-          ...updatedPing,
-          amplifiedBy: Array.from(updatedPing.amplifiedBy || []),
-        });
+        sseManager.broadcast(pingStore.serializePing(updatedPing));
       }
     } else if (msg.type === "COMMENT") {
       pingStore.addComment(msg.pingId, msg);
       const updatedPing = pingStore.get(msg.pingId);
       if (updatedPing) {
-        sseManager.broadcast({
-          ...updatedPing,
-          amplifiedBy: Array.from(updatedPing.amplifiedBy || []),
-        });
+        sseManager.broadcast(pingStore.serializePing(updatedPing));
+      }
+    } else if (msg.type === "QUOTE") {
+      if (msg.quotedPing && !pingStore.has(msg.quotedPing.id)) {
+        pingStore.add(msg.quotedPing);
+      }
+
+      const wasKnown = pingStore.has(msg.id);
+      const noteAdded = pingStore.addQuote(msg.quoteOf, msg);
+
+      if (!wasKnown && pingStore.has(msg.id)) {
+        sseManager.broadcast(pingStore.serializePing(pingStore.get(msg.id)));
+      }
+
+      if (noteAdded) {
+        const updatedOriginal = pingStore.get(msg.quoteOf);
+        if (updatedOriginal) {
+          sseManager.broadcast(pingStore.serializePing(updatedOriginal));
+        }
       }
     }
   };
@@ -72,6 +90,10 @@ const main = async () => {
   };
 
   const pingCallback = (msg) => {
+    if (msg && msg.id && pingStore.has(msg.id)) {
+      sseManager.broadcast(pingStore.serializePing(pingStore.get(msg.id)));
+      return;
+    }
     sseManager.broadcast(msg);
   };
 

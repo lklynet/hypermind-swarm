@@ -35,7 +35,7 @@ export function startSSE() {
                 if (onInitCallback) onInitCallback(data);
             } else if (data.type === "UPDATE") {
                 if (onUpdateCallback) onUpdateCallback(data);
-            } else if (data.type === "PING") {
+            } else if (data.type === "PING" || data.type === "QUOTE") {
                 if (onPingCallback) onPingCallback(data);
             } else if (data.count !== undefined) {
                 if (onUpdateCallback) onUpdateCallback(data);

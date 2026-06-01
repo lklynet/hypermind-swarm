@@ -6,6 +6,7 @@ import { getColorFromId } from "../utils/banner-generator.js";
 import { renderMarkdown, insertMarkdownAtCursor } from "../utils/markdown.js";
 import { showToast } from "../utils/toast.js";
 import { renderComment, renderCommentSection } from "./comments.js";
+import { renderQuotedPingCard } from "./quotes.js";
 import { handleCommandInput, getActionHighlightSpec } from "../commands/handler.js";
 import { updateUrl } from "../utils/url.js";
 
@@ -92,6 +93,16 @@ function updateExistingPing(el, ping) {
         commentCountEl.textContent = ping.comments ? ping.comments.length : 0;
     }
 
+    const quoteCountEl = el.querySelector(".quote-count");
+    if (quoteCountEl) {
+        quoteCountEl.textContent = ping.noteCounts ? ping.noteCounts.quotes || 0 : 0;
+    }
+
+    const activityCountEl = el.querySelector(".activity-count");
+    if (activityCountEl) {
+        activityCountEl.textContent = ping.noteCounts ? ping.noteCounts.total || 0 : 0;
+    }
+
     const list = el.querySelector(".comments-list");
     if (list && ping.comments) {
         list.innerHTML = ping.comments.map((c) => renderComment({ ...c, pingId: ping.id })).join("");
@@ -122,7 +133,7 @@ function createPingElement(ping, domId, isProfile) {
     el.dataset.swarmId = swarmId;
     el.dataset.author = ping.author;
     el.onclick = (e) => {
-        if (e.target.closest('button') || e.target.closest('.ping-author') || e.target.closest('.ping-handle') || e.target.closest('.ping-topic') || e.target.closest('.ping-avatar') || e.target.closest('a') || e.target.closest('.comment-input') || e.target.closest('.markdown-toolbar')) {
+        if (e.target.closest('button') || e.target.closest('.ping-author') || e.target.closest('.ping-handle') || e.target.closest('.ping-topic') || e.target.closest('.ping-avatar') || e.target.closest('a') || e.target.closest('.comment-input') || e.target.closest('.markdown-toolbar') || e.target.closest('.quoted-ping-card') || e.target.closest('.notes-section')) {
             return;
         }
         window.showPing(ping.id);
@@ -150,12 +161,20 @@ function createPingElement(ping, domId, isProfile) {
     <div class="avatar ping-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getColorFromId(ping.author)};" onclick="window.showProfile('${ping.author}')"></div>
     <div class="ping-content">
       <div class="ping-header">
-        <span class="ping-author" onclick="window.showProfile('${ping.author}')" style="cursor: pointer;">${escapeHtml(authorName)}${isFollowing ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.85rem;" title="Following"></i>' : ""}</span>
-        <span class="ping-handle" onclick="event.stopPropagation(); window.showPing('${ping.id}')">@${ping.author.slice(-8)}</span>
-        <span class="ping-time">· ${timeSince(new Date(ping.timestamp))}</span>
-        ${topicPill ? `<span style="margin-left: auto; font-size: 0.8rem;">${topicPill}</span>` : ""}
+        <div class="ping-header-main">
+          <span class="ping-author" onclick="window.showProfile('${ping.author}')" style="cursor: pointer;">${escapeHtml(authorName)}${isFollowing ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.85rem;" title="Following"></i>' : ""}</span>
+          <span class="ping-handle" onclick="event.stopPropagation(); window.showPing('${ping.id}')">@${ping.author.slice(-8)}</span>
+          <span class="ping-time">· ${timeSince(new Date(ping.timestamp))}</span>
+        </div>
+        <div class="ping-header-tools">
+          ${topicPill ? `<span class="ping-header-topic">${topicPill}</span>` : ""}
+          <button class="ping-copy-btn" onclick="window.sharePing('${ping.id}')" title="Copy ping link">
+            <i class="fa-regular fa-copy"></i>
+          </button>
+        </div>
       </div>
       <div class="ping-text">${renderMarkdown(ping.content)}</div>
+      ${renderQuotedPingCard(ping)}
       <div class="ping-actions">
         <button class="action-btn amplify" onclick="window.amplifyPing('${ping.id}')">
           <i class="fa-solid fa-bullhorn"></i> <span class="amplify-count">${ping.likes || 0}</span>
@@ -163,8 +182,11 @@ function createPingElement(ping, domId, isProfile) {
         <button class="action-btn comment" onclick="window.toggleComment('${ping.id}')">
           <i class="fa-regular fa-comment"></i> <span class="comment-count">${ping.comments ? ping.comments.length : 0}</span>
         </button>
-        <button class="action-btn share" onclick="window.sharePing('${ping.id}')">
-          <i class="fa-regular fa-copy"></i>
+        <button class="action-btn quote" onclick="window.quotePing('${ping.id}')">
+          <i class="fa-solid fa-quote-left"></i> <span class="quote-count">${ping.noteCounts ? ping.noteCounts.quotes || 0 : 0}</span>
+        </button>
+        <button class="action-btn activity" onclick="window.showPingActivity('${ping.id}')" title="View activity">
+          <i class="fa-solid fa-chart-simple"></i> <span class="activity-count">${ping.noteCounts ? ping.noteCounts.total || 0 : 0}</span>
         </button>
       </div>
       ${renderCommentSection(ping.id, ping.comments || [])}

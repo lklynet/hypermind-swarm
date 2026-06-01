@@ -27,7 +27,32 @@ const PING_FIELDS = [
     "topic",
 ];
 
-const AMPLIFY_FIELDS = ["type", "id", "originalPing", "amplifier", "sig", "ttl"];
+const AMPLIFY_FIELDS = [
+    "type",
+    "id",
+    "originalPing",
+    "amplifier",
+    "username",
+    "timestamp",
+    "sig",
+    "ttl",
+];
+
+const QUOTE_FIELDS = [
+    "type",
+    "id",
+    "author",
+    "username",
+    "content",
+    "timestamp",
+    "sig",
+    "hops",
+    "ttl",
+    "swarmId",
+    "topic",
+    "quoteOf",
+    "quotedPing",
+];
 
 const COMMENT_FIELDS = [
     "type",
@@ -46,5 +71,6 @@ module.exports = {
     LEAVE_FIELDS,
     PING_FIELDS,
     AMPLIFY_FIELDS,
+    QUOTE_FIELDS,
     COMMENT_FIELDS,
 };

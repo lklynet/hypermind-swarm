@@ -4,10 +4,36 @@ import { escapeHtml } from "../utils/html.js";
 import { getColorFromId } from "../utils/banner-generator.js";
 import { renderMarkdown } from "../utils/markdown.js";
 import { renderCommentSection } from "./comments.js";
+import { renderNotesSection } from "./notes.js";
+import { renderQuotedPingCard } from "./quotes.js";
 import { updateUrl } from "../utils/url.js";
 import { showFeed } from "./profile.js";
 
-export async function showPing(id, push = true) {
+function renderDetailTabs(ping) {
+    const replyCount = ping.comments ? ping.comments.length : 0;
+    const activityCount = ping.noteCounts ? ping.noteCounts.total || 0 : 0;
+
+    return `
+        <div class="ping-detail-tabs" data-ping-id="${ping.id}">
+            <div class="ping-detail-tab-list">
+                <button class="ping-detail-tab active" data-panel="replies" onclick="window.switchPingDetailPanel('${ping.id}', 'replies')">
+                    Replies <span>${replyCount}</span>
+                </button>
+                <button class="ping-detail-tab" data-panel="activity" onclick="window.switchPingDetailPanel('${ping.id}', 'activity')">
+                    Activity <span>${activityCount}</span>
+                </button>
+            </div>
+            <div class="ping-detail-panel active" data-panel="replies">
+                ${renderCommentSection(ping.id, ping.comments || [], true)}
+            </div>
+            <div class="ping-detail-panel" data-panel="activity">
+                ${renderNotesSection(ping) || `<div class="activity-empty">No activity yet.</div>`}
+            </div>
+        </div>
+    `;
+}
+
+export async function showPing(id, push = true, initialPanel = "replies") {
     DOM.mainView.style.display = "none";
     DOM.profileView.style.display = "none";
     const pingView = document.getElementById("ping-view");
@@ -53,6 +79,7 @@ export async function showPing(id, push = true) {
                         <span class="ping-handle" onclick="event.stopPropagation(); window.showPing('${ping.id}')">@${ping.author.slice(-8)}</span>
                     </div>
                     <div class="ping-text">${renderMarkdown(ping.content)}</div>
+                    ${renderQuotedPingCard(ping)}
                     ${topicPill ? `<div style="margin-top: 0.5rem;">${topicPill}</div>` : ""}
                     <div class="ping-time">${timestamp}</div>
                     <div class="ping-actions">
@@ -62,18 +89,41 @@ export async function showPing(id, push = true) {
                         <button class="action-btn comment" onclick="window.toggleComment('${ping.id}')">
                             <i class="fa-regular fa-comment"></i> <span class="comment-count">${ping.comments ? ping.comments.length : 0}</span>
                         </button>
+                        <button class="action-btn quote" onclick="window.quotePing('${ping.id}')">
+                            <i class="fa-solid fa-quote-left"></i> <span class="quote-count">${ping.noteCounts ? ping.noteCounts.quotes || 0 : 0}</span>
+                        </button>
                         <button class="action-btn share" onclick="window.sharePing('${ping.id}')">
                             <i class="fa-regular fa-copy"></i>
                         </button>
                     </div>
-                    ${renderCommentSection(ping.id, ping.comments || [], true)}
+                    ${renderDetailTabs(ping)}
                 </div>
             </div>
         `;
+
+        if (initialPanel !== "replies") {
+            switchPingDetailPanel(ping.id, initialPanel);
+        }
     } catch (e) {
         pingDetailContainer.innerHTML = "<div class='failed-to-load-ping'>Failed to load ping.</div>";
         console.error(e);
     }
+}
+
+export async function showPingActivity(id, push = true) {
+    await showPing(id, push, "activity");
+}
+
+export function switchPingDetailPanel(pingId, panel) {
+    const tabs = document.querySelector(`#detail-ping-${pingId} .ping-detail-tabs`);
+    if (!tabs) return;
+
+    tabs.querySelectorAll(".ping-detail-tab").forEach((tab) => {
+        tab.classList.toggle("active", tab.dataset.panel === panel);
+    });
+    tabs.querySelectorAll(".ping-detail-panel").forEach((tabPanel) => {
+        tabPanel.classList.toggle("active", tabPanel.dataset.panel === panel);
+    });
 }
 
 export function setupPingDetailListeners() {
@@ -84,3 +134,5 @@ export function setupPingDetailListeners() {
 }
 
 window.showPing = showPing;
+window.showPingActivity = showPingActivity;
+window.switchPingDetailPanel = switchPingDetailPanel;

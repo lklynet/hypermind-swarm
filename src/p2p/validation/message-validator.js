@@ -12,8 +12,22 @@ const {
     LEAVE_FIELDS,
     PING_FIELDS,
     AMPLIFY_FIELDS,
+    QUOTE_FIELDS,
     COMMENT_FIELDS,
 } = require("./schemas");
+
+const QUOTED_PING_FIELDS = [
+    "type",
+    "id",
+    "author",
+    "username",
+    "content",
+    "timestamp",
+    "sig",
+    "swarmId",
+    "topic",
+    "quoteOf",
+];
 
 function hasOnlyAllowedFields(msg, allowedFields) {
     return Object.keys(msg).every((f) => allowedFields.includes(f));
@@ -72,10 +86,47 @@ function validateAmplify(msg, validateMessage) {
         hasOnlyAllowedFields(msg, AMPLIFY_FIELDS) &&
         msg.id &&
         msg.originalPing &&
-        validateMessage(msg.originalPing) &&
+        (validateMessage(msg.originalPing) ||
+            validateQuotedPingSnapshot(msg.originalPing)) &&
         msg.amplifier &&
+        (!msg.username || msg.username.length <= MAX_USERNAME_LENGTH) &&
+        (!msg.timestamp || isValidTimestamp(msg.timestamp)) &&
         msg.sig &&
         isValidNumber(msg.ttl, 0, MAX_TTL)
+    );
+}
+
+function validateQuotedPingSnapshot(ping) {
+    return (
+        ping &&
+        typeof ping === "object" &&
+        hasOnlyAllowedFields(ping, QUOTED_PING_FIELDS) &&
+        (ping.type === "PING" || ping.type === "QUOTE") &&
+        ping.id &&
+        ping.author &&
+        ping.content &&
+        isValidString(ping.content, MAX_CONTENT_LENGTH) &&
+        (!ping.username || ping.username.length <= MAX_USERNAME_LENGTH) &&
+        isValidTimestamp(ping.timestamp) &&
+        ping.sig &&
+        (ping.type !== "QUOTE" || Boolean(ping.quoteOf))
+    );
+}
+
+function validateQuote(msg) {
+    return (
+        hasOnlyAllowedFields(msg, QUOTE_FIELDS) &&
+        msg.id &&
+        msg.author &&
+        msg.content &&
+        isValidString(msg.content, MAX_CONTENT_LENGTH) &&
+        (!msg.username || msg.username.length <= MAX_USERNAME_LENGTH) &&
+        isValidTimestamp(msg.timestamp) &&
+        msg.sig &&
+        isValidNumber(msg.ttl, 0, MAX_TTL) &&
+        isValidNumber(msg.hops, 0, MAX_RELAY_HOPS) &&
+        msg.quoteOf &&
+        validateQuotedPingSnapshot(msg.quotedPing)
     );
 }
 
@@ -110,6 +161,8 @@ function validateMessage(msg) {
             return validatePing(msg);
         case "AMPLIFY":
             return validateAmplify(msg, validateMessage);
+        case "QUOTE":
+            return validateQuote(msg);
         case "COMMENT":
             return validateComment(msg);
         default:

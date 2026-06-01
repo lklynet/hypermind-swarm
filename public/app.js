@@ -12,8 +12,10 @@ import { getUrlParams } from "./js/utils/url.js";
 import { showPing, setupPingDetailListeners } from "./js/features/ping-detail.js";
 import { notificationManager, setupNotificationListeners } from "./js/features/notifications.js";
 import { renderComment } from "./js/features/comments.js";
+import { renderNotesSection } from "./js/features/notes.js";
 
 import "./js/features/comments.js";
+import "./js/features/quotes.js";
 
 import "./js/commands/help.js";
 import "./js/commands/giphy.js";
@@ -126,13 +128,33 @@ async function startApp() {
       if (pingView && pingView.style.display === "block") {
         const detailPing = document.querySelector(`#detail-ping-${data.id}`);
         if (detailPing) {
+          const amplifyCountEl = detailPing.querySelector(".amplify-count");
+          if (amplifyCountEl) {
+            amplifyCountEl.textContent = data.likes || 0;
+          }
           const commentCountEl = detailPing.querySelector(".comment-count");
           if (commentCountEl) {
             commentCountEl.textContent = data.comments ? data.comments.length : 0;
           }
+          const quoteCountEl = detailPing.querySelector(".quote-count");
+          if (quoteCountEl) {
+            quoteCountEl.textContent = data.noteCounts ? data.noteCounts.quotes || 0 : 0;
+          }
           const commentsList = detailPing.querySelector(".comments-list");
           if (commentsList && data.comments) {
             commentsList.innerHTML = data.comments.map((c) => renderComment({ ...c, pingId: data.id })).join("");
+          }
+          const repliesTabCount = detailPing.querySelector('.ping-detail-tab[data-panel="replies"] span');
+          if (repliesTabCount) {
+            repliesTabCount.textContent = data.comments ? data.comments.length : 0;
+          }
+          const activityTabCount = detailPing.querySelector('.ping-detail-tab[data-panel="activity"] span');
+          if (activityTabCount) {
+            activityTabCount.textContent = data.noteCounts ? data.noteCounts.total || 0 : 0;
+          }
+          const activityPanel = detailPing.querySelector('.ping-detail-panel[data-panel="activity"]');
+          if (activityPanel) {
+            activityPanel.innerHTML = renderNotesSection(data) || `<div class="activity-empty">No activity yet.</div>`;
           }
         }
       }

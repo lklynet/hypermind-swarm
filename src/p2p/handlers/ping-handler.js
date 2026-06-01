@@ -56,7 +56,7 @@ class PingHandler {
             }
 
             if (this.pingCallback) {
-                this.pingCallback(msg);
+                this.pingCallback(this.pingStore.serializePing(this.pingStore.get(id)));
             }
         }
 

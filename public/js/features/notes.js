@@ -1,7 +1,7 @@
 import { state } from "../core/state.js";
 import { escapeHtml } from "../utils/html.js";
 import { timeSince } from "../utils/formatters.js";
-import { getColorFromId } from "../utils/banner-generator.js";
+import { getAvatarBgVar } from "../utils/banner-generator.js";
 import { renderMarkdown } from "../utils/markdown.js";
 
 function getCounts(ping) {
@@ -32,7 +32,7 @@ export function renderNoteItem(note) {
 
     return `
         <div class="note-item">
-            <div class="avatar note-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getColorFromId(note.author)};" onclick="window.showProfile('${note.author}')"></div>
+            <div class="avatar note-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getAvatarBgVar(note.author)};" onclick="window.showProfile('${note.author}')"></div>
             <div class="note-content">
                 <div class="note-line">
                     <span class="note-author" onclick="window.showProfile('${note.author}')">${escapeHtml(authorName)}</span>

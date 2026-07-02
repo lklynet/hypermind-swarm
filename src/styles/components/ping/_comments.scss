@@ -70,6 +70,7 @@
         padding: 0.5rem 0.75rem;
         border-radius: 12px;
         flex: 1;
+        min-width: 0;
     }
 
     &-author {
@@ -100,6 +101,7 @@
 
     &-text {
         color: var(--text-color);
+        overflow-wrap: anywhere;
 
         a:hover {
             text-decoration: underline !important;
@@ -139,5 +141,6 @@
     &-text {
         margin-top: 0.25rem;
         color: var(--text-color);
+        overflow-wrap: anywhere;
     }
 }

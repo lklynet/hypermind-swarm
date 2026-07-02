@@ -2,7 +2,7 @@ import { DOM, state } from "../core/state.js";
 import { postComment } from "../core/api.js";
 import { escapeHtml } from "../utils/html.js";
 import { timeSince } from "../utils/formatters.js";
-import { getColorFromId } from "../utils/banner-generator.js";
+import { getAvatarBgVar } from "../utils/banner-generator.js";
 import { renderMarkdown, insertMarkdownAtCursor } from "../utils/markdown.js";
 import { showToast } from "../utils/toast.js";
 import { handleCommandInput, getActionHighlightSpec } from "../commands/handler.js";
@@ -107,7 +107,7 @@ export function renderComment(c) {
     const isFollowing = state.following.includes(c.author);
     return `
     <div class="comment-item">
-      <div class="avatar comment-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getColorFromId(c.author)}; cursor: pointer;" onclick="window.showProfile('${c.author}')"></div>
+      <div class="avatar comment-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getAvatarBgVar(c.author)}; cursor: pointer;" onclick="window.showProfile('${c.author}')"></div>
       <div class="comment-content">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>

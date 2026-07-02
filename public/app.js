@@ -1,4 +1,7 @@
 import { state, DOM } from "./js/core/state.js";
+import { initTheme } from "./js/core/theme.js";
+
+initTheme();
 import { fetchWhoami, fetchPings, fetchAuthStatus, loginAuth, logoutAuth } from "./js/core/api.js";
 import { startSSE, setSSECallbacks, setupTabVisibility } from "./js/core/sse.js";
 

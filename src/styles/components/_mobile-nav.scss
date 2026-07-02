@@ -10,7 +10,7 @@
     align-items: center;
     justify-content: center;
     padding: 0 1rem;
-    background-color: rgba(25, 23, 22, 0.95);
+    background-color: rgba(var(--bg-rgb), 0.95);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
     z-index: 98;
@@ -68,7 +68,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0 1rem;
-    background-color: rgba(25, 23, 22, 0.95);
+    background-color: rgba(var(--bg-rgb), 0.95);
     backdrop-filter: blur(12px);
     border-top: 1px solid var(--border-color);
     z-index: 98;

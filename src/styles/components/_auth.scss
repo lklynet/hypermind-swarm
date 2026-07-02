@@ -23,6 +23,15 @@
     height: 36px;
     display: block;
     margin-bottom: 0.75rem;
+    mask-image: url(/hypermind.svg);
+    -webkit-mask-image: url(/hypermind.svg);
+    mask-size: contain;
+    -webkit-mask-size: contain;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-position: center;
+    background-color: var(--primary-color);
 }
 
 .auth-title {

@@ -5,52 +5,127 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Preferences</title>
 <style>
+  :root {
+    --bg-color: var(--color-bg);
+    --text-color: var(--color-fg);
+    --primary-color: var(--color-gold);
+  }
+  [data-theme="warm"] {
+    --color-bg: #191716; --color-fg: #daba8b; --color-black: #0f0e0d;
+    --color-gold: #a17e3e; --color-blue: #65788f;
+    --text-muted: rgba(218, 186, 139, 0.6);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --hover-bg: rgba(255, 255, 255, 0.05);
+  }
+  [data-theme="dark"] {
+    --color-bg: #1a1a1c; --color-fg: #d1d1d6; --color-black: #0e0e10;
+    --color-gold: #7a8fa8; --color-blue: #6888a0;
+    --text-muted: rgba(209, 209, 214, 0.5);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --hover-bg: rgba(255, 255, 255, 0.06);
+  }
+  [data-theme="light"] {
+    --color-bg: #f0f0f1; --color-fg: #1d1d1f; --color-black: #e8e8eb;
+    --color-gold: #6a7e94; --color-blue: #587084;
+    --text-muted: rgba(29, 29, 31, 0.5);
+    --border-color: rgba(0, 0, 0, 0.1);
+    --hover-bg: rgba(0, 0, 0, 0.04);
+  }
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #0d1117;
-    color: #c9d1d9;
-    padding: 24px;
+    background: var(--color-bg);
+    color: var(--text-color);
+    padding: 16px 24px 12px;
     user-select: none;
-    -webkit-app-region: drag;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
   }
-  h2 { font-size: 16px; font-weight: 700; color: #f0f6fc; margin-bottom: 20px; }
-  .field { margin-bottom: 16px; -webkit-app-region: no-drag; }
-  label { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
-  label input[type="checkbox"] { width: 16px; height: 16px; accent-color: #58a6ff; }
-  .text-field label { display: block; margin-bottom: 6px; cursor: default; }
+  .content { flex: 1; }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .header h2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-color);
+  }
+  .header .close-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+  .header .close-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-color);
+  }
+  .field { margin-bottom: 14px; }
+  label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-color);
+  }
+  .text-field label { display: block; margin-bottom: 5px; cursor: default; }
   .text-field input {
     width: 100%;
-    padding: 8px 10px;
-    background: #161b22;
-    border: 1px solid #30363d;
+    padding: 7px 10px;
+    background: var(--color-black);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    color: #c9d1d9;
+    color: var(--text-color);
     font-size: 13px;
     outline: none;
   }
-  .text-field input:focus { border-color: #58a6ff; }
-  .text-field input::placeholder { color: #484f58; }
-  .hint { font-size: 11px; color: #484f58; margin-top: 4px; }
-  .btn-row { display: flex; gap: 8px; margin-top: 20px; -webkit-app-region: no-drag; }
+  .text-field input:focus { border-color: var(--primary-color); }
+  .text-field input::placeholder { color: var(--text-muted); opacity: 0.6; }
+  .hint { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+  .btn-row { display: flex; gap: 8px; margin-top: 16px; }
   .btn {
     flex: 1;
-    padding: 8px;
+    padding: 7px 0;
     border: none;
     border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
   }
-  .btn-save { background: #238636; color: #fff; }
-  .btn-save:hover { background: #2ea043; }
-  .btn-cancel { background: #21262d; color: #c9d1d9; }
-  .btn-cancel:hover { background: #30363d; }
-  .saved { color: #238636; font-size: 12px; margin-left: 8px; display: none; }
+  .btn-save { background: var(--primary-color); color: var(--color-bg); opacity: 0.85; }
+  .btn-save:hover { opacity: 1; }
+  .btn-cancel { background: var(--hover-bg); color: var(--text-color); }
+  .btn-cancel:hover { background: var(--border-color); }
+  .restart-hint { font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 0; margin-bottom: 8px; visibility: hidden; }
+  .restart-hint.show { visibility: visible; }
+  .restart-hint a { color: var(--primary-color); cursor: pointer; text-decoration: none; font-weight: 600; }
 </style>
 </head>
 <body>
-<h2>Preferences</h2>
+<div class="header">
+  <h2>Preferences</h2>
+  <button class="close-btn" id="close-btn" title="Close">&#10005;</button>
+</div>
+
+<div class="content">
 
 <div class="field">
   <label>
@@ -70,36 +145,81 @@
 
 <div class="field text-field">
   <label for="giphy-key">GIPHY API Key</label>
-  <input type="text" id="giphy-key" placeholder="Optional — enables /giphy command">
-  <div class="hint">Get a free key at <span style="color:#58a6ff">developers.giphy.com</span></div>
+  <input type="text" id="giphy-key" placeholder="Optional — enables /gif command">
+  <div class="hint">Get a free key at developers.giphy.com</div>
 </div>
+
+</div>
+
+<p class="restart-hint" id="restart-hint">Restart now to apply changes? <a id="restart-link">Restart</a></p>
 
 <div class="btn-row">
-  <button class="btn btn-cancel" onclick="close()">Cancel</button>
-  <button class="btn btn-save" onclick="save()">Save<span class="saved" id="saved-badge">&#10003; Saved</span></button>
+  <button class="btn btn-cancel" id="cancel-btn">Cancel</button>
+  <button class="btn btn-save" id="save-btn">Save</button>
 </div>
-<p class="hint" style="margin-top:12px">Restart Hypermind for changes to take effect.</p>
 
 <script>
+if (!window.hypermind) {
+  document.body.innerHTML = "<p style='color:var(--text-color);padding:16px'>Error: preload script not loaded. hybermind API is unavailable.</p>";
+  throw new Error("hypermind API not exposed by preload");
+}
+
+var original = {};
+var saveBtn = document.getElementById("save-btn");
+var restartHint = document.getElementById("restart-hint");
+
+document.documentElement.setAttribute("data-theme", "dark");
+
 async function load() {
-  const prefs = await window.hypermind.getPreferences();
-  document.getElementById("device-persistence").checked = prefs.devicePersistence === true;
-  document.getElementById("mega-node").checked = prefs.megaNode === true;
-  document.getElementById("giphy-key").value = prefs.giphyApiKey || "";
+  original = await window.hypermind.getPreferences();
+  document.getElementById("device-persistence").checked = original.devicePersistence;
+  document.getElementById("mega-node").checked = original.megaNode;
+  document.getElementById("giphy-key").value = original.giphyApiKey || "";
 }
 
-async function save() {
-  await window.hypermind.savePreferences({
-    devicePersistence: document.getElementById("device-persistence").checked,
-    megaNode: document.getElementById("mega-node").checked,
-    giphyApiKey: document.getElementById("giphy-key").value.trim() || null,
+saveBtn.addEventListener("click", async () => {
+  try {
+    await window.hypermind.savePreferences({
+      devicePersistence: document.getElementById("device-persistence").checked,
+      megaNode: document.getElementById("mega-node").checked,
+      giphyApiKey: document.getElementById("giphy-key").value.trim() || null,
+    });
+    saveBtn.textContent = "✓ Saved";
+    saveBtn.style.background = "#648464";
+    saveBtn.style.opacity = "1";
+    saveBtn.disabled = true;
+    document.getElementById("cancel-btn").textContent = "Close";
+    restartHint.classList.add("show");
+  } catch (e) {
+    alert("Save failed: " + e.message);
+  }
+});
+
+document.getElementById("restart-link").addEventListener("click", () => {
+  window.hypermind.restartApp();
+});
+
+document.getElementById("cancel-btn").addEventListener("click", () => {
+  window.close();
+});
+
+document.getElementById("close-btn").addEventListener("click", () => {
+  window.close();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") window.close();
+});
+
+document.querySelectorAll("input").forEach((el) => {
+  el.addEventListener("input", () => {
+    saveBtn.disabled = false;
+    saveBtn.textContent = "Save";
+    saveBtn.style.opacity = "0.85";
+    restartHint.classList.remove("show");
+    document.getElementById("cancel-btn").textContent = "Cancel";
   });
-  document.getElementById("saved-badge").style.display = "inline";
-}
-
-function close() {
-  window.hypermind.closePreferences();
-}
+});
 
 load();
 </script>

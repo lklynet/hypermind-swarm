@@ -214,7 +214,7 @@
     align-items: center;
     margin: 0;
     padding: 0;
-    font-family: "Google Sans Code", monospace;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
     font-size: 0.85rem;
 
     @media (min-width: $min-w-desktop) {
@@ -310,7 +310,7 @@
 .user {
   &-profile-widget {
     --avatar-size: 32px;
-    --menu-space: 52px;
+    --menu-space: 36px;
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -390,7 +390,7 @@
 .account-section {
   position: relative;
   width: 95%;
-  padding-right: 2.8rem;
+  padding-right: 0.5rem;
   margin: auto auto 0.75rem auto;
 
   @media (min-width: $min-w-desktop) {
@@ -428,28 +428,26 @@
 }
 
 .theme-toggle-btn {
-  position: absolute;
-  top: 50%;
-  right: 2.5rem;
-  transform: translateY(-50%);
-  width: 36px;
-  height: 36px;
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
   border: none;
   border-radius: 9999px;
-  background: transparent;
+  background: var(--hover-bg);
   color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition:
-    color 0.2s,
-    background-color 0.2s;
+  transition: color 0.2s, background-color 0.2s;
+  z-index: 100;
   font-size: 1.1rem;
 
   &:hover {
     color: var(--primary-color);
-    background-color: var(--hover-bg);
+    background: var(--border-color);
   }
 }
 
@@ -486,3 +484,4 @@
     color: var(--primary-color);
   }
 }
+

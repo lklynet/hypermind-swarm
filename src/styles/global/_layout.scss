@@ -9,8 +9,29 @@
     padding-bottom: 60px;
 
     @media (min-width: $min-w-desktop) {
-        grid-template-columns: 275px 1fr 350px;
+        grid-template-columns: var(--sidebar-width, 275px) 1fr 350px;
         margin: 0 auto;
         padding-bottom: 0;
+    }
+}
+
+.sidebar-resize-handle {
+    display: none;
+
+    @media (min-width: $min-w-desktop) {
+        display: block;
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 4px;
+        height: 100%;
+        cursor: col-resize;
+        background: transparent;
+        z-index: 10;
+
+        &:hover,
+        &.active {
+            background: var(--primary-color);
+        }
     }
 }

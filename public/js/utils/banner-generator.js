@@ -6,10 +6,20 @@ function _djb2(str) {
     return hash;
 }
 
-export function getColorFromId(id) {
-    if (!id) return "#666";
-    const h = Math.abs(_djb2(id)) % 360;
-    return `hsl(${h}, 35%, 65%)`;
+const AVATAR_COLORS = [
+  "var(--color-red)",
+  "var(--color-olive)",
+  "var(--color-gold)",
+  "var(--color-blue)",
+  "var(--color-purple)",
+  "var(--color-green)",
+  "var(--color-beige)",
+];
+
+export function getAvatarBgVar(id) {
+  if (!id) return AVATAR_COLORS[0];
+  const i = Math.abs(_djb2(id)) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[i];
 }
 
 export function getFractalFromId(id) {

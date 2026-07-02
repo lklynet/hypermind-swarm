@@ -1,7 +1,7 @@
 import { DOM, state, saveToLocalStorage } from "../core/state.js";
 import { fetchProfile } from "../core/api.js";
 import { escapeHtml } from "../utils/html.js";
-import { getColorFromId, getFractalFromId } from "../utils/banner-generator.js";
+import { getAvatarBgVar, getFractalFromId } from "../utils/banner-generator.js";
 import { addPingToContainer, updateFeedVisibility } from "./feed.js";
 import { updateUrl } from "../utils/url.js";
 
@@ -32,7 +32,7 @@ export async function showProfile(id, push = true) {
       <div class="profile-cover" style="background-image: url('${getFractalFromId(data.id + "banner")}'); background-size: cover;"></div>
       <div class="profile-details">
         <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-          <div class="avatar profile-avatar-large" style="background-image: url('${avatarUrl}'); background-color: ${getColorFromId(data.id + "pfp")};"></div>
+          <div class="avatar profile-avatar-large" style="background-image: url('${avatarUrl}'); background-color: ${getAvatarBgVar(data.id)};"></div>
           ${!isMe ? `
             <button class="ping-btn-large" style="width: auto; padding: 0.5rem 1.5rem; margin: 0;" onclick="window.toggleFollow('${data.id}')">
               ${isFollowing ? "Unfollow" : "Follow"}
@@ -162,7 +162,7 @@ export async function renderFollowedAccounts() {
         }
 
         el.innerHTML = `
-      <img src="${avatarUrl}" class="avatar" style="width: 32px; height: 32px; border-radius: 50%; background-color: ${getColorFromId(id + "pfp")};">
+      <img src="${avatarUrl}" class="avatar" style="width: 32px; height: 32px; border-radius: 50%; background-color: ${getAvatarBgVar(id)};">
       <span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(name)}</span>
     `;
         container.appendChild(el);
@@ -174,7 +174,7 @@ export function updateMyProfileWidget(data) {
     if (DOM.myIdDisplay) DOM.myIdDisplay.textContent = "@" + data.id.slice(-8);
     if (DOM.myAvatarSmall) {
         DOM.myAvatarSmall.style.backgroundImage = `url(/api/avatar/${data.id})`;
-        DOM.myAvatarSmall.style.backgroundColor = getColorFromId(data.id + "pfp");
+        DOM.myAvatarSmall.style.backgroundColor = getAvatarBgVar(data.id);
     }
 
     const composeAvatar = document.getElementById("compose-avatar");
@@ -182,12 +182,12 @@ export function updateMyProfileWidget(data) {
 
     if (composeAvatar) {
         composeAvatar.style.backgroundImage = `url(/api/avatar/${data.id})`;
-        composeAvatar.style.backgroundColor = getColorFromId(data.id + "pfp");
+        composeAvatar.style.backgroundColor = getAvatarBgVar(data.id);
     }
 
     if (mobileTriggerAvatar) {
         mobileTriggerAvatar.style.backgroundImage = `url(/api/avatar/${data.id})`;
-        mobileTriggerAvatar.style.backgroundColor = getColorFromId(data.id + "pfp");
+        mobileTriggerAvatar.style.backgroundColor = getAvatarBgVar(data.id);
     }
 }
 

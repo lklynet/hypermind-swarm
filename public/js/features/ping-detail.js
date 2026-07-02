@@ -1,7 +1,7 @@
 import { DOM, state } from "../core/state.js";
 import { fetchPing } from "../core/api.js";
 import { escapeHtml } from "../utils/html.js";
-import { getColorFromId } from "../utils/banner-generator.js";
+import { getAvatarBgVar } from "../utils/banner-generator.js";
 import { renderMarkdown } from "../utils/markdown.js";
 import { renderCommentSection } from "./comments.js";
 import { renderNotesSection } from "./notes.js";
@@ -74,7 +74,7 @@ export async function showPing(id, push = true, initialPanel = "replies") {
             <div class="ping" id="detail-ping-${ping.id}">
                 <div class="ping-content">
                     <div class="ping-header">
-                        <div class="avatar ping-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getColorFromId(ping.author)};" onclick="window.showProfile('${ping.author}')"></div>
+                        <div class="avatar ping-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getAvatarBgVar(ping.author)};" onclick="window.showProfile('${ping.author}')"></div>
                         <span class="ping-author" onclick="window.showProfile('${ping.author}')" style="cursor: pointer;">${escapeHtml(authorName)}${isFollowing ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.85rem;" title="Following"></i>' : ""}</span>
                         <span class="ping-handle" onclick="event.stopPropagation(); window.showPing('${ping.id}')">@${ping.author.slice(-8)}</span>
                     </div>

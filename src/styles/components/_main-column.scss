@@ -10,7 +10,7 @@
 .header-tabs {
     display: flex;
     border-bottom: 1px solid var(--border-color);
-    background-color: rgba(25, 23, 22, 0.8);
+    background-color: rgba(var(--bg-rgb), 0.8);
     backdrop-filter: blur(12px);
     position: sticky;
     top: 0;

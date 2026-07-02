@@ -2,8 +2,8 @@ import { DOM, state } from "../core/state.js";
 import { postPing, postAmplify } from "../core/api.js";
 import { escapeHtml } from "../utils/html.js";
 import { timeSince } from "../utils/formatters.js";
-import { getColorFromId } from "../utils/banner-generator.js";
 import { renderMarkdown, insertMarkdownAtCursor } from "../utils/markdown.js";
+import { getAvatarBgVar } from "../utils/banner-generator.js";
 import { showToast } from "../utils/toast.js";
 import { renderComment, renderCommentSection } from "./comments.js";
 import { renderQuotedPingCard } from "./quotes.js";
@@ -158,7 +158,7 @@ function createPingElement(ping, domId, isProfile) {
     }
 
     el.innerHTML = `
-    <div class="avatar ping-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getColorFromId(ping.author)};" onclick="window.showProfile('${ping.author}')"></div>
+    <div class="avatar ping-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getAvatarBgVar(ping.author)};" onclick="window.showProfile('${ping.author}')"></div>
     <div class="ping-content">
       <div class="ping-header">
         <div class="ping-header-main">

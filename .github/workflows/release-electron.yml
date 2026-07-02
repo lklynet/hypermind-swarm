@@ -5,6 +5,9 @@ on:
     tags: ["v*"]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   release:
     strategy:
@@ -35,14 +38,7 @@ jobs:
           npm ci
           npm run build:css
 
-      - name: Build Electron app
-        run: npx electron-builder --${{ matrix.target }} --${{ matrix.arch }}
+      - name: Build and publish Electron app
+        run: npx electron-builder --${{ matrix.target }} --${{ matrix.arch }} --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload artifacts
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist-electron/*.{dmg,exe,AppImage,blockmap,yml}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

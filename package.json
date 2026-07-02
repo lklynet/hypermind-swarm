@@ -1,6 +1,6 @@
 {
   "name": "hypermind-swarm",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "A decentralized P2P Twitter-like swarm",
   "main": "electron-main.js",
   "scripts": {
@@ -41,7 +41,6 @@
     "b4a": "^1.7.3",
     "corestore": "^7.7.0",
     "dotenv": "^17.2.3",
-    "electron-updater": "^6.8.9",
     "express": "^5.2.1",
     "hyperswarm": "^4.16.0",
     "sodium-native": "^5.0.10"

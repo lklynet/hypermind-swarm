@@ -22,6 +22,8 @@ class NotificationManager {
             this.startTime = Date.now();
             localStorage.setItem("notificationsStartTime", this.startTime.toString());
         }
+
+        this._pushDockBadge();
     }
 
     save() {
@@ -138,6 +140,15 @@ class NotificationManager {
                 }
             }
         });
+
+        this._pushDockBadge();
+    }
+
+    _pushDockBadge() {
+        const count = this.getUnreadCount();
+        if (window.hypermind?.setBadge) {
+            window.hypermind.setBadge(count > 0 ? String(count) : "");
+        }
     }
 }
 

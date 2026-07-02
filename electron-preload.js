@@ -6,15 +6,7 @@ contextBridge.exposeInMainWorld("hypermind", {
 
   getPreferences: () => ipcRenderer.invoke("prefs:get"),
   savePreferences: (prefs) => ipcRenderer.invoke("prefs:save", prefs),
-  closePreferences: () => ipcRenderer.invoke("prefs:close"),
+  restartApp: () => ipcRenderer.invoke("prefs:restart"),
 
-  checkForUpdates: () => ipcRenderer.invoke("update:check"),
-  installUpdate: () => ipcRenderer.invoke("update:install"),
-
-  onUpdateStatus: (callback) => {
-    ipcRenderer.on("update:status", (_event, data) => callback(data));
-  },
-  onUpdateProgress: (callback) => {
-    ipcRenderer.on("update:progress", (_event, data) => callback(data));
-  },
+  setBadge: (count) => ipcRenderer.send("notification:badge", count),
 });

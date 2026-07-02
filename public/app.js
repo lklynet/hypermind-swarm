@@ -251,33 +251,43 @@ async function initAuth() {
   }
 }
 
+(function() {
+  const handle = document.getElementById("sidebar-resize-handle");
+  if (!handle) return;
+  const container = document.querySelector(".app-container");
+  const saved = localStorage.getItem("sidebar-width");
+  if (saved) container.style.setProperty("--sidebar-width", saved);
+
+  let dragging = false;
+  let startX = 0;
+  let startWidth = 0;
+
+  handle.addEventListener("mousedown", (e) => {
+    dragging = true;
+    startX = e.clientX;
+    startWidth = parseInt(getComputedStyle(container).getPropertyValue("--sidebar-width")) || 275;
+    handle.classList.add("active");
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    e.preventDefault();
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+    const diff = e.clientX - startX;
+    const newWidth = Math.max(180, Math.min(400, startWidth + diff));
+    container.style.setProperty("--sidebar-width", newWidth + "px");
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (!dragging) return;
+    dragging = false;
+    handle.classList.remove("active");
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+    const width = container.style.getPropertyValue("--sidebar-width");
+    localStorage.setItem("sidebar-width", width);
+  });
+})();
+
 initAuth();
-
-if (window.hypermind) {
-  const banner = document.getElementById("update-banner");
-  const bannerText = document.getElementById("update-banner-text");
-  const bannerBtn = document.getElementById("update-banner-btn");
-
-  window.hypermind.onUpdateStatus((data) => {
-    if (!banner || !bannerText) return;
-    if (data.status === "available") {
-      banner.style.display = "flex";
-      bannerText.textContent = "Update available — downloading...";
-      bannerBtn.style.display = "none";
-    } else if (data.status === "downloaded") {
-      banner.style.display = "flex";
-      bannerText.textContent = "Update downloaded. Restart to install.";
-      bannerBtn.style.display = "";
-    }
-  });
-
-  window.hypermind.onUpdateProgress((data) => {
-    if (bannerText) {
-      bannerText.textContent = `Downloading update... ${data.percent}%`;
-    }
-  });
-
-  bannerBtn?.addEventListener("click", () => {
-    window.hypermind.installUpdate();
-  });
-}

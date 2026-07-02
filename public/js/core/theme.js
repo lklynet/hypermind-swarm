@@ -1,7 +1,7 @@
 const THEMES = ["warm", "dark", "light"];
 
 function getSystemPreference() {
-  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "warm";
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
 }
 
 function applyTheme(theme) {
@@ -15,7 +15,7 @@ export function initTheme() {
 }
 
 export function cycleTheme() {
-  const current = document.documentElement.getAttribute("data-theme") || "warm";
+  const current = document.documentElement.getAttribute("data-theme") || "dark";
   const next = THEMES[(THEMES.indexOf(current) + 1) % THEMES.length];
   applyTheme(next);
 }

@@ -15,6 +15,7 @@ class PingHandler {
         this.relayCallback = deps.relayCallback;
         this.pingCallback = deps.pingCallback;
         this.persistenceManager = deps.persistenceManager;
+        this.isMegaNode = deps.isMegaNode;
     }
 
     handle(msg, sourceSocket) {
@@ -53,6 +54,10 @@ class PingHandler {
 
             if (author === this.peerManager.myId && this.persistenceManager) {
                 this.persistenceManager.append(msg).catch(() => { });
+            }
+
+            if (this.isMegaNode && this.persistenceManager) {
+                this.persistenceManager.persistAll(msg).catch(() => { });
             }
 
             if (this.pingCallback) {

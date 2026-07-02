@@ -2,7 +2,7 @@ const Corestore = require("corestore");
 const b4a = require("b4a");
 
 class PersistenceManager {
-  constructor(storagePath = "./storage") {
+  constructor(storagePath = "./storage", megaNode = false) {
     this.store = new Corestore(storagePath);
     this.primaryCore = null;
     this.peerCores = new Map();
@@ -11,6 +11,8 @@ class PersistenceManager {
     this.coreWatchers = new Map();
     this.trackingCore = null;
     this.onMessage = null;
+    this.megaNode = megaNode;
+    this.megaArchive = null;
   }
 
   async init() {
@@ -33,6 +35,18 @@ class PersistenceManager {
     });
     await this.trackingCore.ready();
     await this._loadTrackedPeers();
+
+    if (this.megaNode) {
+      this.megaArchive = this.store.get({
+        name: "mega-archive",
+        valueEncoding: "json",
+      });
+      await this.megaArchive.ready();
+      console.log(
+        "Mega-archive Hypercore ready. Key:",
+        b4a.toString(this.megaArchive.key, "hex")
+      );
+    }
   }
 
   async _loadTrackedPeers() {
@@ -180,6 +194,40 @@ class PersistenceManager {
     }
 
     return messages;
+  }
+
+  async persistAll(msg) {
+    if (!this.megaNode || !this.megaArchive) return;
+    await this.megaArchive.append(msg).catch((err) =>
+      console.error("Failed to persist message to mega-archive:", err)
+    );
+  }
+
+  async loadMegaArchive() {
+    if (!this.megaNode || !this.megaArchive) return 0;
+
+    const length = this.megaArchive.length;
+    let loaded = 0;
+
+    console.log(`Loading ${length} messages from mega-archive...`);
+
+    for (let i = 0; i < length; i++) {
+      try {
+        const msg = await this.megaArchive.get(i);
+        if (msg && this.onMessage) {
+          this.onMessage(msg);
+          loaded++;
+        }
+      } catch (err) {
+        console.error(
+          `Error reading mega-archive seq ${i}:`,
+          err.message
+        );
+      }
+    }
+
+    console.log(`Loaded ${loaded} messages from mega-archive`);
+    return loaded;
   }
 
   async cleanup() {

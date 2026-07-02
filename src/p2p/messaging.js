@@ -1,6 +1,7 @@
 const {
   RATE_LIMIT_CLEANUP_INTERVAL,
   RATE_LIMIT_WINDOW_MS,
+  MEGA_NODE,
 } = require("../config/constants");
 const { BloomFilterManager } = require("../state/bloom");
 const { validateMessage } = require("./validation/message-validator");
@@ -10,6 +11,7 @@ const { PingHandler } = require("./handlers/ping-handler");
 const { AmplifyHandler } = require("./handlers/amplify-handler");
 const { CommentHandler } = require("./handlers/comment-handler");
 const { QuoteHandler } = require("./handlers/quote-handler");
+const { CatchupHandler } = require("./handlers/catchup-handler");
 
 class MessageHandler {
   constructor(
@@ -20,7 +22,8 @@ class MessageHandler {
     broadcastCallback,
     pingCallback,
     systemMessageFn,
-    persistenceManager
+    persistenceManager,
+    identity
   ) {
     this.peerManager = peerManager;
     this.diagnostics = diagnostics;
@@ -43,6 +46,8 @@ class MessageHandler {
     }, RATE_LIMIT_CLEANUP_INTERVAL);
     this.getSwarmFilter = () => null;
 
+    const isMegaNode = MEGA_NODE;
+
     const deps = {
       peerManager,
       diagnostics,
@@ -54,6 +59,8 @@ class MessageHandler {
       pingCallback,
       systemMessageFn,
       persistenceManager,
+      isMegaNode,
+      identity,
     };
 
     this.heartbeatHandler = new HeartbeatHandler(deps);
@@ -62,6 +69,13 @@ class MessageHandler {
     this.amplifyHandler = new AmplifyHandler(deps);
     this.commentHandler = new CommentHandler(deps);
     this.quoteHandler = new QuoteHandler(deps);
+    this.catchupHandler = new CatchupHandler(deps);
+
+    this.heartbeatHandler.setRequestCatchup((socket) => {
+      const stats = this.pingStore.getStats();
+      const since = stats.oldestTimestamp || Date.now() - 3600000;
+      this.catchupHandler.sendCatchupRequest(socket, since);
+    });
   }
 
   setGetSwarmFilter(fn) {
@@ -92,6 +106,12 @@ class MessageHandler {
         break;
       case "COMMENT":
         this.commentHandler.handle(msg, sourceSocket);
+        break;
+      case "CATCHUP_REQUEST":
+        this.catchupHandler.handleRequest(msg, sourceSocket);
+        break;
+      case "CATCHUP_RESPONSE":
+        this.catchupHandler.handleResponse(msg, sourceSocket);
         break;
     }
   }

@@ -5,6 +5,7 @@ const {
     MAX_SEQUENCE_NUMBER,
     MAX_TTL,
     MAX_MESSAGE_SIZE,
+    MAX_CATCHUP_MESSAGE_SIZE,
 } = require("../../config/constants");
 
 const {
@@ -14,6 +15,8 @@ const {
     AMPLIFY_FIELDS,
     QUOTE_FIELDS,
     COMMENT_FIELDS,
+    CATCHUP_REQUEST_FIELDS,
+    CATCHUP_RESPONSE_FIELDS,
 } = require("./schemas");
 
 const QUOTED_PING_FIELDS = [
@@ -145,26 +148,59 @@ function validateComment(msg) {
     );
 }
 
+function validateCatchupRequest(msg) {
+    return (
+        hasOnlyAllowedFields(msg, CATCHUP_REQUEST_FIELDS) &&
+        msg.id &&
+        isValidTimestamp(msg.since) &&
+        (!msg.cursor || typeof msg.cursor === "number") &&
+        msg.sig
+    );
+}
+
+function validateCatchupResponse(msg) {
+    return (
+        hasOnlyAllowedFields(msg, CATCHUP_RESPONSE_FIELDS) &&
+        msg.id &&
+        Array.isArray(msg.messages) &&
+        msg.messages.every((m) => validateMessage(m)) &&
+        (!msg.cursor || typeof msg.cursor === "number") &&
+        typeof msg.hasMore === "boolean" &&
+        msg.sig
+    );
+}
+
 function validateMessage(msg) {
     if (!msg || typeof msg !== "object") return false;
     if (!msg.type) return false;
 
     const msgSize = JSON.stringify(msg).length;
-    if (msgSize > MAX_MESSAGE_SIZE) return false;
 
     switch (msg.type) {
         case "HEARTBEAT":
+            if (msgSize > MAX_MESSAGE_SIZE) return false;
             return validateHeartbeat(msg);
         case "LEAVE":
+            if (msgSize > MAX_MESSAGE_SIZE) return false;
             return validateLeave(msg);
         case "PING":
+            if (msgSize > MAX_MESSAGE_SIZE) return false;
             return validatePing(msg);
         case "AMPLIFY":
+            if (msgSize > MAX_MESSAGE_SIZE) return false;
             return validateAmplify(msg, validateMessage);
         case "QUOTE":
+            if (msgSize > MAX_MESSAGE_SIZE) return false;
             return validateQuote(msg);
         case "COMMENT":
+            if (msgSize > MAX_MESSAGE_SIZE) return false;
             return validateComment(msg);
+        case "CATCHUP_REQUEST":
+            if (msgSize > MAX_MESSAGE_SIZE) return false;
+            return validateCatchupRequest(msg);
+        case "CATCHUP_RESPONSE":
+            if (msgSize > MAX_CATCHUP_MESSAGE_SIZE) return false;
+            return validateCatchupResponse(msg);
         default:
             return false;
     }

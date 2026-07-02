@@ -5,4 +5,5 @@ data
 storage
 storage2
 public/style.css
+dist-electron
 .cursor/

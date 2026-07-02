@@ -1,0 +1,48 @@
+name: Release Electron App
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: mac
+            arch: universal
+          - os: windows-latest
+            target: win
+            arch: x64
+          - os: ubuntu-latest
+            target: linux
+            arch: x64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Build CSS
+        run: |
+          npm ci
+          npm run build:css
+
+      - name: Build Electron app
+        run: npx electron-builder --${{ matrix.target }} --${{ matrix.arch }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist-electron/*.{dmg,exe,AppImage,blockmap,yml}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

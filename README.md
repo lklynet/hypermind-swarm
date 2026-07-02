@@ -124,6 +124,29 @@ docker run -d \
 
 </details>
 
+
+---
+
+## Desktop App
+
+Download the latest release for your platform from the [releases page](https://github.com/lklynet/hypermind/releases).
+
+On first launch, choose **Run a Local Node** to deploy your own P2P node on this computer, or **Connect to a Server** to connect to an existing Hypermind instance. Your choice is saved and can be changed by deleting the app's settings.
+
+### macOS — Un-quarantine
+
+macOS may block the app because it's not notarized by Apple. To fix this, run in Terminal:
+
+```bash
+xattr -d com.apple.quarantine /Applications/Hypermind.app
+```
+
+If you installed via the DMG, it may also be on the DMG:
+
+```bash
+xattr -d com.apple.quarantine ~/Downloads/Hypermind-*.dmg
+```
+
 ---
 
 ## Contributing

@@ -194,4 +194,8 @@ const main = async () => {
   process.on("SIGTERM", handleShutdown);
 };
 
-main().catch(console.error);
+if (require.main === module) {
+  main().catch(console.error);
+}
+
+module.exports = { main };

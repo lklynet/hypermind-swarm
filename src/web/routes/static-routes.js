@@ -26,10 +26,10 @@ function setupStaticRoutes(app, deps) {
         res.send(html);
     });
 
-    app.get("/api/avatar/:id", (req, res) => {
+    app.get("/api/avatar/:id", async (req, res) => {
         const { id } = req.params;
         try {
-            const svg = generateAvatar(id);
+            const svg = await generateAvatar(id);
             res.setHeader("Content-Type", "image/svg+xml");
             res.setHeader("Cache-Control", "public, max-age=31536000");
             res.send(svg);

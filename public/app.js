@@ -252,3 +252,32 @@ async function initAuth() {
 }
 
 initAuth();
+
+if (window.hypermind) {
+  const banner = document.getElementById("update-banner");
+  const bannerText = document.getElementById("update-banner-text");
+  const bannerBtn = document.getElementById("update-banner-btn");
+
+  window.hypermind.onUpdateStatus((data) => {
+    if (!banner || !bannerText) return;
+    if (data.status === "available") {
+      banner.style.display = "flex";
+      bannerText.textContent = "Update available — downloading...";
+      bannerBtn.style.display = "none";
+    } else if (data.status === "downloaded") {
+      banner.style.display = "flex";
+      bannerText.textContent = "Update downloaded. Restart to install.";
+      bannerBtn.style.display = "";
+    }
+  });
+
+  window.hypermind.onUpdateProgress((data) => {
+    if (bannerText) {
+      bannerText.textContent = `Downloading update... ${data.percent}%`;
+    }
+  });
+
+  bannerBtn?.addEventListener("click", () => {
+    window.hypermind.installUpdate();
+  });
+}

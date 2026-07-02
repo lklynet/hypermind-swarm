@@ -1,5 +1,6 @@
 const { LRUCache } = require("./lru");
 const { MAX_NOTES_PER_PING } = require("../config/constants");
+const { hasSwarmSubscription } = require("../utils/swarm-utils");
 
 const emptyNoteCounts = () => ({
   total: 0,
@@ -31,8 +32,13 @@ function compactPingSnapshot(ping) {
 }
 
 class PingStore {
-  constructor(capacity = 1000) {
-    this.cache = new LRUCache(capacity);
+  constructor(capacity = 1000, megaNode = false) {
+    if (megaNode) {
+      this.cache = new Map();
+    } else {
+      this.cache = new LRUCache(capacity);
+    }
+    this.megaNode = megaNode;
   }
 
   ensureInteractionState(ping) {
@@ -233,6 +239,55 @@ class PingStore {
       }
     }
     return pings.sort((a, b) => a.timestamp - b.timestamp);
+  }
+
+  getMessagesSince(timestamp, cursor = null, batchSize = 50, swarmFilter = null) {
+    const results = [];
+
+    for (const [id, ping] of this.cache.entries()) {
+      if (ping.timestamp > timestamp) {
+        results.push(ping);
+      }
+    }
+
+    results.sort((a, b) => a.timestamp - b.timestamp);
+
+    const filtered = results.filter((ping) => {
+      if (!swarmFilter) return true;
+      const swarmId = ping.swarmId || 0;
+      if (swarmId === 0) return true;
+      return hasSwarmSubscription(swarmFilter, swarmId);
+    });
+
+    let startIndex = 0;
+    if (cursor !== null && cursor >= 0) {
+      startIndex = cursor;
+    }
+
+    const batch = filtered.slice(startIndex, startIndex + batchSize);
+    const hasMore = startIndex + batchSize < filtered.length;
+    const nextCursor = hasMore ? startIndex + batchSize : null;
+
+    const serialized = batch.map((p) => this.serializePing(p));
+
+    return { messages: serialized, cursor: nextCursor, hasMore };
+  }
+
+  getStats() {
+    let oldestTimestamp = Infinity;
+    let newestTimestamp = 0;
+
+    for (const [id, ping] of this.cache.entries()) {
+      if (ping.timestamp < oldestTimestamp) oldestTimestamp = ping.timestamp;
+      if (ping.timestamp > newestTimestamp) newestTimestamp = ping.timestamp;
+    }
+
+    return {
+      totalMessages: this.cache.size,
+      oldestTimestamp: oldestTimestamp === Infinity ? null : oldestTimestamp,
+      newestTimestamp: newestTimestamp === 0 ? null : newestTimestamp,
+      isMegaNode: this.megaNode,
+    };
   }
 
   cleanup() {

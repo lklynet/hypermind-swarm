@@ -16,7 +16,8 @@ class PeerManager {
     ip = null,
     swarmFilter = null,
     encKey = null,
-    username = null
+    username = null,
+    megaNode = null
   ) {
     const stored = this.seenPeers.get(id);
     const wasNew = !stored;
@@ -30,6 +31,7 @@ class PeerManager {
       swarmFilter: swarmFilter || (stored ? stored.swarmFilter : null),
       encKey: encKey || (stored ? stored.encKey : null),
       username: username || (stored ? stored.username : null),
+      megaNode: megaNode !== null ? megaNode : (stored ? stored.megaNode : false),
     });
 
     return wasNew;
@@ -50,6 +52,11 @@ class PeerManager {
 
   hasPeer(id) {
     return this.seenPeers.has(id);
+  }
+
+  isMegaNode(peerId) {
+    const peer = this.seenPeers.get(peerId);
+    return !!(peer && peer.megaNode);
   }
 
   cleanupStalePeers() {

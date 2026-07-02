@@ -9,6 +9,7 @@ const HEARTBEAT_FIELDS = [
     "encKey",
     "swarmFilter",
     "coreKey",
+    "megaNode",
 ];
 
 const LEAVE_FIELDS = ["type", "id", "hops", "sig"];
@@ -66,6 +67,10 @@ const COMMENT_FIELDS = [
     "ttl",
 ];
 
+const CATCHUP_REQUEST_FIELDS = ["type", "id", "since", "cursor", "sig"];
+
+const CATCHUP_RESPONSE_FIELDS = ["type", "id", "messages", "cursor", "hasMore", "sig"];
+
 module.exports = {
     HEARTBEAT_FIELDS,
     LEAVE_FIELDS,
@@ -73,4 +78,6 @@ module.exports = {
     AMPLIFY_FIELDS,
     QUOTE_FIELDS,
     COMMENT_FIELDS,
+    CATCHUP_REQUEST_FIELDS,
+    CATCHUP_RESPONSE_FIELDS,
 };

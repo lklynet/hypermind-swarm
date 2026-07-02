@@ -10,16 +10,16 @@ const { SwarmManager } = require("./src/p2p/swarm");
 const PersistenceManager = require("./src/p2p/persistence");
 const { SSEManager } = require("./src/web/sse");
 const { createServer, startServer } = require("./src/web/server");
-const { DIAGNOSTICS_INTERVAL } = require("./src/config/constants");
+const { DIAGNOSTICS_INTERVAL, MEGA_NODE, LRU_CACHE_CAPACITY } = require("./src/config/constants");
 
 const main = async () => {
   const identity = generateIdentity();
   const storagePath = process.env.STORAGE_PATH || "./storage";
-  const persistenceManager = new PersistenceManager(storagePath);
+  const persistenceManager = new PersistenceManager(storagePath, MEGA_NODE);
 
   const peerManager = new PeerManager(identity.id);
   const diagnostics = new DiagnosticsManager();
-  const pingStore = new PingStore();
+  const pingStore = new PingStore(LRU_CACHE_CAPACITY, MEGA_NODE);
   const sseManager = new SSEManager();
 
   persistenceManager.onMessage = (msg) => {
@@ -75,6 +75,11 @@ const main = async () => {
   let diagnosticsInterval;
   let isShuttingDown = false;
 
+  if (MEGA_NODE) {
+    console.log("Mega-node mode enabled. Loading archive...");
+    await persistenceManager.loadMegaArchive();
+  }
+
   const broadcastUpdate = (reset = false) => {
     sseManager.broadcastUpdate({
       type: "UPDATE",
@@ -116,7 +121,8 @@ const main = async () => {
     broadcastUpdate,
     pingCallback,
     systemMessageFn,
-    persistenceManager
+    persistenceManager,
+    identity
   );
 
   swarmManager = new SwarmManager(

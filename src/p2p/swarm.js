@@ -7,6 +7,7 @@ const {
   CONNECTION_ROTATION_INTERVAL,
   MAX_SOCKET_BUFFER_SIZE,
   MAX_MESSAGES_PER_SECOND,
+  MEGA_NODE,
 } = require("../config/constants");
 const {
   getSwarmId,
@@ -38,6 +39,7 @@ class SwarmManager {
     this.heartbeatInterval = null;
     this.rotationInterval = null;
     this.swarmFilter = createSwarmFilter();
+    this.isMegaNode = MEGA_NODE;
   }
 
   async start() {
@@ -77,6 +79,7 @@ class SwarmManager {
       coreKey: this.persistenceManager
         ? this.persistenceManager.getPrimaryPublicKey()
         : null,
+      megaNode: this.isMegaNode,
     });
     socket.write(hello + "\n");
     this.diagnostics.increment("bytesSent", hello.length + 1);
@@ -149,6 +152,7 @@ class SwarmManager {
           coreKey: this.persistenceManager
             ? this.persistenceManager.getPrimaryPublicKey()
             : null,
+          megaNode: this.isMegaNode,
         }) + "\n";
 
       for (const socket of this.swarm.connections) {
@@ -278,6 +282,7 @@ class SwarmManager {
         coreKey: this.persistenceManager
           ? this.persistenceManager.getPrimaryPublicKey()
           : null,
+        megaNode: this.isMegaNode,
       }) + "\n";
 
     for (const socket of this.swarm.connections) {

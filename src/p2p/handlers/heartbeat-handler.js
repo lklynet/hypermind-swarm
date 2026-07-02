@@ -14,11 +14,16 @@ class HeartbeatHandler {
         this.broadcastCallback = deps.broadcastCallback;
         this.systemMessageFn = deps.systemMessageFn;
         this.persistenceManager = deps.persistenceManager;
+        this.requestCatchupFn = null;
+    }
+
+    setRequestCatchup(fn) {
+        this.requestCatchupFn = fn;
     }
 
     handle(msg, sourceSocket) {
         this.diagnostics.increment("heartbeatsReceived");
-        const { id, username, seq, hops, nonce, sig, swarmFilter, coreKey } = msg;
+        const { id, username, seq, hops, nonce, sig, swarmFilter, coreKey, megaNode } = msg;
 
         const stored = this.peerManager.getPeer(id);
         if (stored && seq <= stored.seq) {
@@ -58,7 +63,8 @@ class HeartbeatHandler {
                 ip,
                 swarmFilter,
                 msg.encKey,
-                username
+                username,
+                !!megaNode
             );
 
             if (wasNew) {
@@ -71,12 +77,16 @@ class HeartbeatHandler {
                         timestamp: Date.now(),
                     });
                 }
+
+                if (megaNode && this.requestCatchupFn && hops === 0) {
+                    this.requestCatchupFn(sourceSocket);
+                }
             }
 
             if (hops < MAX_RELAY_HOPS && !this.bloomFilter.hasRelayed(id, seq)) {
                 this.bloomFilter.markRelayed(id, seq);
                 this.diagnostics.increment("heartbeatsRelayed");
-                this.relayCallback({ ...msg, hops: hops + 1 }, sourceSocket);
+                this.relayCallback({ ...msg, hops: hops + 1, megaNode: !!megaNode }, sourceSocket);
             }
         } catch (e) {
             return;

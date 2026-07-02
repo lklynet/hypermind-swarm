@@ -225,19 +225,21 @@ async function startLocalMode() {
 
   await waitForServer(url);
   mainWindow.loadURL(url);
-
-  setupAutoUpdater();
-  autoUpdater.checkForUpdatesAndNotify().catch(() => {});
+  mainWindow.webContents.once("did-finish-load", () => {
+    autoUpdater.checkForUpdatesAndNotify().catch(() => {});
+  });
 }
 
 async function startRemoteMode(url) {
   await createMainWindow();
   mainWindow.loadURL(url);
-  setupAutoUpdater();
-  autoUpdater.checkForUpdatesAndNotify().catch(() => {});
+  mainWindow.webContents.once("did-finish-load", () => {
+    autoUpdater.checkForUpdatesAndNotify().catch(() => {});
+  });
 }
 
 app.whenReady().then(async () => {
+  setupAutoUpdater();
   buildAppMenu();
 
   const settings = readSettings();

@@ -1,6 +1,6 @@
 {
   "name": "hypermind-swarm",
-  "version": "1.3.3",
+  "version": "1.4.0",
   "description": "A decentralized P2P Twitter-like swarm",
   "main": "electron-main.js",
   "scripts": {
@@ -61,6 +61,7 @@
       "electron-main.js",
       "electron-preload.js",
       "electron-setup.html",
+      "electron-preferences.html",
       "server.js",
       "public/**/*",
       "src/**/*",

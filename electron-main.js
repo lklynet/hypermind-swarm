@@ -6,6 +6,7 @@ const fs = require("fs");
 
 let mainWindow = null;
 let setupWindow = null;
+let preferencesWindow = null;
 let serverProcess = null;
 
 const SETTINGS_PATH = path.join(app.getPath("userData"), "settings.json");
@@ -53,6 +54,12 @@ function buildAppMenu() {
               { role: "about" },
               { type: "separator" },
               {
+                label: "Preferences...",
+                accelerator: "CmdOrCtrl+,",
+                click: () => openPreferences(),
+              },
+              { type: "separator" },
+              {
                 label: "Check for Updates...",
                 click: () => autoUpdater.checkForUpdatesAndNotify(),
               },
@@ -73,6 +80,12 @@ function buildAppMenu() {
         ...(isMac
           ? [{ role: "close" }]
           : [
+              {
+                label: "Preferences...",
+                accelerator: "Ctrl+,",
+                click: () => openPreferences(),
+              },
+              { type: "separator" },
               {
                 label: "Check for Updates...",
                 click: () => autoUpdater.checkForUpdatesAndNotify(),
@@ -141,6 +154,62 @@ ipcMain.handle("setup:reset", () => {
   resetAndShowSetup();
 });
 
+function openPreferences() {
+  if (preferencesWindow) {
+    preferencesWindow.focus();
+    return;
+  }
+  preferencesWindow = new BrowserWindow({
+    width: 420,
+    height: 340,
+    resizable: false,
+    parent: mainWindow,
+    modal: true,
+    title: "Preferences",
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, "electron-preload.js"),
+    },
+  });
+  preferencesWindow.loadFile("electron-preferences.html");
+  preferencesWindow.on("closed", () => {
+    preferencesWindow = null;
+  });
+}
+
+ipcMain.handle("prefs:get", () => {
+  const s = readSettings() || {};
+  return {
+    devicePersistence: !!s.devicePersistence,
+    megaNode: !!s.megaNode,
+    giphyApiKey: s.giphyApiKey || null,
+  };
+});
+
+ipcMain.handle("prefs:save", (_event, prefs) => {
+  const s = readSettings() || {};
+  s.devicePersistence = prefs.devicePersistence;
+  s.megaNode = prefs.megaNode;
+  s.giphyApiKey = prefs.giphyApiKey || undefined;
+  saveSettings(s);
+});
+
+ipcMain.handle("prefs:close", () => {
+  if (preferencesWindow) {
+    preferencesWindow.close();
+    preferencesWindow = null;
+  }
+});
+
+function applyEnvFromSettings() {
+  const s = readSettings();
+  if (!s) return;
+  if (s.devicePersistence) process.env.DEVICE_PERSISTENCE = "true";
+  if (s.megaNode) process.env.MEGA_NODE = "true";
+  if (s.giphyApiKey) process.env.GIPHY_API_KEY = s.giphyApiKey;
+}
+
 function waitForServer(url, timeoutMs = 30000) {
   const start = Date.now();
   return new Promise((resolve, reject) => {
@@ -160,9 +229,9 @@ function waitForServer(url, timeoutMs = 30000) {
 
 async function createMainWindow() {
   mainWindow = new BrowserWindow({
-    width: 1100,
-    height: 760,
-    minWidth: 800,
+    width: 1200,
+    height: 780,
+    minWidth: 1000,
     minHeight: 480,
     title: "Hypermind",
     webPreferences: {
@@ -212,6 +281,7 @@ async function startLocalMode() {
   if (!process.env.STORAGE_PATH) {
     process.env.STORAGE_PATH = path.join(app.getPath("userData"), "storage");
   }
+  applyEnvFromSettings();
   const port = process.env.PORT || 3000;
   const url = `http://localhost:${port}`;
 

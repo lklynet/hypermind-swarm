@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preferences</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    padding: 24px;
+    user-select: none;
+    -webkit-app-region: drag;
+  }
+  h2 { font-size: 16px; font-weight: 700; color: #f0f6fc; margin-bottom: 20px; }
+  .field { margin-bottom: 16px; -webkit-app-region: no-drag; }
+  label { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+  label input[type="checkbox"] { width: 16px; height: 16px; accent-color: #58a6ff; }
+  .text-field label { display: block; margin-bottom: 6px; cursor: default; }
+  .text-field input {
+    width: 100%;
+    padding: 8px 10px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    color: #c9d1d9;
+    font-size: 13px;
+    outline: none;
+  }
+  .text-field input:focus { border-color: #58a6ff; }
+  .text-field input::placeholder { color: #484f58; }
+  .hint { font-size: 11px; color: #484f58; margin-top: 4px; }
+  .btn-row { display: flex; gap: 8px; margin-top: 20px; -webkit-app-region: no-drag; }
+  .btn {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-save { background: #238636; color: #fff; }
+  .btn-save:hover { background: #2ea043; }
+  .btn-cancel { background: #21262d; color: #c9d1d9; }
+  .btn-cancel:hover { background: #30363d; }
+  .saved { color: #238636; font-size: 12px; margin-left: 8px; display: none; }
+</style>
+</head>
+<body>
+<h2>Preferences</h2>
+
+<div class="field">
+  <label>
+    <input type="checkbox" id="device-persistence">
+    Device Persistence
+  </label>
+  <div class="hint">Use your device MAC address as the identity seed. Keeps your identity across resets.</div>
+</div>
+
+<div class="field">
+  <label>
+    <input type="checkbox" id="mega-node">
+    Mega Node
+  </label>
+  <div class="hint">Persist all messages indefinitely and serve as a catch-up relay for the swarm.</div>
+</div>
+
+<div class="field text-field">
+  <label for="giphy-key">GIPHY API Key</label>
+  <input type="text" id="giphy-key" placeholder="Optional — enables /giphy command">
+  <div class="hint">Get a free key at <span style="color:#58a6ff">developers.giphy.com</span></div>
+</div>
+
+<div class="btn-row">
+  <button class="btn btn-cancel" onclick="close()">Cancel</button>
+  <button class="btn btn-save" onclick="save()">Save<span class="saved" id="saved-badge">&#10003; Saved</span></button>
+</div>
+<p class="hint" style="margin-top:12px">Restart Hypermind for changes to take effect.</p>
+
+<script>
+async function load() {
+  const prefs = await window.hypermind.getPreferences();
+  document.getElementById("device-persistence").checked = prefs.devicePersistence === true;
+  document.getElementById("mega-node").checked = prefs.megaNode === true;
+  document.getElementById("giphy-key").value = prefs.giphyApiKey || "";
+}
+
+async function save() {
+  await window.hypermind.savePreferences({
+    devicePersistence: document.getElementById("device-persistence").checked,
+    megaNode: document.getElementById("mega-node").checked,
+    giphyApiKey: document.getElementById("giphy-key").value.trim() || null,
+  });
+  document.getElementById("saved-badge").style.display = "inline";
+}
+
+function close() {
+  window.hypermind.closePreferences();
+}
+
+load();
+</script>
+</body>
+</html>

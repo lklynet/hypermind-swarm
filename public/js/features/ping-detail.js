@@ -70,6 +70,8 @@ export async function showPing(id, push = true, initialPanel = "replies") {
             year: 'numeric'
         });
 
+        const alreadyAmplified = ping.amplifiedBy?.includes(state.myId) || ping.author === state.myId;
+
         pingDetailContainer.innerHTML = `
             <div class="ping" id="detail-ping-${ping.id}">
                 <div class="ping-content">
@@ -83,7 +85,7 @@ export async function showPing(id, push = true, initialPanel = "replies") {
                     ${topicPill ? `<div style="margin-top: 0.5rem;">${topicPill}</div>` : ""}
                     <div class="ping-time">${timestamp}</div>
                     <div class="ping-actions">
-                        <button class="action-btn amplify" onclick="window.amplifyPing('${ping.id}')">
+                        <button class="action-btn amplify${alreadyAmplified ? ' amplified' : ''}" onclick="window.amplifyPing('${ping.id}')">
                             <i class="fa-solid fa-bullhorn"></i> <span class="amplify-count">${ping.likes || 0}</span>
                         </button>
                         <button class="action-btn comment" onclick="window.toggleComment('${ping.id}')">

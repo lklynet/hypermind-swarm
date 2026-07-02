@@ -135,6 +135,10 @@
         color: var(--color-green);
     }
 
+    &.amplify.amplified {
+        color: var(--color-green);
+    }
+
     &.like:hover {
         color: var(--color-red);
     }

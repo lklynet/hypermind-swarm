@@ -88,6 +88,11 @@ function updateExistingPing(el, ping) {
     const countEl = el.querySelector(".amplify-count");
     if (countEl) countEl.textContent = ping.likes || 0;
 
+    const ampBtn = el.querySelector(".action-btn.amplify");
+    if (ampBtn) {
+        ampBtn.classList.toggle("amplified", !!(ping.amplifiedBy?.includes(state.myId) || ping.author === state.myId));
+    }
+
     const commentCountEl = el.querySelector(".comment-count");
     if (commentCountEl) {
         commentCountEl.textContent = ping.comments ? ping.comments.length : 0;
@@ -157,6 +162,8 @@ function createPingElement(ping, domId, isProfile) {
         topicPill = `<span class="ping-topic" onclick="event.stopPropagation(); window.joinSwarm('${escapeHtml(ping.topic)}')">#${escapeHtml(ping.topic)}</span>`;
     }
 
+    const alreadyAmplified = ping.amplifiedBy?.includes(state.myId) || isMe;
+
     el.innerHTML = `
     <div class="avatar ping-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getAvatarBgVar(ping.author)};" onclick="window.showProfile('${ping.author}')"></div>
     <div class="ping-content">
@@ -176,7 +183,7 @@ function createPingElement(ping, domId, isProfile) {
       <div class="ping-text">${renderMarkdown(ping.content)}</div>
       ${renderQuotedPingCard(ping)}
       <div class="ping-actions">
-        <button class="action-btn amplify" onclick="window.amplifyPing('${ping.id}')">
+        <button class="action-btn amplify${alreadyAmplified ? ' amplified' : ''}" onclick="window.amplifyPing('${ping.id}')">
           <i class="fa-solid fa-bullhorn"></i> <span class="amplify-count">${ping.likes || 0}</span>
         </button>
         <button class="action-btn comment" onclick="window.toggleComment('${ping.id}')">
@@ -224,8 +231,12 @@ export async function sendPing() {
 export async function amplifyPing(id) {
     try {
         const data = await postAmplify(id);
-        const countEls = document.querySelectorAll(`[id$="ping-${id}"] .amplify-count`);
-        countEls.forEach((el) => (el.textContent = data.likes));
+        document.querySelectorAll(`[id$="ping-${id}"]`).forEach((el) => {
+            const count = el.querySelector(".amplify-count");
+            if (count) count.textContent = data.likes;
+            const btn = el.querySelector(".action-btn.amplify");
+            if (btn) btn.classList.add("amplified");
+        });
     } catch (e) {
         console.error(e);
         showToast(e.message || "Failed to amplify", "error");

@@ -76,12 +76,19 @@ export function addPingToContainer(ping, container, prepend = false) {
     }
 
     const el = createPingElement(ping, domId, isProfile);
+    insertPingByTimestamp(container, el, ping);
+}
 
-    if (prepend) {
-        container.prepend(el);
-    } else {
-        container.appendChild(el);
+function insertPingByTimestamp(container, el, ping) {
+    for (const child of container.children) {
+        if (!child.classList.contains("ping")) continue;
+        const ts = Number(child.dataset.timestamp);
+        if (ping.timestamp > ts) {
+            container.insertBefore(el, child);
+            return;
+        }
     }
+    container.appendChild(el);
 }
 
 function updateExistingPing(el, ping) {
@@ -137,6 +144,7 @@ function createPingElement(ping, domId, isProfile) {
     el.id = domId;
     el.dataset.swarmId = swarmId;
     el.dataset.author = ping.author;
+    el.dataset.timestamp = ping.timestamp;
     el.onclick = (e) => {
         if (e.target.closest('button') || e.target.closest('.ping-author') || e.target.closest('.ping-handle') || e.target.closest('.ping-topic') || e.target.closest('.ping-avatar') || e.target.closest('a') || e.target.closest('.comment-input') || e.target.closest('.markdown-toolbar') || e.target.closest('.quoted-ping-card') || e.target.closest('.notes-section')) {
             return;

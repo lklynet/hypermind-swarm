@@ -1,4 +1,4 @@
-import { registerCommand } from "./registry.js";
+import { registerCommand } from "./handler.js";
 import { showModal, closeModal } from "../utils/modal.js";
 
 let currentResolve = null;

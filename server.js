@@ -1,4 +1,17 @@
-require("dotenv").config();
+const fs = require("fs");
+const path = require("path");
+
+const envPath = path.join(__dirname, ".env");
+if (fs.existsSync(envPath)) {
+  for (const line of fs.readFileSync(envPath, "utf8").split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const i = trimmed.indexOf("=");
+    if (i === -1) continue;
+    const key = trimmed.slice(0, i).trim();
+    if (!process.env[key]) process.env[key] = trimmed.slice(i + 1).trim();
+  }
+}
 
 const { generateIdentity } = require("./src/core/identity");
 const { PeerManager } = require("./src/state/peers");

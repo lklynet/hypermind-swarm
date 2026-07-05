@@ -1,13 +1,13 @@
-const { app, BrowserWindow, Menu, dialog, ipcMain } = require("electron");
+const { app, BrowserWindow, Menu, Tray, dialog, ipcMain, nativeImage } = require("electron");
 const https = require("https");
 const http = require("http");
 const path = require("path");
 const fs = require("fs");
 
 let mainWindow = null;
-let setupWindow = null;
 let preferencesWindow = null;
-let serverProcess = null;
+let tray = null;
+let forceQuit = false;
 
 const SETTINGS_PATH = path.join(app.getPath("userData"), "settings.json");
 
@@ -32,16 +32,94 @@ function deleteSettings() {
   } catch {}
 }
 
-async function resetAndShowSetup() {
-  deleteSettings();
-  if (mainWindow) mainWindow.close();
-  if (serverProcess) {
-    try {
-      serverProcess.cleanup();
-    } catch {}
-    serverProcess = null;
+function getIconPath() {
+  const dev = path.join(__dirname, "build", "icon.png");
+  if (fs.existsSync(dev)) return dev;
+  const prod = path.join(process.resourcesPath, "icon.png");
+  if (fs.existsSync(prod)) return prod;
+  return dev;
+}
+
+function showMainWindow() {
+  if (!mainWindow) {
+    startLocalMode();
+    return;
   }
-  createSetupWindow();
+  if (process.platform === "win32") {
+    mainWindow.setSkipTaskbar(false);
+  }
+  if (process.platform === "darwin" && app.dock) {
+    app.dock.show();
+  }
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+}
+
+function hideMainWindow() {
+  if (!mainWindow) return;
+  mainWindow.hide();
+  if (process.platform === "win32") {
+    mainWindow.setSkipTaskbar(true);
+  }
+  if (process.platform === "darwin" && app.dock) {
+    app.dock.hide();
+  }
+}
+
+function quitApp() {
+  forceQuit = true;
+  app.quit();
+}
+
+function createTray() {
+  if (tray) return;
+  const trayIcon = nativeImage.createFromPath(getIconPath()).resize({ width: 16, height: 16 });
+  tray = new Tray(trayIcon);
+  tray.setToolTip("Hypermind");
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: "Show Hypermind",
+      click: () => showMainWindow(),
+    },
+    {
+      label: "Quit",
+      click: () => quitApp(),
+    },
+  ]);
+  tray.setContextMenu(contextMenu);
+  tray.on("click", () => showMainWindow());
+}
+
+function resetPreferences() {
+  deleteSettings();
+  app.relaunch();
+  app.quit();
+}
+
+async function promptForUpdate() {
+  const info = await checkForUpdates();
+  if (!info) {
+    dialog.showErrorBox("Update Check Failed", "Unable to check for updates.");
+    return;
+  }
+  if (info.latest === info.current) {
+    dialog.showMessageBox(mainWindow, {
+      message: `Hypermind ${info.current} is the latest version.`,
+      buttons: ["OK"],
+    });
+    return;
+  }
+  const { response } = await dialog.showMessageBox(mainWindow, {
+    type: "info",
+    title: "Update Available",
+    message: `Version ${info.latest} is available (you have ${info.current}).`,
+    detail: "Go to the releases page to download the update.",
+    buttons: ["Download", "Cancel"],
+    defaultId: 0,
+  });
+  if (response === 0) require("electron").shell.openExternal(info.url);
 }
 
 async function checkForUpdates() {
@@ -82,136 +160,39 @@ async function checkForUpdates() {
 async function checkForUpdatesOnStartup() {
   const info = await checkForUpdates();
   if (!info || info.latest === info.current) return;
-  dialog
-    .showMessageBox(mainWindow, {
-      type: "info",
-      title: "Update Available",
-      message: `Version ${info.latest} is available (you have ${info.current}).`,
-      detail: "Go to the releases page to download the update.",
-      buttons: ["Download", "Later"],
-      defaultId: 0,
-    })
-    .then(({ response }) => {
-      if (response === 0) require("electron").shell.openExternal(info.url);
-    });
+  const { response } = await dialog.showMessageBox(mainWindow, {
+    type: "info",
+    title: "Update Available",
+    message: `Version ${info.latest} is available (you have ${info.current}).`,
+    detail: "Go to the releases page to download the update.",
+    buttons: ["Download", "Later"],
+    defaultId: 0,
+  });
+  if (response === 0) require("electron").shell.openExternal(info.url);
 }
 
 function buildAppMenu() {
   const isMac = process.platform === "darwin";
+  const extras = [
+    {
+      label: "Preferences...",
+      accelerator: isMac ? "CmdOrCtrl+," : "Ctrl+,",
+      click: () => openPreferences(),
+    },
+    { type: "separator" },
+    { label: "Check for Updates...", click: () => promptForUpdate() },
+    { type: "separator" },
+    { label: "Reset Preferences...", click: () => resetPreferences() },
+    { type: "separator" },
+    { label: "Quit Hypermind", accelerator: isMac ? "CmdOrCtrl+Q" : undefined, click: () => quitApp() },
+  ];
   const template = [
     ...(isMac
-      ? [
-          {
-            label: app.name,
-            submenu: [
-              { role: "about" },
-              { type: "separator" },
-              {
-                label: "Preferences...",
-                accelerator: "CmdOrCtrl+,",
-                click: () => openPreferences(),
-              },
-              { type: "separator" },
-              {
-                label: "Check for Updates...",
-                click: async () => {
-                  const info = await checkForUpdates();
-                  if (!info) {
-                    dialog.showErrorBox(
-                      "Update Check Failed",
-                      "Unable to check for updates.",
-                    );
-                    return;
-                  }
-                  if (info.latest === info.current) {
-                    dialog.showMessageBox(mainWindow, {
-                      message: `Hypermind ${info.current} is the latest version.`,
-                      buttons: ["OK"],
-                    });
-                  } else {
-                    dialog
-                      .showMessageBox(mainWindow, {
-                        type: "info",
-                        title: "Update Available",
-                        message: `Version ${info.latest} is available (you have ${info.current}).`,
-                        detail:
-                          "Go to the releases page to download the update.",
-                        buttons: ["Download", "Cancel"],
-                        defaultId: 0,
-                      })
-                      .then(({ response }) => {
-                        if (response === 0)
-                          require("electron").shell.openExternal(info.url);
-                      });
-                  }
-                },
-              },
-              { type: "separator" },
-              {
-                label: "Reset Setup...",
-                click: () => resetAndShowSetup(),
-              },
-              { type: "separator" },
-              { role: "quit" },
-            ],
-          },
-        ]
+      ? [{ label: app.name, submenu: [{ role: "about" }, { type: "separator" }, ...extras] }]
       : []),
     {
       label: "File",
-      submenu: [
-        ...(isMac
-          ? [{ role: "close" }]
-          : [
-              {
-                label: "Preferences...",
-                accelerator: "Ctrl+,",
-                click: () => openPreferences(),
-              },
-              { type: "separator" },
-              {
-                label: "Check for Updates...",
-                click: async () => {
-                  const info = await checkForUpdates();
-                  if (!info) {
-                    dialog.showErrorBox(
-                      "Update Check Failed",
-                      "Unable to check for updates.",
-                    );
-                    return;
-                  }
-                  if (info.latest === info.current) {
-                    dialog.showMessageBox(mainWindow, {
-                      message: `Hypermind ${info.current} is the latest version.`,
-                      buttons: ["OK"],
-                    });
-                  } else {
-                    dialog
-                      .showMessageBox(mainWindow, {
-                        type: "info",
-                        title: "Update Available",
-                        message: `Version ${info.latest} is available (you have ${info.current}).`,
-                        detail:
-                          "Go to the releases page to download the update.",
-                        buttons: ["Download", "Cancel"],
-                        defaultId: 0,
-                      })
-                      .then(({ response }) => {
-                        if (response === 0)
-                          require("electron").shell.openExternal(info.url);
-                      });
-                  }
-                },
-              },
-              { type: "separator" },
-              {
-                label: "Reset Setup...",
-                click: () => resetAndShowSetup(),
-              },
-              { type: "separator" },
-              { role: "quit" },
-            ]),
-      ],
+      submenu: isMac ? [{ role: "close" }] : extras,
     },
     {
       label: "Edit",
@@ -340,6 +321,13 @@ async function createMainWindow() {
     mainWindow = null;
   });
 
+  mainWindow.on("close", (e) => {
+    if (!forceQuit) {
+      e.preventDefault();
+      hideMainWindow();
+    }
+  });
+
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (!url.startsWith("http://localhost") && !url.startsWith("file://")) {
       require("electron").shell.openExternal(url);
@@ -356,37 +344,6 @@ async function createMainWindow() {
   });
 }
 
-function createSetupWindow() {
-  setupWindow = new BrowserWindow({
-    width: 520,
-    height: 540,
-    resizable: false,
-    title: "Hypermind Setup",
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      preload: path.join(__dirname, "electron-preload.js"),
-    },
-  });
-
-  setupWindow.loadFile("electron-setup.html");
-  setupWindow.on("closed", () => {
-    setupWindow = null;
-  });
-}
-
-ipcMain.handle("setup:deploy-local", async () => {
-  saveSettings({ mode: "local" });
-  if (setupWindow) setupWindow.close();
-  await startLocalMode();
-});
-
-ipcMain.handle("setup:connect-remote", async (_event, url) => {
-  saveSettings({ mode: "remote", remoteUrl: url });
-  if (setupWindow) setupWindow.close();
-  await startRemoteMode(url);
-});
-
 async function startLocalMode() {
   if (!process.env.STORAGE_PATH) {
     process.env.STORAGE_PATH = path.join(app.getPath("userData"), "storage");
@@ -400,7 +357,6 @@ async function startLocalMode() {
 
   const { main } = require("./server");
   main().catch(console.error);
-  serverProcess = { cleanup: () => {} };
 
   await waitForServer(url);
   mainWindow.loadURL(url);
@@ -409,38 +365,20 @@ async function startLocalMode() {
   );
 }
 
-async function startRemoteMode(url) {
-  await createMainWindow();
-  mainWindow.loadURL(url);
-  mainWindow.webContents.once("did-finish-load", () =>
-    checkForUpdatesOnStartup(),
-  );
-}
-
 app.whenReady().then(async () => {
   buildAppMenu();
-
-  const settings = readSettings();
-  if (settings) {
-    if (settings.mode === "remote") {
-      await startRemoteMode(settings.remoteUrl);
-    } else {
-      await startLocalMode();
-    }
-  } else {
-    createSetupWindow();
-  }
+  createTray();
+  await startLocalMode();
 });
 
-app.on("window-all-closed", () => {
-  app.quit();
+app.on("window-all-closed", (e) => {
+  e.preventDefault();
+});
+
+app.on("before-quit", () => {
+  forceQuit = true;
 });
 
 app.on("activate", () => {
-  if (mainWindow === null && setupWindow === null) {
-    const settings = readSettings();
-    if (!settings) {
-      createSetupWindow();
-    }
-  }
+  showMainWindow();
 });

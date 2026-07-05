@@ -1,4 +1,4 @@
-import { registerCommand, getAllCommands } from "./registry.js";
+import { registerCommand, getAllCommands } from "./handler.js";
 import { showModal } from "../utils/modal.js";
 
 registerCommand({

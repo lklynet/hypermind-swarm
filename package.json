@@ -1,6 +1,6 @@
 {
   "name": "hypermind-swarm",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "A decentralized P2P Twitter-like swarm",
   "main": "electron-main.js",
   "scripts": {
@@ -40,7 +40,6 @@
     "@dicebear/core": "^9.2.4",
     "b4a": "^1.7.3",
     "corestore": "^7.7.0",
-    "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "hyperswarm": "^4.16.0",
     "sodium-native": "^5.0.10"
@@ -59,7 +58,6 @@
     "files": [
       "electron-main.js",
       "electron-preload.js",
-      "electron-setup.html",
       "electron-preferences.html",
       "server.js",
       "public/**/*",
@@ -90,7 +88,8 @@
     "publish": {
       "provider": "github",
       "owner": "lklynet",
-      "repo": "hypermind-swarm"
+      "repo": "hypermind-swarm",
+      "releaseType": "release"
     }
   }
 }

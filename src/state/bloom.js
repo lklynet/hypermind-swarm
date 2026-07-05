@@ -67,4 +67,4 @@ class BloomFilterManager {
     }
 }
 
-module.exports = { BloomFilter, BloomFilterManager };
+module.exports = { BloomFilterManager };

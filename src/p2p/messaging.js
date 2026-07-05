@@ -126,4 +126,4 @@ class MessageHandler {
   }
 }
 
-module.exports = { MessageHandler, validateMessage };
+module.exports = { MessageHandler };

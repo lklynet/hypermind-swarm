@@ -129,7 +129,7 @@ docker run -d \
 
 ## Desktop App
 
-Download the latest release for your platform from the [releases page](https://github.com/lklynet/hypermind/releases).
+Download the latest release for your platform from the [releases page](https://github.com/lklynet/hypermind-swarm/releases).
 
 On first launch, choose **Run a Local Node** to deploy your own P2P node on this computer, or **Connect to a Server** to connect to an existing Hypermind instance. Your choice is saved and can be changed by deleting the app's settings.
 

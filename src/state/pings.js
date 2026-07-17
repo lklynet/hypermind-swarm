@@ -39,6 +39,24 @@ class PingStore {
       this.cache = new LRUCache(capacity);
     }
     this.megaNode = megaNode;
+    this.pendingByPing = new Map();
+  }
+
+  _queuePending(pingId, key, apply) {
+    let list = this.pendingByPing.get(pingId);
+    if (!list) {
+      list = [];
+      this.pendingByPing.set(pingId, list);
+    }
+    if (list.some((item) => item.key === key)) return;
+    list.push({ key, apply });
+  }
+
+  _flushPending(pingId) {
+    const list = this.pendingByPing.get(pingId);
+    if (!list) return;
+    this.pendingByPing.delete(pingId);
+    for (const { apply } of list) apply();
   }
 
   ensureInteractionState(ping) {
@@ -96,12 +114,18 @@ class PingStore {
       },
       receivedAt: Date.now(),
     });
+    this._flushPending(ping.id);
     return true;
   }
 
   addNote(pingId, note) {
+    if (!note || !note.id || !note.type) return false;
+
     const ping = this.cache.get(pingId);
-    if (!ping || !note || !note.id || !note.type) return false;
+    if (!ping) {
+      this._queuePending(pingId, note.id, () => this.addNote(pingId, note));
+      return false;
+    }
 
     this.ensureInteractionState(ping);
 
@@ -183,8 +207,23 @@ class PingStore {
   }
 
   addComment(pingId, comment) {
+    if (!comment || !comment.id) return false;
+
+    if (
+      comment.originalPing &&
+      comment.originalPing.id === pingId &&
+      !this.cache.has(pingId)
+    ) {
+      this.add(comment.originalPing);
+    }
+
     const ping = this.cache.get(pingId);
-    if (!ping) return false;
+    if (!ping) {
+      this._queuePending(pingId, `comment:${comment.id}`, () =>
+        this.addComment(pingId, comment)
+      );
+      return false;
+    }
 
     this.ensureInteractionState(ping);
 
@@ -292,6 +331,7 @@ class PingStore {
 
   cleanup() {
     this.cache.clear();
+    this.pendingByPing.clear();
   }
 }
 

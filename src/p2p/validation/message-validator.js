@@ -26,6 +26,7 @@ const QUOTE_FIELDS = [
 ];
 const COMMENT_FIELDS = [
     "type", "id", "pingId", "author", "username", "content", "timestamp", "sig", "ttl",
+    "originalPing",
 ];
 const CATCHUP_REQUEST_FIELDS = ["type", "id", "since", "cursor", "sig"];
 const CATCHUP_RESPONSE_FIELDS = ["type", "id", "messages", "cursor", "hasMore", "sig"];
@@ -155,7 +156,10 @@ function validateComment(msg) {
         (!msg.username || msg.username.length <= MAX_USERNAME_LENGTH) &&
         isValidTimestamp(msg.timestamp) &&
         msg.sig &&
-        isValidNumber(msg.ttl, 0, MAX_TTL)
+        isValidNumber(msg.ttl, 0, MAX_TTL) &&
+        (!msg.originalPing ||
+            (validateQuotedPingSnapshot(msg.originalPing) &&
+                msg.originalPing.id === msg.pingId))
     );
 }
 

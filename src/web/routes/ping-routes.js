@@ -269,6 +269,7 @@ function setupPingRoutes(app, deps) {
             timestamp,
             sig,
             ttl: 6,
+            originalPing: compactPingSnapshot(ping),
         };
 
         if (pingStore.addComment(pingId, commentMsg)) {

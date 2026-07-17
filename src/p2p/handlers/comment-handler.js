@@ -5,6 +5,30 @@ const {
     COMMENT_RATE_LIMIT,
 } = require("../../config/constants");
 
+function computePingId(ping) {
+    if (!ping) return "";
+    if (ping.type === "QUOTE") {
+        return crypto
+            .createHash("sha256")
+            .update(ping.author + ping.quoteOf + ping.content + ping.timestamp)
+            .digest("hex");
+    }
+
+    return crypto
+        .createHash("sha256")
+        .update(ping.author + ping.content + ping.timestamp)
+        .digest("hex");
+}
+
+function verifySignedPing(ping) {
+    if (!ping || !ping.author || !ping.sig) return false;
+    if (computePingId(ping) !== ping.id) return false;
+
+    const key = createPublicKey(ping.author);
+    const prefix = ping.type === "QUOTE" ? "quote" : "ping";
+    return verifySignature(`${prefix}:${ping.id}`, ping.sig, key);
+}
+
 class CommentHandler {
     constructor(deps) {
         this.peerManager = deps.peerManager;
@@ -18,7 +42,7 @@ class CommentHandler {
     }
 
     handle(msg, sourceSocket) {
-        const { id, pingId, author, content, timestamp, sig, ttl } = msg;
+        const { id, pingId, author, content, timestamp, sig, ttl, originalPing } = msg;
 
         const now = Date.now();
         let rateData = this.rateLimits.get(author);
@@ -36,6 +60,11 @@ class CommentHandler {
 
         const key = createPublicKey(author);
         if (!verifySignature(`comment:${id}`, sig, key)) {
+            this.diagnostics.increment("invalidSig");
+            return;
+        }
+
+        if (originalPing && !verifySignedPing(originalPing)) {
             this.diagnostics.increment("invalidSig");
             return;
         }

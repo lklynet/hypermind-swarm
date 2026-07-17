@@ -1,5 +1,8 @@
 const { generateScreenname } = require("../../utils/name-generator");
 
+const ID_RE = /^[0-9a-f]{88}$/i;
+const MESSAGE_ID_RE = /^[0-9a-f]{64}$/i;
+
 function setupProfileRoutes(app, deps) {
     const { identity, pingStore } = deps;
 
@@ -41,6 +44,7 @@ function setupProfileRoutes(app, deps) {
 
     app.get("/api/profile/:id", (req, res) => {
         const { id } = req.params;
+        if (!ID_RE.test(id)) return res.status(400).json({ error: "Invalid identity" });
         const pings = pingStore.getByAuthor(id);
         const latest = pings[0];
         const storedUsername = pingStore.getUsername(id);
@@ -54,6 +58,7 @@ function setupProfileRoutes(app, deps) {
     });
 
     app.get("/api/ping/:id", (req, res) => {
+        if (!MESSAGE_ID_RE.test(req.params.id)) return res.status(400).json({ error: "Invalid ping ID" });
         const { id } = req.params;
         const ping = pingStore.get(id);
         if (!ping) {
@@ -63,7 +68,10 @@ function setupProfileRoutes(app, deps) {
     });
 
     app.get("/api/catchup", (req, res) => {
-        const since = parseInt(req.query.since) || 0;
+        const since = Number.parseInt(req.query.since, 10);
+        if (!Number.isSafeInteger(since) || since < 0 || since > Date.now() + 300000) {
+            return res.status(400).json({ error: "Invalid since timestamp" });
+        }
         const pings = pingStore.getPingsSince(since);
         res.json({
             pings,

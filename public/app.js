@@ -16,12 +16,57 @@ import { showPing, setupPingDetailListeners } from "./js/features/ping-detail.js
 import { notificationManager, setupNotificationListeners } from "./js/features/notifications.js";
 import { renderComment } from "./js/features/comments.js";
 import { renderNotesSection } from "./js/features/notes.js";
+import { setSafeHtml } from "./js/utils/html.js";
 
 import "./js/features/comments.js";
 import "./js/features/quotes.js";
 
 import "./js/commands/help.js";
 import "./js/commands/giphy.js";
+
+function setupActionDelegation() {
+  document.addEventListener("click", (event) => {
+    const target = event.target.closest("[data-action]");
+    if (!target) return;
+    const { action, pingId, userId, topic, tab, before, after, username, url, panel } = target.dataset;
+    event.stopPropagation();
+
+    const actions = {
+      "show-feed": () => window.showFeed(),
+      "show-my-profile": () => window.showMyProfile(),
+      "cycle-theme": () => window.cycleTheme(),
+      "switch-tab": () => window.switchTab(tab),
+      "toggle-mobile-compose": () => window.toggleMobileCompose(),
+      "insert-markdown": () => window.insertMarkdown(before || "", after || ""),
+      "join-swarm": () => window.joinSwarm(topic),
+      "show-profile": () => window.showProfile(userId),
+      "show-ping": () => window.showPing(pingId),
+      "toggle-follow": () => window.toggleFollow(userId),
+      "share-ping": () => window.sharePing(pingId),
+      "amplify-ping": () => window.amplifyPing(pingId),
+      "toggle-comment": () => window.toggleComment(pingId),
+      "quote-ping": () => window.quotePing(pingId),
+      "show-activity": () => window.showPingActivity(pingId),
+      "detail-panel": () => window.switchPingDetailPanel(pingId, panel),
+      "reply-comment": () => window.replyToComment(pingId, username),
+      "submit-comment": () => window.submitComment(pingId, target),
+      "comment-markdown": () => window.insertCommentMarkdown(pingId, before || "", after || "", target),
+      "select-gif": () => window.selectGif(url),
+    };
+    actions[action]?.();
+  });
+
+  document.addEventListener("input", (event) => {
+    if (event.target.matches(".comment-input")) window.handleCommentInput(event);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.target.matches(".comment-input")) {
+      window.handleCommentKey(event, event.target.dataset.pingId);
+    }
+  });
+}
+
+setupActionDelegation();
 
 const authScreen = document.getElementById("auth-screen");
 const authForm = document.getElementById("auth-form");
@@ -145,7 +190,7 @@ async function startApp() {
           }
           const commentsList = detailPing.querySelector(".comments-list");
           if (commentsList && data.comments) {
-            commentsList.innerHTML = data.comments.map((c) => renderComment({ ...c, pingId: data.id })).join("");
+            setSafeHtml(commentsList, data.comments.map((c) => renderComment({ ...c, pingId: data.id })).join(""));
           }
           const repliesTabCount = detailPing.querySelector('.ping-detail-tab[data-panel="replies"] span');
           if (repliesTabCount) {
@@ -157,7 +202,7 @@ async function startApp() {
           }
           const activityPanel = detailPing.querySelector('.ping-detail-panel[data-panel="activity"]');
           if (activityPanel) {
-            activityPanel.innerHTML = renderNotesSection(data) || `<div class="activity-empty">No activity yet.</div>`;
+            setSafeHtml(activityPanel, renderNotesSection(data) || `<div class="activity-empty">No activity yet.</div>`);
           }
         }
       }

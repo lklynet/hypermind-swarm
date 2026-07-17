@@ -1,5 +1,6 @@
 import { registerCommand } from "./handler.js";
 import { showModal, closeModal } from "../utils/modal.js";
+import { escapeHtml, setSafeHtml } from "../utils/html.js";
 
 let currentResolve = null;
 
@@ -8,11 +9,11 @@ async function searchGifs(query) {
   if (!resultsEl) return;
 
   if (!query || !query.trim()) {
-    resultsEl.innerHTML = '<div class="gif-loading">Type to search...</div>';
+    setSafeHtml(resultsEl, '<div class="gif-loading">Type to search...</div>');
     return;
   }
 
-  resultsEl.innerHTML = '<div class="gif-loading">Searching...</div>';
+  setSafeHtml(resultsEl, '<div class="gif-loading">Searching...</div>');
 
   try {
     const res = await fetch(`/api/gif/search?q=${encodeURIComponent(query)}`);
@@ -23,25 +24,36 @@ async function searchGifs(query) {
     }
 
     if (!data.data || data.data.length === 0) {
-      resultsEl.innerHTML = '<div class="gif-loading">No GIFs found</div>';
+      setSafeHtml(resultsEl, '<div class="gif-loading">No GIFs found</div>');
       return;
     }
 
-    resultsEl.innerHTML = data.data
+    const safeGiphyUrl = (value) => {
+      try {
+        const url = new URL(value);
+        return url.protocol === "https:" && (url.hostname === "giphy.com" || url.hostname.endsWith(".giphy.com"))
+          ? url.href
+          : "";
+      } catch {
+        return "";
+      }
+    };
+    setSafeHtml(resultsEl, data.data
       .map((gif) => {
-        const previewUrl = gif.images.fixed_height_small.url;
-        const fullUrl = gif.images.original.url;
-        const title = gif.title || 'GIF';
+        const previewUrl = safeGiphyUrl(gif.images?.fixed_height_small?.url);
+        const fullUrl = safeGiphyUrl(gif.images?.original?.url);
+        const title = escapeHtml(gif.title || "GIF");
+        if (!previewUrl || !fullUrl) return "";
 
         return `
-          <div class="gif-item" onclick="window.selectGif('${fullUrl}')">
-            <img src="${previewUrl}" alt="${title}" loading="lazy" title="${title}">
+          <div class="gif-item" data-action="select-gif" data-url="${escapeHtml(fullUrl)}">
+            <img src="${escapeHtml(previewUrl)}" alt="${title}" loading="lazy" title="${title}">
           </div>
         `;
       })
-      .join("");
+      .join(""));
   } catch (e) {
-    resultsEl.innerHTML = `<div class="gif-loading" style="color:red">Error: ${e.message}</div>`;
+    resultsEl.textContent = `Error: ${e.message}`;
   }
 }
 
@@ -53,7 +65,7 @@ function createPickerContent(initialQuery) {
     </div>
     <div class="gif-picker-results" id="gif-results"></div>
     <div class="gif-attribution" style="text-align: right; font-size: 10px; opacity: 0.7; padding: 5px;">
-       <img src="https://developers.giphy.com/branch/master/static/header-logo-0fec0225d189bc0eae27dac3e3770582.gif" width="50" alt="Powered by GIPHY">
+       Powered by GIPHY
     </div>
   `;
 

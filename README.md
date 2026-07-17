@@ -9,7 +9,7 @@
 
 **Hypermind-Swarm** is a peer-to-peer, Twitter-style social platform built for decentralized and ephemeral conversations. It's a fork of the original [Hypermind](https://github.com/lklynet/hypermind) project, evolving from a simple deployment counter into a full-fledged communication swarm.
 
-Built by the same creator, Hypermind-Swarm leverages the same robust P2P architecture to give you a place to be yourself—free from algorithms, central servers, and permanent digital footprints.
+Built by the same creator, Hypermind-Swarm leverages the same P2P architecture to give you a place to be yourself without a central feed operator.
 
 ---
 
@@ -19,7 +19,7 @@ We're bringing back the care-free spirit of the early internet. No engagement me
 
 *   **No Algorithms:** You see what's happening in the swarm as it happens.
 *   **No Servers:** Your data lives in the mesh, not on a corporate rack.
-*   **No History:** Conversations are ephemeral. When the swarm moves on, so does the data.
+*   **Local Retention Limits:** Normal nodes keep a bounded local cache instead of an unlimited history.
 
 ---
 
@@ -56,9 +56,9 @@ Join any topic and immediately start seeing pings from peers around the world.
 *   **Amplify:** Boost pings you find interesting to help them reach more peers.
 
 ### 3. Privacy & Whimsy
-*   **Anonymous by Default:** A unique 90's style username generator ensures everyone remains anonymous while bringing back some whimsy to the internet.
+*   **Pseudonymous by Default:** A unique 90's style username generator avoids requiring a real-world name.
 *   **Serverless:** No central point of failure or data collection.
-*   **Ephemeral:** Messages aren't stored forever. The swarm is for the *now*.
+*   **Ephemeral Local Cache:** Normal nodes evict older messages. Other peers may still record anything they receive.
 *   **Incognito:** Generate a new identity whenever you want.
 
 ---
@@ -74,6 +74,16 @@ Join any topic and immediately start seeing pings from peers around the world.
 </div>
 
 ---
+
+## Security and privacy model
+
+Pings are public, signed, and relayed to untrusted peers. They are not end-to-end encrypted. Cryptographic signatures establish which key authored a message; they do not keep its contents secret. Any peer can save public traffic, and mega nodes explicitly archive traffic for catch-up, so deletion and global ephemerality cannot be guaranteed.
+
+Peers necessarily learn network metadata needed to establish P2P connections. Hypermind does not expose peer IP addresses through the web dashboard, but it cannot hide a node's network address from peers it connects to.
+
+`DEVICE_PERSISTENCE=true` currently derives identity keys from the device MAC address. This is convenient but weaker than storing a randomly generated key because MAC addresses have limited entropy and may be observable. Leave it disabled unless you accept that identity-cloning risk.
+
+Hypermind continues to use the deployed `hypermind-swarm-v1` topic and wire format so existing nodes remain interoperable. That compatibility format authenticates ping, comment, and quote authors and content, but it does not authenticate every display/routing field advertised by older nodes. In particular, legacy usernames, topic routing, heartbeat capabilities, disconnect freshness, and legacy amplification targets should not be treated as cryptographically authoritative. The application validates their types, bounds their resource use, and sanitizes them before rendering; amplifications created by updated nodes additionally bind their target in the signed ID.
 
 ## Usage
 
@@ -101,12 +111,16 @@ docker run -d \
   --network host \
   --restart unless-stopped \
   -e PORT=3000 \
-  -e WEB_AUTH=admin:change-me \
+  -e HOST=0.0.0.0 \
+  -e WEB_AUTH='admin:use-a-long-random-password' \
+  -e WEB_ALLOWED_HOSTS='hypermind.example.com' \
   ghcr.io/lklynet/hypermind-swarm:latest
 ```
 
 > **⚠️ NETWORK NOTE:**
 > Always use `--network host`. As a P2P application, Hypermind Swarm needs direct access to network interfaces to punch through NATs and find peers effectively.
+
+Remote dashboards must be placed behind an HTTPS reverse proxy. Set `TRUST_PROXY=true` only when the node is directly behind a trusted proxy, firewall port 3000 from the public internet, and include the externally visible host (including a nonstandard port) in `WEB_ALLOWED_HOSTS`.
 
 </details>
 
@@ -115,12 +129,15 @@ docker run -d \
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `HOST` | `127.0.0.1` | Dashboard bind address. Non-loopback values require authentication and an allowed-host list. |
 | `PORT` | `3000` | The web dashboard port. |
 | `MAX_PEERS` | `50000` | Max peers to track in the swarm. |
 | `MAX_CONNECTIONS` | `50` | Max active P2P connections. |
 | `MAX_RELAY_HOPS` | `10` | How far a ping travels through the mesh. |
-| `DEVICE_PERSISTENCE` | `false` | Enable deterministic identity based on device MAC address. |
-| `WEB_AUTH` | `` | Optional dashboard auth in format `username:password`. |
+| `DEVICE_PERSISTENCE` | `false` | Derive a persistent identity from the device MAC address; see the security warning above. |
+| `WEB_AUTH` | `` | Dashboard credentials in `username:password` format; passwords must be at least 12 characters. Required for remote binding. |
+| `WEB_ALLOWED_HOSTS` | local hosts | Comma-separated exact HTTP Host values accepted by the dashboard. Required for remote binding. |
+| `TRUST_PROXY` | `false` | Trust one reverse proxy for client IP and HTTPS detection. Enable only behind a trusted proxy. |
 
 </details>
 
@@ -131,21 +148,7 @@ docker run -d \
 
 Download the latest release for your platform from the [releases page](https://github.com/lklynet/hypermind-swarm/releases).
 
-On first launch, choose **Run a Local Node** to deploy your own P2P node on this computer, or **Connect to a Server** to connect to an existing Hypermind instance. Your choice is saved and can be changed by deleting the app's settings.
-
-### macOS — Un-quarantine
-
-macOS may block the app because it's not notarized by Apple. To fix this, run in Terminal:
-
-```bash
-xattr -d com.apple.quarantine /Applications/Hypermind.app
-```
-
-If you installed via the DMG, it may also be on the DMG:
-
-```bash
-xattr -d com.apple.quarantine ~/Downloads/Hypermind-*.dmg
-```
+The desktop application runs a local node and binds its dashboard to loopback. Current community builds are not code-signed or notarized. Do not disable operating-system security controls globally; build from reviewed source if your platform cannot verify a release.
 
 ---
 

@@ -1,6 +1,7 @@
 import { DOM, state } from "../core/state.js";
 import { fetchTrending as fetchTrendingApi } from "../core/api.js";
 import { joinSwarm } from "./swarm.js";
+import { escapeHtml, setSafeHtml } from "../utils/html.js";
 
 export async function fetchTrending() {
     try {
@@ -19,14 +20,14 @@ function renderTrending(topics) {
         return;
     }
 
-    DOM.trendingList.innerHTML = topics
+    setSafeHtml(DOM.trendingList, topics
         .map(
             (t) => `
-      <div class="trending-item" onclick="window.joinSwarm('${t.name}')" style="cursor: pointer;">
-        <span style="color: var(--primary-color);">#${t.name}</span>
+      <div class="trending-item" data-action="join-swarm" data-topic="${escapeHtml(t.name)}" style="cursor: pointer;">
+        <span style="color: var(--primary-color);">#${escapeHtml(t.name)}</span>
         <span style="font-size: 0.8rem; color: var(--text-muted);">${t.count} pings</span>
       </div>
     `
         )
-        .join("");
+        .join(""));
 }

@@ -1,10 +1,12 @@
+import { setSafeHtml } from "./html.js";
+
 export function getModalContainer() {
     let container = document.getElementById("global-modal-container");
     if (!container) {
         container = document.createElement("div");
         container.id = "global-modal-container";
         container.className = "modal-overlay";
-        container.innerHTML = `
+        setSafeHtml(container, `
             <div class="modal-window">
                 <div class="modal-header">
                     <h3 class="modal-title"></h3>
@@ -12,7 +14,7 @@ export function getModalContainer() {
                 </div>
                 <div class="modal-body"></div>
             </div>
-        `;
+        `);
         document.body.appendChild(container);
 
         container.querySelector(".modal-close").addEventListener("click", closeModal);
@@ -32,7 +34,7 @@ export function showModal({ title, content, onClose }) {
     bodyEl.innerHTML = "";
 
     if (typeof content === "string") {
-        bodyEl.innerHTML = content;
+        setSafeHtml(bodyEl, content);
     } else if (content instanceof HTMLElement) {
         bodyEl.appendChild(content);
     }

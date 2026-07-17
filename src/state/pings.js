@@ -1,6 +1,7 @@
 const { LRUCache } = require("./lru");
 const { MAX_NOTES_PER_PING } = require("../config/constants");
 const { hasSwarmSubscription } = require("../utils/swarm-utils");
+const { compactSignedSnapshot } = require("../p2p/validation/message-security");
 
 const emptyNoteCounts = () => ({
   total: 0,
@@ -10,25 +11,7 @@ const emptyNoteCounts = () => ({
 });
 
 function compactPingSnapshot(ping) {
-  if (!ping) return null;
-
-  const snapshot = {
-    type: ping.type || "PING",
-    id: ping.id,
-    author: ping.author,
-    username: ping.username,
-    content: ping.content,
-    timestamp: ping.timestamp,
-    sig: ping.sig,
-    swarmId: ping.swarmId || 0,
-    topic: ping.topic || "",
-  };
-
-  if (ping.quoteOf) {
-    snapshot.quoteOf = ping.quoteOf;
-  }
-
-  return snapshot;
+  return compactSignedSnapshot(ping);
 }
 
 class PingStore {

@@ -1,5 +1,3 @@
-const crypto = require("crypto");
-const { verifySignature, createPublicKey } = require("../../core/security");
 const {
     RATE_LIMIT_WINDOW_MS,
     PING_RATE_LIMIT,
@@ -19,7 +17,7 @@ class PingHandler {
     }
 
     handle(msg, sourceSocket) {
-        const { author, id, sig, timestamp } = msg;
+        const { author, id } = msg;
         const ttl = typeof msg.ttl === "number" ? msg.ttl : DEFAULT_MESSAGE_TTL;
 
         const now = Date.now();
@@ -30,20 +28,6 @@ class PingHandler {
         }
 
         if (rateData.count >= PING_RATE_LIMIT) {
-            return;
-        }
-
-        const idBase = author + msg.content + msg.timestamp;
-        const computedId = crypto.createHash("sha256").update(idBase).digest("hex");
-
-        if (computedId !== id) {
-            this.diagnostics.increment("invalidSig");
-            return;
-        }
-
-        const key = createPublicKey(author);
-        if (!verifySignature(`ping:${id}`, sig, key)) {
-            this.diagnostics.increment("invalidSig");
             return;
         }
 

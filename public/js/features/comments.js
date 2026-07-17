@@ -107,14 +107,14 @@ export function renderComment(c) {
     const isFollowing = state.following.includes(c.author);
     return `
     <div class="comment-item">
-      <div class="avatar comment-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getAvatarBgVar(c.author)}; cursor: pointer;" onclick="window.showProfile('${c.author}')"></div>
+      <div class="avatar comment-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getAvatarBgVar(c.author)}; cursor: pointer;" data-action="show-profile" data-user-id="${c.author}"></div>
       <div class="comment-content">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <span class="comment-author" style="cursor: pointer;" onclick="window.showProfile('${c.author}')">${escapeHtml(c.username || "Anonymous")}${isFollowing ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.75rem;" title="Following"></i>' : ""}</span>
+            <span class="comment-author" style="cursor: pointer;" data-action="show-profile" data-user-id="${c.author}">${escapeHtml(c.username || "Anonymous")}${isFollowing ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.75rem;" title="Following"></i>' : ""}</span>
             <span style="font-size: 0.8rem; color: var(--text-muted);">${timeSince(new Date(c.timestamp))}</span>
           </div>
-          <button class="comment-reply-btn" onclick="window.replyToComment('${c.pingId || ""}', '${escapeHtml(c.username || "Anonymous")}')" title="Reply to this comment">
+          <button class="comment-reply-btn" data-action="reply-comment" data-ping-id="${c.pingId || ""}" data-username="${escapeHtml(c.username || "Anonymous")}" title="Reply to this comment">
             <i class="fa-solid fa-reply"></i>
           </button>
         </div>
@@ -174,18 +174,18 @@ export function renderCommentSection(pingId, comments = [], isDetailView = false
     return `
         <div class="comment-section" style="display: ${displayStyle};">
             <div class="comment-input-wrapper">
-                <input type="text" class="comment-input" placeholder="Write a comment..." onkeydown="window.handleCommentKey(event, '${pingId}')" oninput="window.handleCommentInput(event)">
+                <input type="text" class="comment-input" data-ping-id="${pingId}" placeholder="Write a comment...">
             </div>
             <div class="compose-actions" style="margin-bottom: 0.5rem;">
                 <div class="markdown-toolbar">
-                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '**', '**', this)" title="Bold"><i class="fa-solid fa-bold" style="font-size: 0.8rem;"></i></button>
-                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '*', '*', this)" title="Italic"><i class="fa-solid fa-italic" style="font-size: 0.8rem;"></i></button>
-                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '__', '__', this)" title="Underline"><i class="fa-solid fa-underline" style="font-size: 0.8rem;"></i></button>
-                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '~~', '~~', this)" title="Strikethrough"><i class="fa-solid fa-strikethrough" style="font-size: 0.8rem;"></i></button>
-                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '[', '](url)', this)" title="Link"><i class="fa-solid fa-link" style="font-size: 0.8rem;"></i></button>
-                    <button type="button" onclick="window.insertCommentMarkdown('${pingId}', '![alt](', ')', this)" title="Image"><i class="fa-solid fa-image" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" data-action="comment-markdown" data-ping-id="${pingId}" data-before="**" data-after="**" title="Bold"><i class="fa-solid fa-bold" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" data-action="comment-markdown" data-ping-id="${pingId}" data-before="*" data-after="*" title="Italic"><i class="fa-solid fa-italic" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" data-action="comment-markdown" data-ping-id="${pingId}" data-before="__" data-after="__" title="Underline"><i class="fa-solid fa-underline" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" data-action="comment-markdown" data-ping-id="${pingId}" data-before="~~" data-after="~~" title="Strikethrough"><i class="fa-solid fa-strikethrough" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" data-action="comment-markdown" data-ping-id="${pingId}" data-before="[" data-after="](url)" title="Link"><i class="fa-solid fa-link" style="font-size: 0.8rem;"></i></button>
+                    <button type="button" data-action="comment-markdown" data-ping-id="${pingId}" data-before="![alt](" data-after=")" title="Image"><i class="fa-solid fa-image" style="font-size: 0.8rem;"></i></button>
                 </div>
-                <button onclick="window.submitComment('${pingId}', this)" style="margin-left: auto; background: var(--primary-color); color: var(--color-bg); border: none; border-radius: 9999px; padding: 0.25rem 1rem; font-weight: 700; cursor: pointer;">Reply</button>
+                <button data-action="submit-comment" data-ping-id="${pingId}" style="margin-left: auto; background: var(--primary-color); color: var(--color-bg); border: none; border-radius: 9999px; padding: 0.25rem 1rem; font-weight: 700; cursor: pointer;">Reply</button>
             </div>
             ${commentsHeader}
             <div class="comments-list">

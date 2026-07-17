@@ -1,6 +1,8 @@
 const Corestore = require("corestore");
 const b4a = require("b4a");
 
+const MAX_TRACKED_CORES = parseInt(process.env.MAX_TRACKED_CORES, 10) || 256;
+
 class PersistenceManager {
   constructor(storagePath = "./storage", megaNode = false) {
     this.store = new Corestore(storagePath);
@@ -8,6 +10,7 @@ class PersistenceManager {
     this.peerCores = new Map();
     this.pendingPeerCores = new Map();
     this.knownPeerKeys = new Set();
+    this.peerCoreOwners = new Map();
     this.coreWatchers = new Map();
     this.trackingCore = null;
     this.onMessage = null;
@@ -54,6 +57,7 @@ class PersistenceManager {
       const length = this.trackingCore.length;
       console.log(`Loading ${length} tracked peers from storage...`);
       for (let i = 0; i < length; i++) {
+        if (this.knownPeerKeys.size >= MAX_TRACKED_CORES) break;
         const peerKey = await this.trackingCore.get(i);
         if (peerKey && !this.knownPeerKeys.has(peerKey)) {
           this.knownPeerKeys.add(peerKey);
@@ -135,18 +139,34 @@ class PersistenceManager {
     await this.primaryCore.append(msg);
   }
 
-  async getPeerCore(publicKey) {
+  async getPeerCore(publicKey, ownerId = null) {
     const keyStr =
       typeof publicKey === "string"
         ? publicKey
         : b4a.toString(publicKey, "hex");
 
+    if (!/^[0-9a-f]{64}$/i.test(keyStr)) {
+      throw new Error("Invalid peer core key");
+    }
+    if (ownerId) {
+      const existingKey = this.peerCoreOwners.get(ownerId);
+      if (existingKey && existingKey !== keyStr) {
+        throw new Error("Peer attempted to change its core key");
+      }
+      if (!existingKey && this.peerCoreOwners.size >= MAX_TRACKED_CORES) {
+        throw new Error("Peer core owner limit reached");
+      }
+    }
     if (!this.knownPeerKeys.has(keyStr)) {
+      if (this.knownPeerKeys.size >= MAX_TRACKED_CORES) {
+        throw new Error("Peer core limit reached");
+      }
       this.knownPeerKeys.add(keyStr);
       if (this.trackingCore) {
         this.trackingCore.append(keyStr).catch(console.error);
       }
     }
+    if (ownerId) this.peerCoreOwners.set(ownerId, keyStr);
 
     if (this.peerCores.has(keyStr)) return this.peerCores.get(keyStr);
     if (this.pendingPeerCores.has(keyStr)) {
@@ -239,6 +259,7 @@ class PersistenceManager {
     }
     this.coreWatchers.clear();
     this.pendingPeerCores.clear();
+    this.peerCoreOwners.clear();
     this.peerCores.clear();
     if (this.store) {
       await this.store.close();

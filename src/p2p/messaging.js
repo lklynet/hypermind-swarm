@@ -4,7 +4,7 @@ const {
   MEGA_NODE,
 } = require("../config/constants");
 const { BloomFilterManager } = require("../state/bloom");
-const { validateMessage } = require("./validation/message-validator");
+const { verifyProtocolMessage } = require("./validation/message-security");
 const { HeartbeatHandler } = require("./handlers/heartbeat-handler");
 const { LeaveHandler } = require("./handlers/leave-handler");
 const { PingHandler } = require("./handlers/ping-handler");
@@ -83,8 +83,9 @@ class MessageHandler {
   }
 
   handleMessage(msg, sourceSocket) {
-    if (!validateMessage(msg)) {
+    if (!verifyProtocolMessage(msg)) {
       this.diagnostics.increment("invalidMessages");
+      this.diagnostics.increment("invalidSig");
       return;
     }
 

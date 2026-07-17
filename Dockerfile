@@ -33,6 +33,8 @@ ENV NODE_ENV=production
 
 COPY --from=builder --chown=node:node /app /app
 
+RUN mkdir -p /app/storage && chown node:node /app/storage
+
 USER node
 
 RUN node -e "require('rocksdb-native')"

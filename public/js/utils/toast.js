@@ -9,10 +9,10 @@ export function showToast(message, type = "info") {
     if (type === "error") icon = "fa-circle-exclamation";
     if (type === "success") icon = "fa-circle-check";
 
-    toast.innerHTML = `
+    setSafeHtml(toast, `
     <i class="fa-solid ${icon}"></i>
     <span>${message}</span>
-  `;
+  `);
 
     container.appendChild(toast);
 
@@ -20,3 +20,4 @@ export function showToast(message, type = "info") {
         toast.remove();
     }, 3000);
 }
+import { setSafeHtml } from "./html.js";

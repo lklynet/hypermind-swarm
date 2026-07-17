@@ -11,7 +11,7 @@ const MAX_MESSAGE_SIZE = parseInt(process.env.MAX_MESSAGE_SIZE) || 2048;
 const MAX_RELAY_HOPS = parseInt(process.env.MAX_RELAY_HOPS) || 10;
 const MAX_CONNECTIONS = parseInt(process.env.MAX_CONNECTIONS) || 50;
 
-const MAX_SOCKET_BUFFER_SIZE = parseInt(process.env.MAX_SOCKET_BUFFER_SIZE) || 16384;
+const MAX_SOCKET_BUFFER_SIZE = parseInt(process.env.MAX_SOCKET_BUFFER_SIZE) || 131072;
 const MAX_MESSAGES_PER_SECOND = parseInt(process.env.MAX_MESSAGES_PER_SECOND) || 10;
 const MAX_SSE_CLIENTS = parseInt(process.env.MAX_SSE_CLIENTS) || 1000;
 
@@ -39,6 +39,7 @@ const MAX_NOTES_PER_PING = parseInt(process.env.MAX_NOTES_PER_PING) || 100;
 const BROADCAST_THROTTLE = 1000;
 const DIAGNOSTICS_INTERVAL = 10000;
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || "127.0.0.1";
 const CHAT_RATE_LIMIT = parseInt(process.env.CHAT_RATE_LIMIT) || 5000;
 const VISUAL_LIMIT = parseInt(process.env.VISUAL_LIMIT) || 500;
 const DEVICE_PERSISTENCE = process.env.DEVICE_PERSISTENCE === "true";
@@ -81,6 +82,7 @@ module.exports = {
   BROADCAST_THROTTLE,
   DIAGNOSTICS_INTERVAL,
   PORT,
+  HOST,
   CHAT_RATE_LIMIT,
   VISUAL_LIMIT,
   DEVICE_PERSISTENCE,

@@ -1,7 +1,5 @@
 const {
     verifyPoW,
-    verifySignature,
-    createPublicKey,
 } = require("../../core/security");
 const { MAX_RELAY_HOPS } = require("../../config/constants");
 
@@ -41,19 +39,12 @@ class HeartbeatHandler {
         try {
             if (!stored && !this.peerManager.canAcceptPeer(id)) return;
 
-            const key = createPublicKey(id);
-
-            if (!verifySignature(`seq:${seq}`, sig, key)) {
-                this.diagnostics.increment("invalidSig");
-                return;
-            }
-
             if (hops === 0) {
                 sourceSocket.peerId = id;
             }
 
             if (coreKey && this.persistenceManager) {
-                this.persistenceManager.getPeerCore(coreKey).catch(() => { });
+                this.persistenceManager.getPeerCore(coreKey, id).catch(() => { });
             }
 
             const ip = hops === 0 ? this.getIp(sourceSocket) : null;

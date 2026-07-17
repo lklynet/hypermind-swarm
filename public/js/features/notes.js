@@ -26,16 +26,16 @@ export function renderNoteItem(note) {
     } else if (note.type === "quote") {
         body = `quoted: <span class="note-text">${renderMarkdown(note.content || "")}</span>`;
         if (note.quotePingId) {
-            action = `<button class="note-link" onclick="event.stopPropagation(); window.showPing('${note.quotePingId}')">View quote</button>`;
+            action = `<button class="note-link" data-action="show-ping" data-ping-id="${note.quotePingId}">View quote</button>`;
         }
     }
 
     return `
         <div class="note-item">
-            <div class="avatar note-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getAvatarBgVar(note.author)};" onclick="window.showProfile('${note.author}')"></div>
+            <div class="avatar note-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getAvatarBgVar(note.author)};" data-action="show-profile" data-user-id="${note.author}"></div>
             <div class="note-content">
                 <div class="note-line">
-                    <span class="note-author" onclick="window.showProfile('${note.author}')">${escapeHtml(authorName)}</span>
+                    <span class="note-author" data-action="show-profile" data-user-id="${note.author}">${escapeHtml(authorName)}</span>
                     <span class="note-body">${body}</span>
                     ${timeLabel ? `<span class="note-time">· ${timeLabel}</span>` : ""}
                 </div>

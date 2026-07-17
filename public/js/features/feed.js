@@ -1,6 +1,6 @@
 import { DOM, state } from "../core/state.js";
 import { postPing, postAmplify } from "../core/api.js";
-import { escapeHtml } from "../utils/html.js";
+import { escapeHtml, setSafeHtml } from "../utils/html.js";
 import { timeSince } from "../utils/formatters.js";
 import { renderMarkdown, insertMarkdownAtCursor } from "../utils/markdown.js";
 import { getAvatarBgVar } from "../utils/banner-generator.js";
@@ -117,7 +117,7 @@ function updateExistingPing(el, ping) {
 
     const list = el.querySelector(".comments-list");
     if (list && ping.comments) {
-        list.innerHTML = ping.comments.map((c) => renderComment({ ...c, pingId: ping.id })).join("");
+        setSafeHtml(list, ping.comments.map((c) => renderComment({ ...c, pingId: ping.id })).join(""));
     }
 }
 
@@ -167,23 +167,23 @@ function createPingElement(ping, domId, isProfile) {
 
     let topicPill = "";
     if (ping.topic) {
-        topicPill = `<span class="ping-topic" onclick="event.stopPropagation(); window.joinSwarm('${escapeHtml(ping.topic)}')">#${escapeHtml(ping.topic)}</span>`;
+        topicPill = `<span class="ping-topic" data-action="join-swarm" data-topic="${escapeHtml(ping.topic)}">#${escapeHtml(ping.topic)}</span>`;
     }
 
     const alreadyAmplified = ping.amplifiedBy?.includes(state.myId) || isMe;
 
-    el.innerHTML = `
-    <div class="avatar ping-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getAvatarBgVar(ping.author)};" onclick="window.showProfile('${ping.author}')"></div>
+    setSafeHtml(el, `
+    <div class="avatar ping-avatar" style="background-image: url('${avatarUrl}'); background-color: ${getAvatarBgVar(ping.author)};" data-action="show-profile" data-user-id="${ping.author}"></div>
     <div class="ping-content">
       <div class="ping-header">
         <div class="ping-header-main">
-          <span class="ping-author" onclick="window.showProfile('${ping.author}')" style="cursor: pointer;">${escapeHtml(authorName)}${isFollowing ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.85rem;" title="Following"></i>' : ""}</span>
-          <span class="ping-handle" onclick="event.stopPropagation(); window.showPing('${ping.id}')">@${ping.author.slice(-8)}</span>
+          <span class="ping-author" data-action="show-profile" data-user-id="${ping.author}" style="cursor: pointer;">${escapeHtml(authorName)}${isFollowing ? ' <i class="fa-solid fa-circle-check" style="color: var(--primary-color); font-size: 0.85rem;" title="Following"></i>' : ""}</span>
+          <span class="ping-handle" data-action="show-ping" data-ping-id="${ping.id}">@${ping.author.slice(-8)}</span>
           <span class="ping-time">· ${timeSince(new Date(ping.timestamp))}</span>
         </div>
         <div class="ping-header-tools">
           ${topicPill ? `<span class="ping-header-topic">${topicPill}</span>` : ""}
-          <button class="ping-copy-btn" onclick="window.sharePing('${ping.id}')" title="Copy ping link">
+          <button class="ping-copy-btn" data-action="share-ping" data-ping-id="${ping.id}" title="Copy ping link">
             <i class="fa-regular fa-copy"></i>
           </button>
         </div>
@@ -191,22 +191,22 @@ function createPingElement(ping, domId, isProfile) {
       <div class="ping-text">${renderMarkdown(ping.content)}</div>
       ${renderQuotedPingCard(ping)}
       <div class="ping-actions">
-        <button class="action-btn amplify${alreadyAmplified ? ' amplified' : ''}" onclick="window.amplifyPing('${ping.id}')">
+        <button class="action-btn amplify${alreadyAmplified ? ' amplified' : ''}" data-action="amplify-ping" data-ping-id="${ping.id}">
           <i class="fa-solid fa-bullhorn"></i> <span class="amplify-count">${ping.likes || 0}</span>
         </button>
-        <button class="action-btn comment" onclick="window.toggleComment('${ping.id}')">
+        <button class="action-btn comment" data-action="toggle-comment" data-ping-id="${ping.id}">
           <i class="fa-regular fa-comment"></i> <span class="comment-count">${ping.comments ? ping.comments.length : 0}</span>
         </button>
-        <button class="action-btn quote" onclick="window.quotePing('${ping.id}')">
+        <button class="action-btn quote" data-action="quote-ping" data-ping-id="${ping.id}">
           <i class="fa-solid fa-quote-left"></i> <span class="quote-count">${ping.noteCounts ? ping.noteCounts.quotes || 0 : 0}</span>
         </button>
-        <button class="action-btn activity" onclick="window.showPingActivity('${ping.id}')" title="View activity">
+        <button class="action-btn activity" data-action="show-activity" data-ping-id="${ping.id}" title="View activity">
           <i class="fa-solid fa-chart-simple"></i> <span class="activity-count">${ping.noteCounts ? ping.noteCounts.total || 0 : 0}</span>
         </button>
       </div>
       ${renderCommentSection(ping.id, ping.comments || [])}
     </div>
-  `;
+  `);
 
     return el;
 }

@@ -1,6 +1,6 @@
 import { DOM, state, saveToLocalStorage } from "../core/state.js";
 import { fetchProfile } from "../core/api.js";
-import { escapeHtml } from "../utils/html.js";
+import { escapeHtml, setSafeHtml } from "../utils/html.js";
 import { getAvatarBgVar, getFractalFromId } from "../utils/banner-generator.js";
 import { addPingToContainer, updateFeedVisibility } from "./feed.js";
 import { updateUrl } from "../utils/url.js";
@@ -28,13 +28,13 @@ export async function showProfile(id, push = true) {
         const isFollowing = state.following.includes(data.id);
         const isMe = data.id === state.myId;
 
-        DOM.profileInfo.innerHTML = `
+        setSafeHtml(DOM.profileInfo, `
       <div class="profile-cover" style="background-image: url('${getFractalFromId(data.id + "banner")}'); background-size: cover;"></div>
       <div class="profile-details">
         <div style="display: flex; justify-content: space-between; align-items: flex-end;">
           <div class="avatar profile-avatar-large" style="background-image: url('${avatarUrl}'); background-color: ${getAvatarBgVar(data.id)};"></div>
           ${!isMe ? `
-            <button class="ping-btn-large" style="width: auto; padding: 0.5rem 1.5rem; margin: 0;" onclick="window.toggleFollow('${data.id}')">
+            <button class="ping-btn-large" style="width: auto; padding: 0.5rem 1.5rem; margin: 0;" data-action="toggle-follow" data-user-id="${data.id}">
               ${isFollowing ? "Unfollow" : "Follow"}
             </button>
           ` : ""}
@@ -47,7 +47,7 @@ export async function showProfile(id, push = true) {
           <span><span class="stat-value">${data.pings.length}</span> Pings</span>
         </div>
       </div>
-    `;
+    `);
 
         if (data.pings.length === 0) {
             DOM.profileFeed.innerHTML = "<div style='padding: 2rem; text-align: center; color: var(--text-muted);'>No pings yet.</div>";
@@ -114,7 +114,7 @@ function updateFollowedStateInFeed(userId, isFollowing) {
 
         const commentAuthors = pingEl.querySelectorAll(".comment-author");
         commentAuthors.forEach((commentAuthor) => {
-            if (commentAuthor.getAttribute("onclick")?.includes(`'${userId}'`)) {
+            if (commentAuthor.dataset.userId === userId) {
                 const existingCheck = commentAuthor.querySelector(".fa-circle-check");
                 if (isFollowing && !existingCheck) {
                     commentAuthor.insertAdjacentHTML(
@@ -161,10 +161,10 @@ export async function renderFollowedAccounts() {
             }
         }
 
-        el.innerHTML = `
+        setSafeHtml(el, `
       <img src="${avatarUrl}" class="avatar" style="width: 32px; height: 32px; border-radius: 50%; background-color: ${getAvatarBgVar(id)};">
       <span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(name)}</span>
-    `;
+    `);
         container.appendChild(el);
     }
 }

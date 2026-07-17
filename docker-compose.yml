@@ -6,7 +6,9 @@ services:
     restart: unless-stopped
     environment:
       - PORT=${PORT:-3000}
+      - HOST=0.0.0.0
       - STORAGE_PATH=${STORAGE_PATH:-./storage}
-      - WEB_AUTH=${WEB_AUTH:-}
+      - WEB_AUTH=${WEB_AUTH:?Set WEB_AUTH to username:strong-password}
+      - WEB_ALLOWED_HOSTS=${WEB_ALLOWED_HOSTS:?Set WEB_ALLOWED_HOSTS to the public host and port}
       - DEVICE_PERSISTENCE=${DEVICE_PERSISTENCE:-false}
       - GIPHY_API_KEY=${GIPHY_API_KEY:-}

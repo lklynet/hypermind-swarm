@@ -5,10 +5,12 @@ services:
     container_name: hypermind-swarm
     network_mode: host
     restart: unless-stopped
-        environment:
+    environment:
+      - HOST=0.0.0.0
       - PORT=${PORT:-3000}
       - STORAGE_PATH=${STORAGE_PATH:-./storage}
-      - WEB_AUTH=${WEB_AUTH:-}
+      - WEB_AUTH=${WEB_AUTH:?Set WEB_AUTH to username:strong-password}
+      - WEB_ALLOWED_HOSTS=${WEB_ALLOWED_HOSTS:?Set WEB_ALLOWED_HOSTS to the public host and port}
       - WEB_AUTH_SESSION_TTL_MS=${WEB_AUTH_SESSION_TTL_MS:-43200000}
       - TOPIC_NAME=${TOPIC_NAME:-hypermind-swarm-v1}
       - POW_PREFIX=${POW_PREFIX:-00000}
@@ -17,9 +19,10 @@ services:
       - MAX_MESSAGE_SIZE=${MAX_MESSAGE_SIZE:-2048}
       - MAX_RELAY_HOPS=${MAX_RELAY_HOPS:-10}
       - MAX_CONNECTIONS=${MAX_CONNECTIONS:-50}
-      - MAX_SOCKET_BUFFER_SIZE=${MAX_SOCKET_BUFFER_SIZE:-16384}
+      - MAX_SOCKET_BUFFER_SIZE=${MAX_SOCKET_BUFFER_SIZE:-131072}
       - MAX_MESSAGES_PER_SECOND=${MAX_MESSAGES_PER_SECOND:-10}
       - MAX_SSE_CLIENTS=${MAX_SSE_CLIENTS:-1000}
+      - MAX_SSE_CLIENTS_PER_IP=${MAX_SSE_CLIENTS_PER_IP:-5}
       - MAX_CONTENT_LENGTH=${MAX_CONTENT_LENGTH:-2000}
       - MAX_USERNAME_LENGTH=${MAX_USERNAME_LENGTH:-50}
       - HEARTBEAT_INTERVAL=${HEARTBEAT_INTERVAL:-30000}
@@ -36,5 +39,3 @@ services:
       - VISUAL_LIMIT=${VISUAL_LIMIT:-500}
       - DEVICE_PERSISTENCE=${DEVICE_PERSISTENCE:-false}
       - GIPHY_API_KEY=${GIPHY_API_KEY:-}
-    environment:
-      - PORT=3000

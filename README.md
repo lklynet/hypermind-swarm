@@ -129,7 +129,7 @@ Remote dashboards must be placed behind an HTTPS reverse proxy. Set `TRUST_PROXY
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `HOST` | `127.0.0.1` | Dashboard bind address. Non-loopback values require authentication and an allowed-host list. |
+| `HOST` | `127.0.0.1` (`0.0.0.0` in Docker) | Dashboard bind address. Non-loopback values require authentication and an allowed-host list. |
 | `PORT` | `3000` | The web dashboard port. |
 | `MAX_PEERS` | `50000` | Max peers to track in the swarm. |
 | `MAX_CONNECTIONS` | `50` | Max active P2P connections. |

@@ -135,7 +135,7 @@ Remote dashboards must be placed behind an HTTPS reverse proxy. Set `TRUST_PROXY
 | `MAX_CONNECTIONS` | `50` | Max active P2P connections. |
 | `MAX_RELAY_HOPS` | `10` | How far a ping travels through the mesh. |
 | `DEVICE_PERSISTENCE` | `false` | Derive a persistent identity from the device MAC address; see the security warning above. |
-| `WEB_AUTH` | `` | Dashboard credentials in `username:password` format; passwords must be at least 12 characters. Required for remote binding. |
+| `WEB_AUTH` | `` | Dashboard credentials in `username:password` format; 12 or more password characters are strongly recommended. Required for remote binding. |
 | `WEB_ALLOWED_HOSTS` | local hosts | Comma-separated exact HTTP Host values accepted by the dashboard. Required for remote binding. |
 | `TRUST_PROXY` | `false` | Trust one reverse proxy for client IP and HTTPS detection. Enable only behind a trusted proxy. |
 

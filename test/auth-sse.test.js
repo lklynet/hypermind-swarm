@@ -17,6 +17,14 @@ function response() {
   };
 }
 
+test("legacy short WEB_AUTH passwords remain usable", () => {
+  const auth = new AuthManager("admin:legacy");
+
+  assert.equal(auth.enabled, true);
+  assert.equal(auth.verifyCredentials("admin", "legacy"), true);
+  assert.equal(auth.verifyCredentials("admin", "wrong"), false);
+});
+
 test("auth sessions are HttpOnly, strict, bounded, and user-agent bound", () => {
   process.env.WEB_AUTH_MAX_SESSIONS = "2";
   const auth = new AuthManager("admin:correct horse battery staple");

@@ -39,7 +39,9 @@ class AuthManager {
     const password = normalized.slice(separatorIndex + 1).trim();
     if (!username || !password) return;
     if (password.length < 12) {
-      throw new Error("WEB_AUTH password must be at least 12 characters");
+      console.warn(
+        "Warning: WEB_AUTH password is shorter than the recommended 12 characters"
+      );
     }
 
     this.enabled = true;

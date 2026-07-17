@@ -74,7 +74,7 @@ jobs:
           -e PORT=3000
           -e POW_PREFIX=0
           -e VERIFICATION_POW_PREFIX=0
-          -e WEB_AUTH=ci:ci-test-only
+          -e WEB_AUTH=ci:legacy
           -e WEB_ALLOWED_HOSTS=localhost:3000,127.0.0.1:3000
           -p 3000:3000
           hypermind-test:${{ github.sha }}

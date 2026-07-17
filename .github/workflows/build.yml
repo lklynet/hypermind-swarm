@@ -68,7 +68,16 @@ jobs:
 
       - name: Run container for testing
         if: matrix.test
-        run: docker run -d --name hypermind-test -e HOST=0.0.0.0 -e PORT=3000 -e WEB_AUTH=ci:ci-test-only -e WEB_ALLOWED_HOSTS=localhost:3000,127.0.0.1:3000 -p 3000:3000 hypermind-test:${{ github.sha }}
+        run: >-
+          docker run -d --name hypermind-test
+          -e HOST=0.0.0.0
+          -e PORT=3000
+          -e POW_PREFIX=0
+          -e VERIFICATION_POW_PREFIX=0
+          -e WEB_AUTH=ci:ci-test-only
+          -e WEB_ALLOWED_HOSTS=localhost:3000,127.0.0.1:3000
+          -p 3000:3000
+          hypermind-test:${{ github.sha }}
 
       - name: Wait for server to be ready
         if: matrix.test

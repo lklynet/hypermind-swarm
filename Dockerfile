@@ -23,6 +23,7 @@ RUN npm ci --omit=dev \
 FROM node:24-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    libatomic1 \
     libsodium23 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -33,6 +34,8 @@ ENV NODE_ENV=production
 COPY --from=builder --chown=node:node /app /app
 
 USER node
+
+RUN node -e "require('rocksdb-native')"
 
 EXPOSE 3000
 

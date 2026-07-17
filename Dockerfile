@@ -33,12 +33,14 @@ ENV NODE_ENV=production
 
 COPY --from=builder --chown=node:node /app /app
 
-RUN mkdir -p /app/storage && chown node:node /app/storage
+RUN chmod 0755 /app/docker-entrypoint.sh \
+    && mkdir -p /app/storage \
+    && chown node:node /app/storage
 
-USER node
-
-RUN node -e "require('rocksdb-native')"
+RUN setpriv --reuid=node --regid=node --init-groups \
+    node -e "require('rocksdb-native')"
 
 EXPOSE 3000
 
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["node", "server.js"]

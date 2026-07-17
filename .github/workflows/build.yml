@@ -112,6 +112,10 @@ jobs:
         if: always() && matrix.test
         run: docker rm -f hypermind-test || true
 
+      - name: Verify existing storage upgrade
+        if: matrix.test
+        run: ./scripts/test-docker-storage-upgrade.sh hypermind-test:${{ github.sha }}
+
       - name: Build and push by digest
         if: inputs.push-to-registry
         id: build

@@ -17,7 +17,8 @@ COPY . .
 
 RUN npm run build:css
 
-RUN npm prune --omit=dev
+RUN npm ci --omit=dev \
+    && node -e "require('rocksdb-native')"
 
 FROM node:24-slim
 

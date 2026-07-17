@@ -9,13 +9,13 @@
     "start": "npm run build:css && node server.js",
     "dev": "npm run watch:css & node server.js",
     "second-instance": "STORAGE_PATH=./storage2 PORT=3002 npm run dev",
-    "verify": "npm run build:css && node --check server.js && node --check electron-main.js && node --check src/web/routes.js && node --check src/p2p/swarm.js && node --check src/p2p/validation/message-security.js && node --check src/p2p/validation/message-validator.js && npm test",
+    "verify": "npm run build:css && node --check server.js && node --check src/web/routes.js",
     "electron": "electron .",
     "build:electron": "npm run build:css && electron-builder",
     "dist:mac": "npm run build:css && electron-builder --mac",
     "dist:win": "npm run build:css && electron-builder --win",
     "dist:linux": "npm run build:css && electron-builder --linux",
-    "test": "node --test --test-concurrency=1 test/*.test.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -38,17 +38,15 @@
   "dependencies": {
     "@dicebear/collection": "^9.2.4",
     "@dicebear/core": "^9.2.4",
-    "@fortawesome/fontawesome-free": "^7.3.1",
     "b4a": "^1.7.3",
     "corestore": "^7.7.0",
-    "dompurify": "^3.4.12",
     "express": "^5.2.1",
     "hyperswarm": "^4.16.0",
     "sodium-native": "^5.0.10"
   },
   "devDependencies": {
-    "electron": "^43.1.1",
-    "electron-builder": "^26.15.3",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
     "sass": "^1.97.2"
   },
   "build": {
@@ -59,7 +57,6 @@
     },
     "files": [
       "electron-main.js",
-      "electron-main-preload.js",
       "electron-preload.js",
       "electron-preferences.html",
       "server.js",

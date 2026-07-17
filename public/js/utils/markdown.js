@@ -1,44 +1,14 @@
 import { escapeHtml } from "./html.js";
 
-function safeExternalUrl(value) {
-    try {
-        const url = new URL(value, window.location.origin);
-        if (url.protocol !== "https:" && url.protocol !== "http:") return null;
-        return url.href;
-    } catch {
-        return null;
-    }
-}
-
 export function renderMarkdown(text) {
     if (!text) return "";
 
-    const tokens = [];
-    const preserveHtml = (value) => {
-        const marker = `\uE000HM_MARKDOWN_${tokens.length}\uE001`;
-        tokens.push([marker, value]);
-        return marker;
-    };
+    let html = escapeHtml(text);
 
-    let source = String(text);
-
-    source = source.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_match, alt, url) => {
-        const safeUrl = safeExternalUrl(url.trim());
-        if (!safeUrl) return `[image: ${alt || "blocked"}]`;
-        return preserveHtml(
-            `<img src="${escapeHtml(safeUrl)}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" style="max-width: 100%; border-radius: 8px; margin: 0.5rem 0;">`
-        );
-    });
-
-    source = source.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, label, url) => {
-        const safeUrl = safeExternalUrl(url.trim());
-        if (!safeUrl) return label;
-        return preserveHtml(
-            `<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`
-        );
-    });
-
-    let html = escapeHtml(source);
+    html = html.replace(
+        /!\[([^\]]*)\]\(([^)]+)\)/g,
+        '<img src="$2" alt="$1" style="max-width: 100%; border-radius: 8px; margin: 0.5rem 0;">'
+    );
 
     html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
     html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
@@ -53,7 +23,7 @@ export function renderMarkdown(text) {
 
     html = html.replace(
         /#(\w+)/g,
-        '<span class="markdown-swarm" data-action="join-swarm" data-topic="$1">#$1</span>'
+        '<span style="color: var(--primary-color); cursor: pointer;" onclick="event.stopPropagation(); window.joinSwarm(\'$1\')">#$1</span>'
     );
 
     html = html.replace(
@@ -61,9 +31,10 @@ export function renderMarkdown(text) {
         '<span style="color: var(--primary-color); font-weight: 600;">@$1</span>'
     );
 
-    for (const [marker, value] of tokens) {
-        html = html.split(marker).join(value);
-    }
+    html = html.replace(
+        /\[([^\]]+)\]\(([^)]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: var(--primary-color); text-decoration: none;">$1</a>'
+    );
 
     return html;
 }

@@ -1,8 +1,34 @@
+const crypto = require("crypto");
+const { verifySignature, createPublicKey } = require("../../core/security");
 const {
     RATE_LIMIT_WINDOW_MS,
     PING_RATE_LIMIT,
     DEFAULT_MESSAGE_TTL,
 } = require("../../config/constants");
+
+function computePingId(ping) {
+    if (!ping) return "";
+    if (ping.type === "QUOTE") {
+        return crypto
+            .createHash("sha256")
+            .update(ping.author + ping.quoteOf + ping.content + ping.timestamp)
+            .digest("hex");
+    }
+
+    return crypto
+        .createHash("sha256")
+        .update(ping.author + ping.content + ping.timestamp)
+        .digest("hex");
+}
+
+function verifySignedPing(ping) {
+    if (!ping || !ping.author || !ping.sig) return false;
+    if (computePingId(ping) !== ping.id) return false;
+
+    const key = createPublicKey(ping.author);
+    const prefix = ping.type === "QUOTE" ? "quote" : "ping";
+    return verifySignature(`${prefix}:${ping.id}`, ping.sig, key);
+}
 
 class QuoteHandler {
     constructor(deps) {
@@ -33,6 +59,11 @@ class QuoteHandler {
         if (rateData.count >= PING_RATE_LIMIT) return;
 
         if (quotedPing.id !== quoteOf) {
+            this.diagnostics.increment("invalidSig");
+            return;
+        }
+
+        if (!verifySignedPing(quotedPing) || !verifySignedPing(msg)) {
             this.diagnostics.increment("invalidSig");
             return;
         }

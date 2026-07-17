@@ -1,6 +1,5 @@
 import { state } from "../core/state.js";
 import { showModal, closeModal } from "../utils/modal.js";
-import { escapeHtml } from "../utils/html.js";
 
 class NotificationManager {
     constructor() {
@@ -175,10 +174,10 @@ export function showNotifications() {
             if (n.type === "mention") {
                 // Check if it's a comment mention or ping mention
                 notifText = n.commentId
-                    ? `<strong>${escapeHtml(n.username || 'Anonymous')}</strong> mentioned you in a comment`
-                    : `<strong>${escapeHtml(n.username || 'Anonymous')}</strong> mentioned you in a ping`;
+                    ? `<strong>${n.username || 'Anonymous'}</strong> mentioned you in a comment`
+                    : `<strong>${n.username || 'Anonymous'}</strong> mentioned you in a ping`;
             } else {
-                notifText = `<strong>${escapeHtml(n.username || 'Anonymous')}</strong> commented on your ping`;
+                notifText = `<strong>${n.username || 'Anonymous'}</strong> commented on your ping`;
             }
             return `
                         <li style="padding: 0.75rem; border-bottom: 1px solid var(--border-color); cursor: pointer; ${!n.read ? 'background-color: rgba(252, 163, 17, 0.1);' : ''}"

@@ -1,15 +1,8 @@
-const {
-  compactTransportMessage,
-  signProtocolMessage,
-  verifyProtocolMessage,
-} = require("../validation/message-security");
+const { signMessage, verifySignature, createPublicKey } = require("../../core/security");
 const {
   MEGA_CATCHUP_BATCH_SIZE,
   MEGA_MAX_CATCHUP_MESSAGES,
-  MAX_CATCHUP_MESSAGE_SIZE,
 } = require("../../config/constants");
-
-const LEGACY_SOCKET_PAYLOAD_LIMIT = 16 * 1024;
 
 class CatchupHandler {
   constructor(deps) {
@@ -22,19 +15,18 @@ class CatchupHandler {
     this.isMegaNode = deps.isMegaNode;
     this.identity = deps.identity;
     this.catchupSince = new Map();
-    this.catchupMessageCount = new WeakMap();
-    this.pendingRequests = new WeakMap();
+    this.catchupMessageCount = new Map();
   }
 
   handleRequest(msg, sourceSocket) {
     if (!this.isMegaNode) return;
 
-    const { id, since, cursor } = msg;
-    if (!sourceSocket.peerId || sourceSocket.peerId !== id) return;
-    let session = this.catchupMessageCount.get(sourceSocket);
-    if (cursor === null) {
-      session = { since, total: 0, expectedCursor: null };
-    } else if (!session || session.since !== since || session.expectedCursor !== cursor) {
+    const { id, since, cursor, sig } = msg;
+
+    const signPayload = `catchup:request:${id}:${since}:${cursor || 0}`;
+    const key = createPublicKey(id);
+    if (!verifySignature(signPayload, sig, key)) {
+      this.diagnostics.increment("invalidSig");
       return;
     }
 
@@ -50,37 +42,31 @@ class CatchupHandler {
     let finalCursor = nextCursor;
     let finalHasMore = more;
 
-    session.total += messages.length;
-    if (session.total > MEGA_MAX_CATCHUP_MESSAGES) {
-      finalCursor = null;
-      finalHasMore = false;
+    {
+      const sessionKey = `${id}:${since}`;
+      const totalSoFar = (this.catchupMessageCount.get(sessionKey) || 0) + messages.length;
+      if (totalSoFar > MEGA_MAX_CATCHUP_MESSAGES || !finalHasMore) {
+        this.catchupMessageCount.delete(sessionKey);
+        if (totalSoFar > MEGA_MAX_CATCHUP_MESSAGES) {
+          finalCursor = null;
+          finalHasMore = false;
+        }
+      } else {
+        this.catchupMessageCount.set(sessionKey, totalSoFar);
+      }
     }
 
-    const responseMessages = messages.map(compactTransportMessage);
-    while (
-      responseMessages.length > 1 &&
-      Buffer.byteLength(JSON.stringify(responseMessages), "utf8") >
-        Math.min(MAX_CATCHUP_MESSAGE_SIZE, LEGACY_SOCKET_PAYLOAD_LIMIT) - 1024
-    ) {
-      responseMessages.pop();
-      finalCursor = (cursor || 0) + responseMessages.length;
-      finalHasMore = true;
-    }
+    const responseSignPayload = `catchup:response:${this.identity.id}:${finalCursor || 0}`;
+    const responseSig = signMessage(responseSignPayload, this.identity.privateKey);
 
-    if (finalHasMore && finalCursor !== null) {
-      session.expectedCursor = finalCursor;
-      this.catchupMessageCount.set(sourceSocket, session);
-    } else {
-      this.catchupMessageCount.delete(sourceSocket);
-    }
-
-    const response = signProtocolMessage({
+    const response = {
       type: "CATCHUP_RESPONSE",
       id: this.identity.id,
-      messages: responseMessages,
+      messages,
       cursor: finalCursor,
       hasMore: finalHasMore,
-    }, this.identity.privateKey);
+      sig: responseSig,
+    };
 
     const responseStr = JSON.stringify(response) + "\n";
     sourceSocket.write(responseStr);
@@ -90,17 +76,16 @@ class CatchupHandler {
   handleResponse(msg, sourceSocket) {
     if (this.isMegaNode) return;
 
-    const { id, messages, cursor, hasMore } = msg;
-    const pending = this.pendingRequests.get(sourceSocket);
-    if (!pending || !sourceSocket.peerId || sourceSocket.peerId !== id) return;
-    this.pendingRequests.delete(sourceSocket);
+    const { id, messages, cursor, hasMore, sig } = msg;
 
-    for (const rawMessage of messages) {
-      const pingMsg = compactTransportMessage(rawMessage);
-      if (!verifyProtocolMessage(pingMsg)) {
-        this.diagnostics.increment("invalidMessages");
-        continue;
-      }
+    const responseSignPayload = `catchup:response:${id}:${cursor || 0}`;
+    const key = createPublicKey(id);
+    if (!verifySignature(responseSignPayload, sig, key)) {
+      this.diagnostics.increment("invalidSig");
+      return;
+    }
+
+    for (const pingMsg of messages) {
       if (pingMsg.type === "PING") {
         const isNew = this.pingStore.add(pingMsg);
         if (isNew) {
@@ -187,14 +172,16 @@ class CatchupHandler {
       : `${socket.remoteAddress}:catchup-since`;
     this.catchupSince.set(sessionKey, since);
 
-    const request = signProtocolMessage({
+    const signPayload = `catchup:request:${this.identity.id}:${since}:${cursor || 0}`;
+    const sig = signMessage(signPayload, this.identity.privateKey);
+
+    const request = {
       type: "CATCHUP_REQUEST",
       id: this.identity.id,
       since,
       cursor,
-    }, this.identity.privateKey);
-
-    this.pendingRequests.set(socket, { since, cursor, createdAt: Date.now() });
+      sig,
+    };
 
     const requestStr = JSON.stringify(request) + "\n";
     socket.write(requestStr);

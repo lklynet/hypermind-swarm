@@ -1,5 +1,6 @@
+const crypto = require("crypto");
+const { signMessage } = require("../../core/security");
 const { compactPingSnapshot } = require("../../state/pings");
-const { signProtocolMessage } = require("../../p2p/validation/message-security");
 const {
     CHAT_RATE_LIMIT,
     DEFAULT_MESSAGE_TTL,
@@ -9,23 +10,18 @@ const {
 const { getSwarmId } = require("../../utils/swarm-utils");
 
 const pingRateLimits = new Map();
-const MESSAGE_ID_RE = /^[0-9a-f]{64}$/i;
-const isValidTopic = (value) =>
-    typeof value === "string" &&
-    value.length > 0 &&
-    value.length <= 64 &&
-    !/[\u0000-\u001f\u007f]/.test(value);
 
 function getClientKey(req) {
+    const forwarded = req.headers["x-forwarded-for"];
+    if (typeof forwarded === "string" && forwarded.length > 0) {
+        return forwarded.split(",")[0].trim();
+    }
     return req.ip || req.socket.remoteAddress || "unknown";
 }
 
 function isPingRateLimited(req) {
     const now = Date.now();
     const clientKey = getClientKey(req);
-    if (!pingRateLimits.has(clientKey) && pingRateLimits.size >= 5000) {
-        pingRateLimits.delete(pingRateLimits.keys().next().value);
-    }
     let rateData = pingRateLimits.get(clientKey);
 
     if (!rateData || now - rateData.windowStart >= CHAT_RATE_LIMIT) {
@@ -40,6 +36,14 @@ function isPingRateLimited(req) {
     rateData.count++;
     pingRateLimits.set(clientKey, rateData);
 
+    if (pingRateLimits.size > 5000) {
+        for (const [key, data] of pingRateLimits.entries()) {
+            if (now - data.windowStart >= CHAT_RATE_LIMIT) {
+                pingRateLimits.delete(key);
+            }
+        }
+    }
+
     return false;
 }
 
@@ -51,7 +55,7 @@ function setupPingRoutes(app, deps) {
             return res.status(429).json({ error: "Rate limit exceeded" });
         }
 
-        const { content, topic } = req.body || {};
+        const { content, topic } = req.body;
         if (
             !content ||
             typeof content !== "string" ||
@@ -60,13 +64,7 @@ function setupPingRoutes(app, deps) {
             return res.status(400).json({ error: "Invalid content" });
         }
 
-        if (topic !== undefined && typeof topic !== "string") {
-            return res.status(400).json({ error: "Invalid topic" });
-        }
         const normalizedTopic = (topic || "").trim().toLowerCase();
-        if (normalizedTopic && !isValidTopic(normalizedTopic)) {
-            return res.status(400).json({ error: "Invalid topic" });
-        }
 
         let swarmId = 0;
         if (normalizedTopic) {
@@ -74,18 +72,24 @@ function setupPingRoutes(app, deps) {
         }
 
         const timestamp = Date.now();
-        const msg = signProtocolMessage({
+        const idBase = identity.id + content + timestamp;
+        const msgId = crypto.createHash("sha256").update(idBase).digest("hex");
+
+        const sig = signMessage(`ping:${msgId}`, identity.privateKey);
+
+        const msg = {
             type: "PING",
+            id: msgId,
             author: identity.id,
             username: identity.username,
             content,
             timestamp,
+            sig,
             hops: 0,
             ttl: DEFAULT_MESSAGE_TTL,
             swarmId,
             topic: normalizedTopic,
-            nonce: identity.nonce,
-        }, identity.privateKey);
+        };
 
         if (pingStore.add(msg)) {
             if (persistenceManager) {
@@ -103,11 +107,8 @@ function setupPingRoutes(app, deps) {
     });
 
     app.post("/api/amplify", (req, res) => {
-        if (isPingRateLimited(req)) {
-            return res.status(429).json({ error: "Rate limit exceeded" });
-        }
-        const { id } = req.body || {};
-        if (!MESSAGE_ID_RE.test(id || "")) return res.status(400).json({ error: "Invalid ping ID" });
+        const { id } = req.body;
+        if (!id) return res.status(400).json({ error: "Missing ping ID" });
 
         const ping = pingStore.get(id);
         if (!ping) {
@@ -122,18 +123,25 @@ function setupPingRoutes(app, deps) {
             return res.status(400).json({ error: "Cannot amplify your own ping" });
         }
 
+        const amplifyIdBase = identity.id + ping.id + Date.now();
+        const amplifyId = crypto
+            .createHash("sha256")
+            .update(amplifyIdBase)
+            .digest("hex");
+        const sig = signMessage(`amplify:${amplifyId}`, identity.privateKey);
         const originalPingData = compactPingSnapshot(ping);
         const timestamp = Date.now();
 
-        const amplifyMsg = signProtocolMessage({
+        const amplifyMsg = {
             type: "AMPLIFY",
+            id: amplifyId,
             originalPing: originalPingData,
             amplifier: identity.id,
             username: identity.username,
             timestamp,
-            nonce: identity.nonce,
+            sig,
             ttl: DEFAULT_MESSAGE_TTL,
-        }, identity.privateKey);
+        };
 
         pingStore.addAmplify(id, identity.id, {
             username: identity.username,
@@ -164,9 +172,9 @@ function setupPingRoutes(app, deps) {
             return res.status(429).json({ error: "Rate limit exceeded" });
         }
 
-        const { pingId, content, topic } = req.body || {};
+        const { pingId, content, topic } = req.body;
         if (
-            !MESSAGE_ID_RE.test(pingId || "") ||
+            !pingId ||
             !content ||
             typeof content !== "string" ||
             content.length > MAX_CONTENT_LENGTH
@@ -182,31 +190,31 @@ function setupPingRoutes(app, deps) {
         const requestedTopic = typeof topic === "string"
             ? topic.trim().toLowerCase()
             : "";
-        if (requestedTopic && !isValidTopic(requestedTopic)) {
-            return res.status(400).json({ error: "Invalid topic" });
-        }
         const normalizedTopic = requestedTopic || originalPing.topic || "";
         const swarmId = normalizedTopic
             ? getSwarmId(normalizedTopic)
             : originalPing.swarmId || 0;
 
         const timestamp = Date.now();
-        const quoteMsg = signProtocolMessage({
+        const idBase = identity.id + pingId + content + timestamp;
+        const quoteId = crypto.createHash("sha256").update(idBase).digest("hex");
+        const sig = signMessage(`quote:${quoteId}`, identity.privateKey);
+
+        const quoteMsg = {
             type: "QUOTE",
+            id: quoteId,
             author: identity.id,
             username: identity.username,
             content,
             timestamp,
+            sig,
             hops: 0,
             ttl: DEFAULT_MESSAGE_TTL,
             swarmId,
             topic: normalizedTopic,
             quoteOf: pingId,
             quotedPing: compactPingSnapshot(originalPing),
-            nonce: identity.nonce,
-        }, identity.privateKey);
-
-        const quoteId = quoteMsg.id;
+        };
 
         const wasKnown = pingStore.has(quoteId);
         const noteAdded = pingStore.addQuote(pingId, quoteMsg);
@@ -231,12 +239,9 @@ function setupPingRoutes(app, deps) {
     });
 
     app.post("/api/comment", (req, res) => {
-        if (isPingRateLimited(req)) {
-            return res.status(429).json({ error: "Rate limit exceeded" });
-        }
-        const { pingId, content } = req.body || {};
+        const { pingId, content } = req.body;
         if (
-            !MESSAGE_ID_RE.test(pingId || "") ||
+            !pingId ||
             !content ||
             typeof content !== "string" ||
             content.length > MAX_CONTENT_LENGTH
@@ -250,16 +255,21 @@ function setupPingRoutes(app, deps) {
         }
 
         const timestamp = Date.now();
-        const commentMsg = signProtocolMessage({
+        const idBase = identity.id + pingId + content + timestamp;
+        const commentId = crypto.createHash("sha256").update(idBase).digest("hex");
+        const sig = signMessage(`comment:${commentId}`, identity.privateKey);
+
+        const commentMsg = {
             type: "COMMENT",
+            id: commentId,
             pingId,
             author: identity.id,
             username: identity.username,
             content,
             timestamp,
+            sig,
             ttl: 6,
-            nonce: identity.nonce,
-        }, identity.privateKey);
+        };
 
         if (pingStore.addComment(pingId, commentMsg)) {
             if (persistenceManager) {

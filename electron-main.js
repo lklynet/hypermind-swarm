@@ -3,7 +3,6 @@ const https = require("https");
 const http = require("http");
 const path = require("path");
 const fs = require("fs");
-const { pathToFileURL } = require("url");
 
 let mainWindow = null;
 let preferencesWindow = null;
@@ -24,21 +23,7 @@ function readSettings() {
 
 function saveSettings(settings) {
   fs.mkdirSync(path.dirname(SETTINGS_PATH), { recursive: true });
-  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2), { mode: 0o600 });
-  fs.chmodSync(SETTINGS_PATH, 0o600);
-}
-
-function isSafeExternalUrl(value) {
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" || url.protocol === "http:";
-  } catch {
-    return false;
-  }
-}
-
-function openExternalHttp(value) {
-  if (isSafeExternalUrl(value)) require("electron").shell.openExternal(value);
+  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2));
 }
 
 function deleteSettings() {
@@ -134,7 +119,7 @@ async function promptForUpdate() {
     buttons: ["Download", "Cancel"],
     defaultId: 0,
   });
-  if (response === 0) openExternalHttp(info.url);
+  if (response === 0) require("electron").shell.openExternal(info.url);
 }
 
 async function checkForUpdates() {
@@ -183,7 +168,7 @@ async function checkForUpdatesOnStartup() {
     buttons: ["Download", "Later"],
     defaultId: 0,
   });
-  if (response === 0) openExternalHttp(info.url);
+  if (response === 0) require("electron").shell.openExternal(info.url);
 }
 
 function buildAppMenu() {
@@ -251,33 +236,16 @@ function openPreferences() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      sandbox: true,
-      webSecurity: true,
       preload: path.join(__dirname, "electron-preload.js"),
     },
   });
   preferencesWindow.loadFile("electron-preferences.html");
-  const preferencesUrl = pathToFileURL(path.join(__dirname, "electron-preferences.html")).href;
-  preferencesWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
-  preferencesWindow.webContents.on("will-navigate", (event, url) => {
-    if (url !== preferencesUrl) event.preventDefault();
-  });
   preferencesWindow.on("closed", () => {
     preferencesWindow = null;
   });
 }
 
-function isPreferencesSender(event) {
-  try {
-    const expected = pathToFileURL(path.join(__dirname, "electron-preferences.html")).href;
-    return event.senderFrame.url === expected;
-  } catch {
-    return false;
-  }
-}
-
-ipcMain.handle("prefs:get", (event) => {
-  if (!isPreferencesSender(event)) throw new Error("Untrusted IPC sender");
+ipcMain.handle("prefs:get", () => {
   const s = readSettings() || {};
   return {
     devicePersistence: !!s.devicePersistence,
@@ -286,12 +254,7 @@ ipcMain.handle("prefs:get", (event) => {
   };
 });
 
-ipcMain.handle("prefs:save", (event, prefs) => {
-  if (!isPreferencesSender(event)) throw new Error("Untrusted IPC sender");
-  if (!prefs || typeof prefs !== "object") throw new Error("Invalid preferences");
-  if (prefs.giphyApiKey && (typeof prefs.giphyApiKey !== "string" || prefs.giphyApiKey.length > 256)) {
-    throw new Error("Invalid GIPHY API key");
-  }
+ipcMain.handle("prefs:save", (_event, prefs) => {
   const s = readSettings() || {};
   s.devicePersistence = prefs.devicePersistence;
   s.megaNode = prefs.megaNode;
@@ -299,22 +262,14 @@ ipcMain.handle("prefs:save", (event, prefs) => {
   saveSettings(s);
 });
 
-ipcMain.handle("prefs:restart", (event) => {
-  if (!isPreferencesSender(event)) throw new Error("Untrusted IPC sender");
+ipcMain.handle("prefs:restart", () => {
   app.relaunch();
   app.quit();
 });
 
-ipcMain.on("notification:badge", (event, count) => {
-  try {
-    const expectedOrigin = `http://localhost:${process.env.PORT || 3000}`;
-    if (new URL(event.senderFrame.url).origin !== expectedOrigin) return;
-  } catch {
-    return;
-  }
+ipcMain.on("notification:badge", (_event, count) => {
   if (app.dock) {
-    const normalized = Math.min(999, Math.max(0, parseInt(count, 10) || 0));
-    app.dock.setBadge(normalized > 0 ? String(normalized) : "");
+    app.dock.setBadge(count > 0 ? String(count) : "");
   }
 });
 
@@ -358,9 +313,7 @@ async function createMainWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      sandbox: true,
-      webSecurity: true,
-      preload: path.join(__dirname, "electron-main-preload.js"),
+      preload: path.join(__dirname, "electron-preload.js"),
     },
   });
 
@@ -376,23 +329,19 @@ async function createMainWindow() {
   });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    openExternalHttp(url);
-    return { action: "deny" };
+    if (!url.startsWith("http://localhost") && !url.startsWith("file://")) {
+      require("electron").shell.openExternal(url);
+      return { action: "deny" };
+    }
+    return { action: "allow" };
   });
 
   mainWindow.webContents.on("will-navigate", (e, url) => {
-    const expectedOrigin = `http://localhost:${process.env.PORT || 3000}`;
-    let isExpected = false;
-    try {
-      isExpected = new URL(url).origin === expectedOrigin;
-    } catch {}
-    if (!isExpected) {
+    if (!url.startsWith("http://localhost") && !url.startsWith("file://")) {
       e.preventDefault();
-      openExternalHttp(url);
+      require("electron").shell.openExternal(url);
     }
   });
-  mainWindow.webContents.on("will-attach-webview", (event) => event.preventDefault());
-  mainWindow.webContents.session.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false));
 }
 
 async function startLocalMode() {

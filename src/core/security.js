@@ -2,7 +2,7 @@ const crypto = require("crypto");
 const { VERIFICATION_POW_PREFIX } = require("../config/constants");
 
 const verifyPoW = (id, nonce) => {
-    if (!Number.isSafeInteger(nonce) || nonce < 0) return false;
+    if (!nonce) return false;
     const powHash = crypto
         .createHash("sha256")
         .update(id + nonce)

@@ -7,11 +7,7 @@ function parseCookies(req) {
   cookieHeader.split(";").forEach((part) => {
     const [name, ...rest] = part.trim().split("=");
     if (!name) return;
-    try {
-      cookies[name] = decodeURIComponent(rest.join("=") || "");
-    } catch {
-      cookies[name] = "";
-    }
+    cookies[name] = decodeURIComponent(rest.join("=") || "");
   });
   return cookies;
 }
@@ -26,7 +22,6 @@ class AuthManager {
     this.sessionTtlMs =
       parseInt(process.env.WEB_AUTH_SESSION_TTL_MS, 10) || 12 * 60 * 60 * 1000;
     this.sessions = new Map();
-    this.maxSessions = parseInt(process.env.WEB_AUTH_MAX_SESSIONS, 10) || 128;
     this.enabled = false;
     this.username = "";
     this.passwordHash = "";
@@ -38,11 +33,6 @@ class AuthManager {
     const username = normalized.slice(0, separatorIndex).trim();
     const password = normalized.slice(separatorIndex + 1).trim();
     if (!username || !password) return;
-    if (password.length < 12) {
-      console.warn(
-        "Warning: WEB_AUTH password is shorter than the recommended 12 characters"
-      );
-    }
 
     this.enabled = true;
     this.username = username;
@@ -50,7 +40,7 @@ class AuthManager {
   }
 
   _isSecureRequest(req) {
-    return req.secure;
+    return req.secure || req.headers["x-forwarded-proto"] === "https";
   }
 
   _getUserAgentHash(req) {
@@ -104,9 +94,6 @@ class AuthManager {
 
   createSession(req, res) {
     this._cleanupExpiredSessions();
-    while (this.sessions.size >= this.maxSessions) {
-      this.sessions.delete(this.sessions.keys().next().value);
-    }
     const token = crypto.randomBytes(32).toString("hex");
     const tokenHash = sha256Hex(token);
     this.sessions.set(tokenHash, {
@@ -143,9 +130,8 @@ class AuthManager {
 
   verifyCredentials(username, password) {
     if (!this.enabled) return true;
-    if (typeof username !== "string" || typeof password !== "string") return false;
-    const normalizedUsername = username.trim();
-    const normalizedPassword = password.trim();
+    const normalizedUsername = (username || "").trim();
+    const normalizedPassword = (password || "").trim();
     if (!normalizedUsername || !normalizedPassword) return false;
     if (normalizedUsername !== this.username) return false;
 

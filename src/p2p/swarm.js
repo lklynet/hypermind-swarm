@@ -1,5 +1,5 @@
 const Hyperswarm = require("hyperswarm");
-const { signProtocolMessage } = require("./validation/message-security");
+const { signMessage } = require("../core/security");
 const {
   TOPIC,
   HEARTBEAT_INTERVAL,
@@ -62,19 +62,25 @@ class SwarmManager {
     }
 
     socket.connectedAt = Date.now();
-    const hello = JSON.stringify(signProtocolMessage({
+
+    const sig = signMessage(
+      `seq:${this.peerManager.getSeq()}`,
+      this.identity.privateKey
+    );
+    const hello = JSON.stringify({
       type: "HEARTBEAT",
       id: this.identity.id,
       username: this.identity.username,
       seq: this.peerManager.getSeq(),
       hops: 0,
       nonce: this.identity.nonce,
+      sig,
       encKey: this.identity.encryptionPublicKey,
       coreKey: this.persistenceManager
         ? this.persistenceManager.getPrimaryPublicKey()
         : null,
       megaNode: this.isMegaNode,
-    }, this.identity.privateKey));
+    });
     socket.write(hello + "\n");
     this.diagnostics.increment("bytesSent", hello.length + 1);
     this.broadcastFn();
@@ -134,18 +140,20 @@ class SwarmManager {
       const seq = this.peerManager.incrementSeq();
       this.peerManager.addOrUpdatePeer(this.identity.id, seq, null);
 
+      const sig = signMessage(`seq:${seq}`, this.identity.privateKey);
       const heartbeat =
-        JSON.stringify(signProtocolMessage({
+        JSON.stringify({
           type: "HEARTBEAT",
           id: this.identity.id,
           seq,
           hops: 0,
           nonce: this.identity.nonce,
+          sig,
           coreKey: this.persistenceManager
             ? this.persistenceManager.getPrimaryPublicKey()
             : null,
           megaNode: this.isMegaNode,
-        }, this.identity.privateKey)) + "\n";
+        }) + "\n";
 
       for (const socket of this.swarm.connections) {
         socket.write(heartbeat);
@@ -186,12 +194,17 @@ class SwarmManager {
   }
 
   shutdown() {
+    const sig = signMessage(
+      `type:LEAVE:${this.identity.id}`,
+      this.identity.privateKey
+    );
     const goodbye =
-      JSON.stringify(signProtocolMessage({
+      JSON.stringify({
         type: "LEAVE",
         id: this.identity.id,
         hops: 0,
-      }, this.identity.privateKey)) + "\n";
+        sig,
+      }) + "\n";
 
     for (const socket of this.swarm.connections) {
       socket.write(goodbye);
@@ -255,8 +268,9 @@ class SwarmManager {
       this.identity.encryptionPublicKey
     );
 
+    const sig = signMessage(`seq:${seq}`, this.identity.privateKey);
     const heartbeat =
-      JSON.stringify(signProtocolMessage({
+      JSON.stringify({
         type: "HEARTBEAT",
         id: this.identity.id,
         seq,
@@ -264,11 +278,12 @@ class SwarmManager {
         nonce: this.identity.nonce,
         swarmFilter: this.swarmFilter,
         encKey: this.identity.encryptionPublicKey,
+        sig,
         coreKey: this.persistenceManager
           ? this.persistenceManager.getPrimaryPublicKey()
           : null,
         megaNode: this.isMegaNode,
-      }, this.identity.privateKey)) + "\n";
+      }) + "\n";
 
     for (const socket of this.swarm.connections) {
       socket.write(heartbeat);

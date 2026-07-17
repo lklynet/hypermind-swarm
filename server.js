@@ -23,17 +23,9 @@ const { SwarmManager } = require("./src/p2p/swarm");
 const PersistenceManager = require("./src/p2p/persistence");
 const { SSEManager } = require("./src/web/sse");
 const { createServer, startServer } = require("./src/web/server");
-const { DIAGNOSTICS_INTERVAL, HOST, MEGA_NODE, LRU_CACHE_CAPACITY } = require("./src/config/constants");
-const { verifyProtocolMessage } = require("./src/p2p/validation/message-security");
+const { DIAGNOSTICS_INTERVAL, MEGA_NODE, LRU_CACHE_CAPACITY } = require("./src/config/constants");
 
 const main = async () => {
-  const isLoopbackHost = HOST === "127.0.0.1" || HOST === "::1" || HOST === "localhost";
-  if (!isLoopbackHost && !process.env.WEB_AUTH) {
-    throw new Error("WEB_AUTH is required when HOST is not loopback");
-  }
-  if (!isLoopbackHost && !process.env.WEB_ALLOWED_HOSTS) {
-    throw new Error("WEB_ALLOWED_HOSTS is required when HOST is not loopback");
-  }
   const identity = generateIdentity();
   const storagePath = process.env.STORAGE_PATH || "./storage";
   const persistenceManager = new PersistenceManager(storagePath, MEGA_NODE);
@@ -44,11 +36,6 @@ const main = async () => {
   const sseManager = new SSEManager();
 
   persistenceManager.onMessage = (msg) => {
-    if (!verifyProtocolMessage(msg)) {
-      diagnostics.increment("invalidMessages");
-      diagnostics.increment("invalidSig");
-      return;
-    }
     if (msg.type === "PING") {
       const isNew = pingStore.add(msg);
       if (isNew) {
@@ -116,6 +103,7 @@ const main = async () => {
       diagnostics: reset
         ? diagnostics.getAndResetStats()
         : diagnostics.getStats(),
+      peers: peerManager.getPeersWithIps(),
     });
   };
 

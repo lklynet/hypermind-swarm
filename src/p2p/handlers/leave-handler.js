@@ -1,3 +1,4 @@
+const { verifySignature, createPublicKey } = require("../../core/security");
 const { MAX_RELAY_HOPS } = require("../../config/constants");
 
 class LeaveHandler {
@@ -12,9 +13,18 @@ class LeaveHandler {
 
     handle(msg, sourceSocket) {
         this.diagnostics.increment("leaveMessages");
-        const { id, hops } = msg;
+        const { id, hops, sig } = msg;
+
+        if (!sig) return;
 
         if (!this.peerManager.hasPeer(id)) return;
+
+        const key = createPublicKey(id);
+
+        if (!verifySignature(`type:LEAVE:${id}`, sig, key)) {
+            this.diagnostics.increment("invalidSig");
+            return;
+        }
 
         if (this.peerManager.hasPeer(id)) {
             this.peerManager.removePeer(id);

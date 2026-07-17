@@ -7,9 +7,6 @@ const {
 class SSEManager {
   constructor() {
     this.clients = new Set();
-    this.clientKeys = new Map();
-    this.clientsPerKey = new Map();
-    this.maxClientsPerKey = parseInt(process.env.MAX_SSE_CLIENTS_PER_IP, 10) || 5;
     this.lastBroadcast = 0;
     this.heartbeatInterval = setInterval(
       () => this.heartbeat(),
@@ -17,38 +14,24 @@ class SSEManager {
     );
   }
 
-  addClient(res, clientKey = "unknown") {
+  addClient(res) {
     if (this.clients.size >= MAX_SSE_CLIENTS) {
       return false;
     }
-    const keyCount = this.clientsPerKey.get(clientKey) || 0;
-    if (keyCount >= this.maxClientsPerKey) return false;
     this.clients.add(res);
-    this.clientKeys.set(res, clientKey);
-    this.clientsPerKey.set(clientKey, keyCount + 1);
     return true;
   }
 
   removeClient(res) {
     this.clients.delete(res);
-    const key = this.clientKeys.get(res);
-    this.clientKeys.delete(res);
-    if (key) {
-      const next = (this.clientsPerKey.get(key) || 1) - 1;
-      if (next > 0) this.clientsPerKey.set(key, next);
-      else this.clientsPerKey.delete(key);
-    }
   }
 
   heartbeat() {
     for (const client of this.clients) {
       try {
-        if (!client.write(": heartbeat\n\n")) {
-          this.removeClient(client);
-          client.end();
-        }
+        client.write(": heartbeat\n\n");
       } catch (e) {
-        this.removeClient(client);
+        this.clients.delete(client);
       }
     }
   }
@@ -65,14 +48,10 @@ class SSEManager {
     const message = JSON.stringify(data);
     for (const client of this.clients) {
       try {
-        if (!client.write(`data: ${message}\n\n`)) {
-          this.removeClient(client);
-          client.end();
-          continue;
-        }
+        client.write(`data: ${message}\n\n`);
         if (client.flush) client.flush();
       } catch (e) {
-        this.removeClient(client);
+        this.clients.delete(client);
       }
     }
   }
@@ -92,8 +71,6 @@ class SSEManager {
       } catch (e) { }
     }
     this.clients.clear();
-    this.clientKeys.clear();
-    this.clientsPerKey.clear();
   }
 }
 

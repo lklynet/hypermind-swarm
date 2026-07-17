@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV HOST=0.0.0.0
 
 COPY --from=builder --chown=node:node /app /app
 

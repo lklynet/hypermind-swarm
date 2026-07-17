@@ -70,7 +70,6 @@ jobs:
         if: matrix.test
         run: >-
           docker run -d --name hypermind-test
-          -e HOST=0.0.0.0
           -e PORT=3000
           -e POW_PREFIX=0
           -e VERIFICATION_POW_PREFIX=0

@@ -11,7 +11,7 @@ const createServer = (identity, peerManager, swarm, sseManager, diagnostics, pin
 }
 
 const startServer = (app, identity) => {
-    app.listen(PORT, () => {
+    app.listen(PORT, "0.0.0.0", () => {
         console.log(`Hypermind Node running on port ${PORT}`);
         console.log(`ID: ${identity.id}`);
     });

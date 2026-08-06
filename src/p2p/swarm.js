@@ -90,19 +90,24 @@ class SwarmManager {
 
     socket.on("data", (data) => {
       this.diagnostics.increment("bytesReceived", data.length);
-      socket.buffer += data.toString();
+      const text = data.toString();
 
-      if (socket.buffer.length > MAX_SOCKET_BUFFER_SIZE) {
-        this.diagnostics.increment("bufferOverflows");
-        socket.destroy();
-        return;
-      }
+      // ponytail: keep the existing JSON wire format for compatibility; a native app channel is the upgrade path if mixed-frame fragmentation becomes observable.
+      if (!socket.buffer && !text.includes("{")) return;
 
+      socket.buffer += text;
       const lines = socket.buffer.split("\n");
       socket.buffer = lines.pop();
 
+      if (!socket.buffer.trimStart().startsWith("{")) {
+        socket.buffer = "";
+      } else if (socket.buffer.length > MAX_SOCKET_BUFFER_SIZE) {
+        this.diagnostics.increment("bufferOverflows");
+        socket.buffer = "";
+      }
+
       for (const msgStr of lines) {
-        if (!msgStr.trim()) continue;
+        if (!msgStr.trimStart().startsWith("{")) continue;
         try {
           const msg = JSON.parse(msgStr);
 

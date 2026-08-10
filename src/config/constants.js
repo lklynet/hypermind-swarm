@@ -44,7 +44,7 @@ const VISUAL_LIMIT = parseInt(process.env.VISUAL_LIMIT) || 500;
 const DEVICE_PERSISTENCE = process.env.DEVICE_PERSISTENCE === "true";
 
 const MEGA_NODE = process.env.MEGA_NODE === "true";
-const MEGA_CATCHUP_BATCH_SIZE = parseInt(process.env.MEGA_CATCHUP_BATCH_SIZE) || 50;
+const MEGA_CATCHUP_BATCH_SIZE = parseInt(process.env.MEGA_CATCHUP_BATCH_SIZE) || 5;
 const MEGA_MAX_CATCHUP_MESSAGES = parseInt(process.env.MEGA_MAX_CATCHUP_MESSAGES) || 5000;
 const MAX_CATCHUP_MESSAGE_SIZE = parseInt(process.env.MAX_CATCHUP_MESSAGE_SIZE) || 65536;
 
